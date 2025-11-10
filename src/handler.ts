@@ -1,75 +1,45 @@
 import type { NextRequest } from 'next/server'
-import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types'
+import type { AutoDiscoveryConfig, LLMsTxtConfig, LLMsTxtHandlerConfig } from './types'
 import { NextResponse } from 'next/server'
+import { LLMsTxtAutoDiscovery } from './discovery'
 import { generateLLMsTxt } from './generator'
 
 /**
- * Creates handlers for the llms.txt API route
- * Following the Auth.js pattern where handlers are exported and can be re-exported in route files
+ * Creates a versatile handler for generating llms.txt files.
  *
- * Usage:
- * ```typescript
- * // lib/llmstxt.ts
- * import { createLLMsTxtHandlers } from 'next-llms-txt';
+ * This function acts as a single entry point for creating both a site-wide `llms.txt`
+ * and per-page `*.html.md` files, with optional auto-discovery of page configurations.
  *
- * export const { GET } = createLLMsTxtHandlers({
- *   title: "My Project",
- *   description: "A brief summary",
- *   sections: [...]
- * });
- *
- * // app/llms.txt/route.ts
- * import { GET } from "@/lib/llmstxt"
- * export { GET }
- * ```
- *
- * @param config - The llms.txt configuration or handler config
- * @returns Object with GET handler
+ * @param config - The configuration for the handler.
+ * @returns An object with a `GET` method for use in a Next.js route handler.
  */
-export function createLLMsTxtHandlers(
+export function createLLmsTxt(
   config: LLMsTxtConfig | LLMsTxtHandlerConfig,
 ): {
   GET: (request: NextRequest) => Promise<NextResponse>
 } {
-  // Check if it's a handler config or direct llms.txt config
-  let llmsConfig: LLMsTxtConfig
-  let handlerConfig: LLMsTxtHandlerConfig | undefined
+  const handlerConfig = ('defaultConfig' in config ? config : { defaultConfig: config }) as LLMsTxtHandlerConfig
 
-  if ('defaultConfig' in config) {
-    // It's a LLMsTxtHandlerConfig
-    if (!config.defaultConfig) {
-      throw new Error('LLMs.txt configuration is required in defaultConfig')
-    }
-    llmsConfig = config.defaultConfig
-    handlerConfig = config
-  }
-  else {
-    // It's a direct LLMsTxtConfig
-    llmsConfig = config as LLMsTxtConfig
-    handlerConfig = undefined
+  if (!handlerConfig.defaultConfig?.title && !handlerConfig.autoDiscovery) {
+    throw new Error(
+      'A `defaultConfig` with a `title` or `autoDiscovery` must be provided.',
+    )
   }
 
-  if (!llmsConfig.title) {
-    throw new Error('LLMs.txt configuration must have a title')
-  }
+  const GET = async (request: NextRequest): Promise<NextResponse> => {
+    const { pathname } = new URL(request.url)
 
-  const GET = async (_request: NextRequest) => {
     try {
-      // Use custom generator if provided, otherwise use default
-      const content = handlerConfig?.generator
-        ? handlerConfig.generator(llmsConfig)
-        : generateLLMsTxt(llmsConfig)
-
-      return new NextResponse(content, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/markdown; charset=utf-8',
-          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-        },
-      })
+      // Route to the appropriate handler based on the request path
+      if (pathname === '/llms.txt') {
+        return handleSiteRequest(request, handlerConfig)
+      }
+      else {
+        return handlePageRequest(request, handlerConfig)
+      }
     }
     catch (error) {
-      console.error('Error generating llms.txt:', error)
+      console.error('[next-llms-txt] Error generating llms.txt:', error)
       return new NextResponse('Error generating llms.txt', { status: 500 })
     }
   }
@@ -78,6 +48,111 @@ export function createLLMsTxtHandlers(
 }
 
 /**
- * Convenience export that matches the Auth.js pattern name
+ * Handles requests for the site-wide llms.txt file.
  */
-export const handlers = createLLMsTxtHandlers
+async function handleSiteRequest(
+  _request: NextRequest,
+  handlerConfig: LLMsTxtHandlerConfig,
+): Promise<NextResponse> {
+  let finalConfig = handlerConfig.defaultConfig
+  let pages = (handlerConfig as any).pages || []
+
+  if (handlerConfig.autoDiscovery) {
+    const discoveryConfig = getAutoDiscoveryConfig(handlerConfig)
+    const discovery = new LLMsTxtAutoDiscovery(discoveryConfig)
+    const discoveredPages = await discovery.discoverPages()
+    pages = [...pages, ...discoveredPages]
+
+    const siteConfigFromDiscovery = await discovery.generateSiteConfig()
+    finalConfig = {
+      ...siteConfigFromDiscovery,
+      ...finalConfig,
+      sections: siteConfigFromDiscovery.sections || [],
+    }
+  }
+
+  if (!finalConfig?.title) {
+    throw new Error('LLMs.txt configuration must have a title.')
+  }
+
+  const content = handlerConfig.generator
+    ? handlerConfig.generator(finalConfig, pages)
+    : generateLLMsTxt(finalConfig, pages)
+
+  return createMarkdownResponse(content)
+}
+
+/**
+ * Handles requests for per-page *.html.md files.
+ */
+async function handlePageRequest(
+  request: NextRequest,
+  handlerConfig: LLMsTxtHandlerConfig,
+): Promise<NextResponse> {
+  if (!handlerConfig.autoDiscovery) {
+    return new NextResponse('Auto-discovery must be enabled for page-specific llms.txt files.', { status: 400 })
+  }
+
+  const { pathname } = new URL(request.url)
+  const discoveryConfig = getAutoDiscoveryConfig(handlerConfig)
+  const discovery = new LLMsTxtAutoDiscovery(discoveryConfig)
+  const pages = await discovery.discoverPages()
+
+  const requestedRoute = normalizePath(pathname)
+  const matchingPage = pages.find(page => normalizePath(page.route) === requestedRoute)
+
+  if (!matchingPage?.config) {
+    return new NextResponse('Page not found or no llms.txt configuration available.', { status: 404 })
+  }
+
+  const pageConfig: LLMsTxtConfig = {
+    ...matchingPage.config,
+    sections: [
+      {
+        title: 'This Page',
+        items: [{
+          title: matchingPage.config.title,
+          url: `${discoveryConfig.baseUrl}${requestedRoute}`,
+          description: matchingPage.config.description,
+        }],
+      },
+    ],
+  }
+
+  const content = handlerConfig.generator
+    ? handlerConfig.generator(pageConfig)
+    : generateLLMsTxt(pageConfig)
+
+  return createMarkdownResponse(content)
+}
+
+/**
+ * Helper functions.
+ */
+function getAutoDiscoveryConfig(handlerConfig: LLMsTxtHandlerConfig): AutoDiscoveryConfig {
+  if (typeof handlerConfig.autoDiscovery === 'object') {
+    return handlerConfig.autoDiscovery
+  }
+  if (!handlerConfig.baseUrl) {
+    throw new Error('A `baseUrl` is required for auto-discovery.')
+  }
+  return { baseUrl: handlerConfig.baseUrl }
+}
+
+function normalizePath(path: string): string {
+  let normalized = path.endsWith('/index') ? path.slice(0, -5) || '/' : path
+  if (normalized.length > 1 && normalized.endsWith('/')) {
+    normalized = normalized.slice(0, -1)
+  }
+  return normalized
+}
+
+function createMarkdownResponse(content: string): NextResponse {
+  return new NextResponse(content, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+    },
+  })
+}

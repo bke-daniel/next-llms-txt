@@ -1,37 +1,10 @@
-import type { LLMsTxtConfig } from './types'
+import type { AutoDiscoveryConfig, LLMsTxtConfig } from './types'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
-
-/**
- * Configuration for automatic page discovery and llms.txt generation
- */
-export interface AutoDiscoveryConfig {
-  /**
-   * Base URL for the application
-   */
-  baseUrl: string
-
-  /**
-   * App directory path (for App Router)
-   */
-  appDir?: string
-
-  /**
-   * Pages directory path (for Pages Router)
-   */
-  pagesDir?: string
-
-  /**
-   * Project root directory
-   */
-  rootDir?: string
-
-  /**
-   * Whether to show warnings during development
-   */
-  showWarnings?: boolean
-}
+import { parse } from '@babel/parser'
+import traverse from '@babel/traverse'
+import * as t from '@babel/types'
 
 /**
  * Information about a discovered page
@@ -230,28 +203,53 @@ export class LLMsTxtAutoDiscovery {
 
     try {
       const content = fs.readFileSync(filePath, 'utf-8')
+      const ast = parse(content, {
+        sourceType: 'module',
+        plugins: ['typescript', 'jsx'],
+      })
 
-      // Check for explicit llmstxt export
-      if (content.includes('export const llmstxt') || content.includes('export { llmstxt }')) {
+      let llmsTxtConfig: LLMsTxtConfig | undefined
+      let metadataConfig: { title?: string, description?: string } | undefined
+
+      traverse(ast, {
+        ExportNamedDeclaration(path) {
+          path.node.specifiers.forEach((specifier) => {
+            if (t.isIdentifier(specifier.exported) && specifier.exported.name === 'llmstxt') {
+              // Handle re-exported variables, e.g., export { config as llmstxt }
+            }
+          })
+
+          if (path.node.declaration && t.isVariableDeclaration(path.node.declaration)) {
+            path.node.declaration.declarations.forEach((declaration) => {
+              if (t.isIdentifier(declaration.id) && declaration.id.name === 'llmstxt') {
+                llmsTxtConfig = extractObjectExpression(declaration.init)
+              }
+              if (t.isIdentifier(declaration.id) && declaration.id.name === 'metadata') {
+                metadataConfig = extractObjectExpression(declaration.init)
+              }
+            })
+          }
+        },
+      })
+
+      if (llmsTxtConfig) {
         pageInfo.hasLLMsTxtExport = true
-        pageInfo.config = this.extractLLMsTxtConfig(content, route)
+        pageInfo.config = llmsTxtConfig
       }
-
-      // Check for Next.js metadata export as fallback
-      if (content.includes('export const metadata') && !pageInfo.hasLLMsTxtExport) {
+      else if (metadataConfig) {
         pageInfo.hasMetadataFallback = true
-        pageInfo.config = this.extractMetadataConfig(content, route)
-
+        pageInfo.config = {
+          title: metadataConfig.title || this.generatePageTitle(route),
+          description: metadataConfig.description || `Page: ${route}`,
+        }
         this.addWarning(
-          `Using metadata fallback for llms.txt generation - consider adding explicit llmstxt export`,
+          'Using metadata fallback for llms.txt generation - consider adding explicit llmstxt export',
           pageInfo,
         )
       }
-
-      // Generate warnings for pages without any exports
-      if (!pageInfo.hasLLMsTxtExport && !pageInfo.hasMetadataFallback) {
+      else {
         this.addWarning(
-          `No llms.txt export or metadata found - cannot generate llms.txt entry`,
+          'No llms.txt export or metadata found - cannot generate llms.txt entry',
           pageInfo,
         )
       }
@@ -267,8 +265,7 @@ export class LLMsTxtAutoDiscovery {
    * Extracts llmstxt configuration from page content
    */
   private extractLLMsTxtConfig(content: string, route: string): LLMsTxtConfig {
-    // Simplified extraction - in production you'd use a proper AST parser
-    // For now, return mock data based on the route
+    // This method is now replaced by AST parsing in analyzePage
     return this.generateMockConfig(route)
   }
 
@@ -276,19 +273,8 @@ export class LLMsTxtAutoDiscovery {
    * Extracts configuration from Next.js metadata
    */
   private extractMetadataConfig(content: string, route: string): LLMsTxtConfig {
-    try {
-      // Extract title and description from metadata export
-      const titleMatch = content.match(/title:\s*['"`]([^'"`]+)['"`]/)
-      const descriptionMatch = content.match(/description:\s*['"`]([^'"`]+)['"`]/)
-
-      return {
-        title: titleMatch?.[1] || this.generatePageTitle(route),
-        description: descriptionMatch?.[1] || `Page: ${route}`,
-      }
-    }
-    catch {
-      return this.generateMockConfig(route)
-    }
+    // This method is now replaced by AST parsing in analyzePage
+    return this.generateMockConfig(route)
   }
 
   /**
@@ -399,4 +385,23 @@ export class LLMsTxtAutoDiscovery {
   getWarnings(): string[] {
     return [...this.warnings]
   }
+}
+
+function extractObjectExpression(node: t.Expression | null | undefined): any {
+  if (!node || !t.isObjectExpression(node)) {
+    return undefined
+  }
+
+  const obj: { [key: string]: any } = {}
+  for (const prop of node.properties) {
+    if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
+      if (t.isStringLiteral(prop.value)) {
+        obj[prop.key.name] = prop.value.value
+      }
+      else if (t.isTemplateLiteral(prop.value)) {
+        obj[prop.key.name] = prop.value.quasis.map(q => q.value.raw).join('')
+      }
+    }
+  }
+  return obj
 }

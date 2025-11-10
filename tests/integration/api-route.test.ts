@@ -1,6 +1,6 @@
 import type { LLMsTxtConfig } from '../../src/types'
 import { NextRequest } from 'next/server'
-import { createLLMsTxtHandlers } from '../../src/handler'
+import { createLLmsTxt } from '../../src/handler'
 
 describe('integration: LLMs.txt API Route', () => {
   const testConfig: LLMsTxtConfig = {
@@ -39,7 +39,7 @@ describe('integration: LLMs.txt API Route', () => {
   }
 
   it('should generate complete llms.txt file through API route', async () => {
-    const { GET } = createLLMsTxtHandlers(testConfig)
+    const { GET } = createLLmsTxt(testConfig)
 
     // Simulate a real Next.js request
     const request = new NextRequest('http://localhost:3000/llms.txt', {
@@ -50,7 +50,7 @@ describe('integration: LLMs.txt API Route', () => {
 
     // Verify response properties
     expect(response.status).toBe(200)
-    expect(response.headers.get('Content-Type')).toBe('text/markdown; charset=utf-8')
+    expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
 
     // Verify content structure
     const content = await response.text()
@@ -80,7 +80,7 @@ describe('integration: LLMs.txt API Route', () => {
   })
 
   it('should handle empty request correctly', async () => {
-    const { GET } = createLLMsTxtHandlers({ title: 'Empty Test' })
+    const { GET } = createLLmsTxt({ title: 'Empty Test' })
 
     const request = new NextRequest('http://localhost:3000/llms.txt')
     const response = await GET(request)
@@ -90,13 +90,13 @@ describe('integration: LLMs.txt API Route', () => {
     expect(content).toBe('# Empty Test\n')
   })
 
-  it('should work with Auth.js-style configuration', async () => {
+  it('should work with handler-style configuration', async () => {
     const handlerConfig = {
       defaultConfig: testConfig,
       customProperty: 'test',
     }
 
-    const { GET } = createLLMsTxtHandlers(handlerConfig)
+    const { GET } = createLLmsTxt(handlerConfig)
 
     const request = new NextRequest('http://localhost:3000/llms.txt')
     const response = await GET(request)
@@ -107,7 +107,7 @@ describe('integration: LLMs.txt API Route', () => {
   })
 
   it('should produce valid llms.txt format according to spec', async () => {
-    const { GET } = createLLMsTxtHandlers(testConfig)
+    const { GET } = createLLmsTxt(testConfig)
 
     const request = new NextRequest('http://localhost:3000/llms.txt')
     const response = await GET(request)
@@ -168,7 +168,7 @@ describe('integration: LLMs.txt API Route', () => {
       ],
     }
 
-    const { GET } = createLLMsTxtHandlers(configWithOptional)
+    const { GET } = createLLmsTxt(configWithOptional)
 
     const request = new NextRequest('http://localhost:3000/llms.txt', {
       method: 'GET',
@@ -179,7 +179,7 @@ describe('integration: LLMs.txt API Route', () => {
 
     // Verify response
     expect(response.status).toBe(200)
-    expect(response.headers.get('Content-Type')).toBe('text/markdown; charset=utf-8')
+    expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
 
     // Verify content structure
     const lines = content.split('\n').filter(line => line.trim() !== '')

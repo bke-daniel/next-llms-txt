@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { NextRequest } from 'next/server'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
-import { createEnhancedLLMsTxtHandlers, createPageLLMsTxtHandlers } from '../../src/enhanced-handler'
+import { createLLmsTxt } from '../../src/handler'
 
 describe('complete llms.txt system integration', () => {
   const testProjectPath = path.join(__dirname, '../fixtures/test-project')
@@ -12,10 +12,11 @@ describe('complete llms.txt system integration', () => {
       const request = new NextRequest('https://www.next-llms-txt.com/llms.txt')
 
       // Call the handler with auto-discovery
-      const { GET } = createEnhancedLLMsTxtHandlers({
-        title: 'Next.js LLMs.txt Demo Site',
-        description: 'Demo site showcasing automatic llms.txt generation',
-        baseUrl: 'https://www.next-llms-txt.com',
+      const { GET } = createLLmsTxt({
+        defaultConfig: {
+          title: 'Next.js LLMs.txt Demo Site',
+          description: 'Demo site showcasing automatic llms.txt generation',
+        },
         autoDiscovery: {
           baseUrl: 'https://www.next-llms-txt.com',
           rootDir: testProjectPath,
@@ -28,21 +29,14 @@ describe('complete llms.txt system integration', () => {
 
       const content = await response.text()
       expect(content).toContain('# Next.js LLMs.txt Demo Site')
-
-      // Since auto-discovery requires proper file system setup,
-      // let's just verify the basic structure works
       expect(content).toMatch(/^# .+/)
       expect(content).toMatch(/> .+/)
-
-      // Content should at least have title and description when auto-discovery is enabled
-      // (Note: auto-discovery may not find pages in test environment due to directory structure)
-
-      // Should NOT include pages without any configuration
       expect(content).not.toContain('https://www.next-llms-txt.com/services/no-export-at-all')
     })
 
     it('should generate individual page llms.txt files', async () => {
-      const { GET } = createPageLLMsTxtHandlers('https://www.next-llms-txt.com', {
+      const { GET } = createLLmsTxt({
+        defaultConfig: { title: 'Dummy Title' },
         autoDiscovery: {
           baseUrl: 'https://www.next-llms-txt.com',
           rootDir: testProjectPath,
@@ -61,17 +55,18 @@ describe('complete llms.txt system integration', () => {
       expect(homeContent).toContain('https://www.next-llms-txt.com/')
 
       // Test services page
-      const servicesRequest = new NextRequest('https://www.next-llms-txt.com/services.html')
+      const servicesRequest = new NextRequest('https://www.next-llms-txt.com/services')
       const servicesResponse = await GET(servicesRequest)
 
       expect(servicesResponse.status).toBe(200)
       const servicesContent = await servicesResponse.text()
       expect(servicesContent).toContain('# Services Overview')
-      expect(servicesContent).toContain('https://www.next-llms-txt.com/services.html')
+      expect(servicesContent).toContain('https://www.next-llms-txt.com/services')
     })
 
     it('should handle pages with metadata fallback', async () => {
-      const { GET } = createPageLLMsTxtHandlers('https://www.next-llms-txt.com', {
+      const { GET } = createLLmsTxt({
+        defaultConfig: { title: 'Dummy Title' },
         autoDiscovery: {
           baseUrl: 'https://www.next-llms-txt.com',
           rootDir: testProjectPath,
@@ -79,7 +74,7 @@ describe('complete llms.txt system integration', () => {
         },
       })
 
-      const request = new NextRequest('https://www.next-llms-txt.com/services/no-export.html')
+      const request = new NextRequest('https://www.next-llms-txt.com/services/no-export')
       const response = await GET(request)
 
       expect(response.status).toBe(200)
@@ -89,7 +84,8 @@ describe('complete llms.txt system integration', () => {
     })
 
     it('should return 404 for pages without any configuration', async () => {
-      const { GET } = createPageLLMsTxtHandlers('https://www.next-llms-txt.com', {
+      const { GET } = createLLmsTxt({
+        defaultConfig: { title: 'Dummy Title' },
         autoDiscovery: {
           baseUrl: 'https://www.next-llms-txt.com',
           rootDir: testProjectPath,
@@ -97,7 +93,7 @@ describe('complete llms.txt system integration', () => {
         },
       })
 
-      const request = new NextRequest('https://www.next-llms-txt.com/services/no-export-at-all.html')
+      const request = new NextRequest('https://www.next-llms-txt.com/services/no-export-at-all')
       const response = await GET(request)
 
       expect(response.status).toBe(404)
@@ -133,7 +129,8 @@ describe('complete llms.txt system integration', () => {
 
   describe('trailing slash handling', () => {
     it('should handle trailing slashes consistently', async () => {
-      const { GET } = createPageLLMsTxtHandlers('https://www.next-llms-txt.com', {
+      const { GET } = createLLmsTxt({
+        defaultConfig: { title: 'Dummy Title' },
         autoDiscovery: {
           baseUrl: 'https://www.next-llms-txt.com',
           rootDir: testProjectPath,
@@ -163,10 +160,11 @@ describe('complete llms.txt system integration', () => {
 
   describe('content validation', () => {
     it('should generate valid llmstxt.org compliant content', async () => {
-      const { GET } = createEnhancedLLMsTxtHandlers({
-        title: 'Test Site',
-        description: 'Test description',
-        baseUrl: 'https://www.next-llms-txt.com',
+      const { GET } = createLLmsTxt({
+        defaultConfig: {
+          title: 'Test Site',
+          description: 'Test description',
+        },
         autoDiscovery: {
           baseUrl: 'https://www.next-llms-txt.com',
           rootDir: testProjectPath,
@@ -197,10 +195,11 @@ describe('complete llms.txt system integration', () => {
 
   describe('error handling in integration', () => {
     it('should handle missing project directory gracefully', async () => {
-      const { GET } = createEnhancedLLMsTxtHandlers({
-        title: 'Fallback Site',
-        description: 'Site with missing directory',
-        baseUrl: 'https://www.next-llms-txt.com',
+      const { GET } = createLLmsTxt({
+        defaultConfig: {
+          title: 'Fallback Site',
+          description: 'Site with missing directory',
+        },
         autoDiscovery: {
           baseUrl: 'https://www.next-llms-txt.com',
           rootDir: '/nonexistent/path',

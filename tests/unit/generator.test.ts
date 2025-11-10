@@ -1,4 +1,4 @@
-import type { LLMsTxtConfig } from '../../src/types'
+import type { LLMsTxtConfig, PageInfo } from '../../src/types'
 import { generateLLMsTxt } from '../../src/generator'
 
 describe('generateLLMsTxt', () => {
@@ -6,10 +6,8 @@ describe('generateLLMsTxt', () => {
     const config: LLMsTxtConfig = {
       title: 'Test Project',
     }
-
     const result = generateLLMsTxt(config)
-
-    expect(result).toBe('# Test Project\n')
+    expect(result).toBe('# Test Project')
   })
 
   it('should generate llms.txt with title and description', () => {
@@ -17,10 +15,8 @@ describe('generateLLMsTxt', () => {
       title: 'Test Project',
       description: 'A test project for demonstration',
     }
-
     const result = generateLLMsTxt(config)
-
-    expect(result).toBe('# Test Project\n\n> A test project for demonstration\n')
+    expect(result).toBe('# Test Project\n> A test project for demonstration')
   })
 
   it('should generate llms.txt with sections and items', () => {
@@ -46,14 +42,11 @@ describe('generateLLMsTxt', () => {
     }
 
     const result = generateLLMsTxt(config)
-    const expected = `# Test Project
-
-> A test project
-
-## Documentation
-- [Getting Started](/docs/getting-started): Learn the basics
-- [API Reference](/docs/api)
-`
+    const expected = [
+      '# Test Project',
+      '> A test project',
+      '## Documentation\n- [Getting Started](/docs/getting-started): Learn the basics\n- [API Reference](/docs/api)',
+    ].join('\n\n')
 
     expect(result).toBe(expected)
   })
@@ -85,14 +78,11 @@ describe('generateLLMsTxt', () => {
     }
 
     const result = generateLLMsTxt(config)
-    const expected = `# Multi-Section Project
-
-## Documentation
-- [Guide](/guide)
-
-## Examples
-- [Basic Example](/examples/basic): Simple usage example
-`
+    const expected = [
+      '# Multi-Section Project',
+      '## Documentation\n- [Guide](/guide)',
+      '## Examples\n- [Basic Example](/examples/basic): Simple usage example',
+    ].join('\n\n')
 
     expect(result).toBe(expected)
   })
@@ -102,10 +92,8 @@ describe('generateLLMsTxt', () => {
       title: 'Empty Sections Project',
       sections: [],
     }
-
     const result = generateLLMsTxt(config)
-
-    expect(result).toBe('# Empty Sections Project\n')
+    expect(result).toBe('# Empty Sections Project')
   })
 
   it('should handle section with no items', () => {
@@ -118,13 +106,8 @@ describe('generateLLMsTxt', () => {
         },
       ],
     }
-
     const result = generateLLMsTxt(config)
-    const expected = `# Test Project
-
-## Empty Section
-`
-
+    const expected = '# Test Project\n\n## Empty Section'
     expect(result).toBe(expected)
   })
 
@@ -157,18 +140,12 @@ describe('generateLLMsTxt', () => {
     }
 
     const result = generateLLMsTxt(config)
-    const expected = `# Test Project
-
-> A test project
-
-## Documentation
-- [Getting Started](/docs/getting-started)
-
-## Optional
-- [Advanced Guide](/docs/advanced): For power users only
-- [Legacy Docs](/docs/legacy)
-`
-
+    const expected = [
+      '# Test Project',
+      '> A test project',
+      '## Documentation\n- [Getting Started](/docs/getting-started)',
+      '## Optional\n- [Advanced Guide](/docs/advanced): For power users only\n- [Legacy Docs](/docs/legacy)',
+    ].join('\n\n')
     expect(result).toBe(expected)
   })
 
@@ -183,14 +160,9 @@ describe('generateLLMsTxt', () => {
         },
       ],
     }
-
     const result = generateLLMsTxt(config)
-    const expected = `# Test Project
-
-## Optional
-- [Secondary Info](/secondary): Can be skipped
-`
-
+    const expected
+      = '# Test Project\n\n## Optional\n- [Secondary Info](/secondary): Can be skipped'
     expect(result).toBe(expected)
   })
 
@@ -199,9 +171,40 @@ describe('generateLLMsTxt', () => {
       title: 'Test Project',
       optional: [],
     }
-
     const result = generateLLMsTxt(config)
+    expect(result).toBe('# Test Project')
+  })
 
-    expect(result).toBe('# Test Project\n')
+  it('should generate llms.txt with discovered pages', () => {
+    const config: LLMsTxtConfig = {
+      title: 'Test Project',
+    }
+    const pages: PageInfo[] = [
+      {
+        route: '/about',
+        filePath: '...',
+        hasLLMsTxtExport: true,
+        hasMetadataFallback: false,
+        warnings: [],
+        config: {
+          title: 'About Us',
+          description: 'Information about the team',
+        },
+      },
+      {
+        route: '/contact',
+        filePath: '...',
+        hasLLMsTxtExport: true,
+        hasMetadataFallback: false,
+        warnings: [],
+        config: {
+          title: 'Contact Page',
+        },
+      },
+    ]
+    const result = generateLLMsTxt(config, pages)
+    const expected
+      = '# Test Project\n\n## Pages\n- [About Us](/about): Information about the team\n- [Contact Page](/contact)'
+    expect(result).toBe(expected)
   })
 })

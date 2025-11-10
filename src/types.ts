@@ -1,3 +1,7 @@
+import type { PageInfo } from './discovery'
+
+export type { PageInfo }
+
 /**
  * Configuration for llms.txt generation following the llmstxt.org specification
  */
@@ -37,6 +41,11 @@ export interface LLMsTxtSection {
    * Example: "Documentation", "Examples", "API Reference"
    */
   title: string
+
+  /**
+   * Optional description for the section
+   */
+  description?: string
 
   /**
    * List of items in this section
@@ -82,5 +91,45 @@ export interface LLMsTxtHandlerConfig {
   /**
    * Custom generator function
    */
-  generator?: (config: LLMsTxtConfig) => string
+  generator?: (config: LLMsTxtConfig, pages?: PageInfo[]) => string
+
+  /**
+   * Enable automatic page discovery
+   */
+  autoDiscovery?: boolean | AutoDiscoveryConfig
+
+  /**
+   * Support trailing slash variations
+   */
+  trailingSlash?: boolean
+}
+
+/**
+ * Configuration for automatic page discovery and llms.txt generation
+ */
+export interface AutoDiscoveryConfig {
+  /**
+   * Base URL for the application
+   */
+  baseUrl: string
+
+  /**
+   * App directory path (for App Router)
+   */
+  appDir?: string
+
+  /**
+   * Pages directory path (for Pages Router)
+   */
+  pagesDir?: string
+
+  /**
+   * Project root directory
+   */
+  rootDir?: string
+
+  /**
+   * Whether to show warnings during development
+   */
+  showWarnings?: boolean
 }

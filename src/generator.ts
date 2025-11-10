@@ -1,4 +1,4 @@
-import type { LLMsTxtConfig } from './types'
+import type { LLMsTxtConfig, PageInfo } from './types'
 
 /**
  * Generates llms.txt content following the llmstxt.org specification
@@ -16,44 +16,55 @@ import type { LLMsTxtConfig } from './types'
  * @param config - The llms.txt configuration
  * @returns The generated llms.txt content as markdown
  */
-export function generateLLMsTxt(config: LLMsTxtConfig): string {
-  const lines: string[] = []
-
-  // H1 header (required)
-  lines.push(`# ${config.title}`)
-  lines.push('')
-
-  // Blockquote description (optional)
+export function generateLLMsTxt(
+  config: LLMsTxtConfig,
+  pages: PageInfo[] = [],
+): string {
+  const header = [`# ${config.title}`]
   if (config.description) {
-    lines.push(`> ${config.description}`)
-    lines.push('')
+    header.push(`> ${config.description}`)
   }
 
-  // Sections (H2 headers with markdown lists)
-  if (config.sections && config.sections.length > 0) {
-    for (const section of config.sections) {
-      lines.push(`## ${section.title}`)
+  const contentBlocks: string[] = []
 
-      for (const item of section.items) {
-        const description = item.description ? `: ${item.description}` : ''
-        lines.push(`- [${item.title}](${item.url})${description}`)
+  // Pages from auto-discovery
+  if (pages.length > 0) {
+    const block = ['## Pages']
+    pages.forEach((page) => {
+      const description = page.config?.description
+        ? `: ${page.config.description}`
+        : ''
+      block.push(`- [${page.config?.title}](${page.route})${description}`)
+    })
+    contentBlocks.push(block.join('\n'))
+  }
+
+  // Manually configured pages/items in sections
+  if (config.sections) {
+    config.sections.forEach((section) => {
+      const block = [`## ${section.title}`]
+      if (section.description) {
+        block.push(`> ${section.description}`)
       }
-
-      lines.push('')
-    }
+      if (section.items.length > 0) {
+        section.items.forEach((item) => {
+          const description = item.description ? `: ${item.description}` : ''
+          block.push(`- [${item.title}](${item.url})${description}`)
+        })
+      }
+      contentBlocks.push(block.join('\n'))
+    })
   }
 
-  // Optional section (special meaning - can be skipped for shorter context)
+  // Optional section
   if (config.optional && config.optional.length > 0) {
-    lines.push('## Optional')
-
-    for (const item of config.optional) {
+    const block = ['## Optional']
+    config.optional.forEach((item) => {
       const description = item.description ? `: ${item.description}` : ''
-      lines.push(`- [${item.title}](${item.url})${description}`)
-    }
-
-    lines.push('')
+      block.push(`- [${item.title}](${item.url})${description}`)
+    })
+    contentBlocks.push(block.join('\n'))
   }
 
-  return `${lines.join('\n').trim()}\n`
+  return [header.join('\n'), ...contentBlocks].filter(Boolean).join('\n\n')
 }

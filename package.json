@@ -57,6 +57,10 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
+    "@babel/generator": "^7.28.5",
+    "@babel/parser": "^7.28.5",
+    "@babel/traverse": "^7.28.5",
+    "@babel/types": "^7.28.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^24.10.0",
     "@types/supertest": "^6.0.2",

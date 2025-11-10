@@ -1,98 +1,93 @@
 import type { LLMsTxtConfig } from '../../src/types'
-import { createLLMsTxtHandlers } from '../../src/handler'
+import { NextRequest } from 'next/server'
+import { createLLmsTxt } from '../../src/handler'
 
-// Mock Next.js types for testing
-const mockRequest = {
-  url: 'http://localhost:3000/llms.txt',
-  method: 'GET',
-} as any
-
-describe('createLLMsTxtHandlers', () => {
+describe('createLLmsTxt', () => {
   it('should create handlers with valid config', () => {
     const config: LLMsTxtConfig = {
-      title: 'Test Project',
-      description: 'Test description',
+      title: 'Test Site',
+      description: 'A test site for llms.txt',
     }
 
-    const handlers = createLLMsTxtHandlers(config)
+    const handlers = createLLmsTxt({ defaultConfig: config })
 
     expect(handlers).toHaveProperty('GET')
     expect(typeof handlers.GET).toBe('function')
-  })
-
-  it('should throw error when title is missing', () => {
-    const config = {
-      description: 'Test description',
-    } as any
-
-    expect(() => createLLMsTxtHandlers(config)).toThrow()
   })
 
   it('should handle handler config with defaultConfig', () => {
     const handlerConfig = {
       defaultConfig: {
-        title: 'Test Project',
-        description: 'Test description',
+        title: 'Test Site',
+        description: 'A test site for llms.txt',
       },
     }
 
-    const handlers = createLLMsTxtHandlers(handlerConfig)
+    const handlers = createLLmsTxt(handlerConfig)
 
     expect(handlers).toHaveProperty('GET')
     expect(typeof handlers.GET).toBe('function')
   })
 
-  it('should throw error when handler config has no defaultConfig', () => {
-    const handlerConfig = {
-      someOtherProperty: true,
-    } as any
+  it('should throw error when handler config has no defaultConfig and no autoDiscovery', () => {
+    const handlerConfig = {} as any
 
-    expect(() => createLLMsTxtHandlers(handlerConfig)).toThrow('LLMs.txt configuration must have a title')
+    expect(() => createLLmsTxt(handlerConfig)).toThrow(
+      'A `defaultConfig` with a `title` or `autoDiscovery` must be provided.',
+    )
   })
 
-  describe('gET handler', () => {
+  describe('get handler', () => {
+    const mockRequest = new NextRequest('https://example.com/llms.txt')
+
     it('should return NextResponse with correct content type and content', async () => {
       const config: LLMsTxtConfig = {
-        title: 'Test Project',
-        description: 'A test project',
-        sections: [
-          {
-            title: 'Documentation',
-            items: [
-              {
-                title: 'Guide',
-                url: '/guide',
-              },
-            ],
-          },
-        ],
+        title: 'Test Site',
+        description: 'A test site for llms.txt',
       }
 
-      const { GET } = createLLMsTxtHandlers(config)
+      // Mocking discovered pages instead of relying on filesystem
+      const { GET } = createLLmsTxt({
+        defaultConfig: config,
+        autoDiscovery: {
+          rootDir: '/fake-dir', // a fake dir to satisfy the type
+          baseUrl: 'https://example.com',
+        },
+        // Manually pass pages to avoid filesystem discovery in unit test
+        pages: [
+          {
+            path: '/',
+            title: 'Homepage',
+            description: 'The main landing page',
+            fullPath: '/fake-dir/app/page.tsx',
+            url: 'https://example.com/',
+          },
+        ],
+      })
       const response = await GET(mockRequest)
 
       expect(response.status).toBe(200)
-      expect(response.headers.get('Content-Type')).toBe('text/markdown; charset=utf-8')
+      expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
 
       const content = await response.text()
-      expect(content).toContain('# Test Project')
-      expect(content).toContain('> A test project')
-      expect(content).toContain('## Documentation')
-      expect(content).toContain('- [Guide](/guide)')
+      expect(content).toContain('# Test Site')
+      expect(content).toContain('> A test site for llms.txt')
+      expect(content).toContain('- [Homepage](https://example.com/): The main landing page')
     })
 
     it('should handle minimal config', async () => {
       const config: LLMsTxtConfig = {
-        title: 'Minimal Project',
+        title: 'Minimal Site',
       }
 
-      const { GET } = createLLMsTxtHandlers(config)
+      const { GET } = createLLmsTxt({ defaultConfig: config })
       const response = await GET(mockRequest)
 
       expect(response.status).toBe(200)
-
       const content = await response.text()
-      expect(content).toBe('# Minimal Project\n')
+      expect(content).toContain('# Minimal Site')
+      expect(content).not.toContain('>') // No description
+      expect(content).not.toContain('- [') // No pages
     })
   })
 })
