@@ -82,10 +82,10 @@ This file shows what the generated `/llms.txt` file looks like.
 
 This output follows the [llmstxt.org specification](https://llmstxt.org):
 
-✅ **H1 Header (Required)**: `# FastHTML`  
-✅ **Blockquote (Optional)**: `> FastHTML helps developers...`  
-✅ **H2 Sections**: `## Documentation`, `## Community`, etc.  
-✅ **Markdown Links**: `- [Title](url): Description`  
+✅ **H1 Header (Required)**: `# FastHTML`
+✅ **Blockquote (Optional)**: `> FastHTML helps developers...`
+✅ **H2 Sections**: `## Documentation`, `## Community`, etc.
+✅ **Markdown Links**: `- [Title](url): Description`
 ✅ **Clean Format**: Easy for both humans and LLMs to parse
 
 ## Content-Type

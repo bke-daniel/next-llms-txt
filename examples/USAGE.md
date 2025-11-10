@@ -40,64 +40,64 @@ npm install next-llms-txt
 Create `lib/llmstxt.ts` (or any location you prefer):
 
 ```typescript
-import { createLLMsTxtHandlers } from 'next-llms-txt';
+import { createLLMsTxtHandlers } from 'next-llms-txt'
 
 export const { GET } = createLLMsTxtHandlers({
-  title: "My Next.js Application",
-  description: "A powerful web application built with Next.js",
+  title: 'My Next.js Application',
+  description: 'A powerful web application built with Next.js',
   sections: [
     {
-      title: "Documentation",
+      title: 'Documentation',
       items: [
         {
-          title: "Getting Started",
-          url: "/docs/getting-started",
-          description: "Learn how to get started with our app"
+          title: 'Getting Started',
+          url: '/docs/getting-started',
+          description: 'Learn how to get started with our app'
         },
         {
-          title: "API Documentation",
-          url: "/docs/api",
-          description: "Complete API reference"
+          title: 'API Documentation',
+          url: '/docs/api',
+          description: 'Complete API reference'
         },
         {
-          title: "Guides",
-          url: "/docs/guides",
-          description: "Step-by-step tutorials"
+          title: 'Guides',
+          url: '/docs/guides',
+          description: 'Step-by-step tutorials'
         }
       ]
     },
     {
-      title: "Examples",
+      title: 'Examples',
       items: [
         {
-          title: "Basic Example",
-          url: "/examples/basic",
-          description: "Simple usage example"
+          title: 'Basic Example',
+          url: '/examples/basic',
+          description: 'Simple usage example'
         },
         {
-          title: "Advanced Usage",
-          url: "/examples/advanced",
-          description: "Complex scenarios and patterns"
+          title: 'Advanced Usage',
+          url: '/examples/advanced',
+          description: 'Complex scenarios and patterns'
         }
       ]
     },
     {
-      title: "Community",
+      title: 'Community',
       items: [
         {
-          title: "GitHub",
-          url: "https://github.com/yourorg/yourproject",
-          description: "Source code and issues"
+          title: 'GitHub',
+          url: 'https://github.com/yourorg/yourproject',
+          description: 'Source code and issues'
         },
         {
-          title: "Discord",
-          url: "https://discord.gg/yourserver",
-          description: "Join our community"
+          title: 'Discord',
+          url: 'https://discord.gg/yourserver',
+          description: 'Join our community'
         }
       ]
     }
   ]
-});
+})
 ```
 
 ### 3. Create the API Route
@@ -105,8 +105,9 @@ export const { GET } = createLLMsTxtHandlers({
 Following the Auth.js pattern, create `app/llms.txt/route.ts`:
 
 ```typescript
-import { GET } from "@/lib/llmstxt";
-export { GET };
+import { GET } from '@/lib/llmstxt'
+
+export { GET }
 ```
 
 ### 4. Test Your Setup
@@ -155,27 +156,27 @@ This pattern follows the same philosophy as:
 Full TypeScript support with auto-completion:
 
 ```typescript
-import { createLLMsTxtHandlers, LLMsTxtConfig } from 'next-llms-txt';
+import { createLLMsTxtHandlers, LLMsTxtConfig } from 'next-llms-txt'
 
 // Config is fully typed
 const config: LLMsTxtConfig = {
-  title: "My App", // required
-  description: "Optional description",
+  title: 'My App', // required
+  description: 'Optional description',
   sections: [
     {
-      title: "Section Name",
+      title: 'Section Name',
       items: [
         {
-          title: "Link Title",
-          url: "/path",
-          description: "Optional description"
+          title: 'Link Title',
+          url: '/path',
+          description: 'Optional description'
         }
       ]
     }
   ]
-};
+}
 
-export const { GET } = createLLMsTxtHandlers(config);
+export const { GET } = createLLMsTxtHandlers(config)
 ```
 
 ## Next Steps

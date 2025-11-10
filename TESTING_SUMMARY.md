@@ -33,7 +33,7 @@ tests/
 - **Error Handling**: Tests validation and error scenarios
 - **Edge Cases**: Empty configs, missing fields, large datasets
 
-#### Integration Tests (8 tests)  
+#### Integration Tests (8 tests)
 - **Complete API Flow**: Full request/response cycle testing
 - **Static File Generation**: Filesystem write operations
 - **Specification Compliance**: Validates llmstxt.org format
@@ -41,7 +41,7 @@ tests/
 - **Encoding**: UTF-8 and special character handling
 
 #### End-to-End Tests (4 tests)
-- **Server Startup**: Real Next.js server testing  
+- **Server Startup**: Real Next.js server testing
 - **HTTP Accessibility**: Actual network requests
 - **Concurrent Requests**: Load testing scenarios
 - **Build Integration**: Static generation during build
@@ -50,7 +50,7 @@ tests/
 ```json
 {
   "test": "jest",
-  "test:watch": "jest --watch", 
+  "test:watch": "jest --watch",
   "test:coverage": "jest --coverage",
   "test:e2e": "jest --config jest.e2e.config.js"
 }
@@ -71,7 +71,7 @@ tests/
 ### Development Workflow
 1. **Write new features** with corresponding tests
 2. **Run tests during development**: `npm run test:watch`
-3. **Check coverage before commits**: `npm run test:coverage`  
+3. **Check coverage before commits**: `npm run test:coverage`
 4. **Run e2e tests for releases**: `npm run test:e2e`
 
 ### CI/CD Pipeline
@@ -94,10 +94,10 @@ npm run test:coverage      # With coverage report
 npm run test:e2e          # End-to-end server tests
 ```
 
-#### Specific Test Categories  
+#### Specific Test Categories
 ```bash
 npm test -- tests/unit/           # Only unit tests
-npm test -- tests/integration/    # Only integration tests  
+npm test -- tests/integration/    # Only integration tests
 npm test -- generator.test.ts     # Specific test file
 ```
 
@@ -109,7 +109,7 @@ npm test -- generator.test.ts     # Specific test file
 - Validates encoding and special characters
 - Performance testing with large configurations
 
-### ✅ Server Accessibility  
+### ✅ Server Accessibility
 - Real Next.js server startup and shutdown
 - HTTP requests to `/llms.txt` endpoint
 - Response headers and content validation
@@ -130,7 +130,7 @@ npm test -- generator.test.ts     # Specific test file
 ## Benefits
 
 1. **Confidence in Releases** - Comprehensive test coverage ensures reliability
-2. **Regression Prevention** - Tests catch breaking changes automatically  
+2. **Regression Prevention** - Tests catch breaking changes automatically
 3. **Documentation** - Tests serve as usage examples
 4. **Performance Monitoring** - Performance tests catch efficiency regressions
 5. **Cross-Platform Compatibility** - CI tests across multiple Node.js versions

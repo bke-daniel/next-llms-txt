@@ -10,7 +10,7 @@ The test suite is organized into three main categories:
 - **`generator.test.ts`** - Tests the core `generateLLMsTxt` function
 - **`handler.test.ts`** - Tests the API route handlers
 
-### 2. Integration Tests (`tests/integration/`)  
+### 2. Integration Tests (`tests/integration/`)
 - **`api-route.test.ts`** - Tests the complete API route functionality with Next.js
 - **`static-generation.test.ts`** - Tests file system operations and static generation
 
@@ -49,7 +49,7 @@ npm run test:e2e
 # Unit tests only
 npm test -- tests/unit/
 
-# Integration tests only  
+# Integration tests only
 npm test -- tests/integration/
 
 # Specific test file
@@ -60,7 +60,7 @@ npm test -- tests/unit/generator.test.ts
 
 ### Generator Function Tests
 - Basic title-only generation
-- Title with description  
+- Title with description
 - Multiple sections with items
 - Items with and without descriptions
 - Empty configurations
@@ -112,7 +112,7 @@ To integrate with CI/CD pipelines, add these commands to your workflow:
 - name: Run tests
   run: npm test
 
-- name: Run E2E tests  
+- name: Run E2E tests
   run: npm run test:e2e
 
 - name: Generate coverage report

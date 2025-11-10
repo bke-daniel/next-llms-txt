@@ -6,19 +6,19 @@ export interface LLMsTxtConfig {
    * Title for the llms.txt file (H1 header - REQUIRED)
    * Example: "My Project Name"
    */
-  title: string;
+  title: string
 
   /**
    * Brief summary about the site (optional blockquote)
    * Example: "A Next.js plugin for generating AI-friendly documentation"
    */
-  description?: string;
+  description?: string
 
   /**
    * Sections to include in the llms.txt file
    * Each section will be rendered as an H2 header with markdown list items
    */
-  sections?: LLMsTxtSection[];
+  sections?: LLMsTxtSection[]
 }
 
 /**
@@ -30,13 +30,13 @@ export interface LLMsTxtSection {
    * Section title (will be rendered as H2)
    * Example: "Documentation", "Examples", "API Reference"
    */
-  title: string;
+  title: string
 
   /**
    * List of items in this section
    * Each item is a link with optional description
    */
-  items: LLMsTxtItem[];
+  items: LLMsTxtItem[]
 }
 
 /**
@@ -46,17 +46,17 @@ export interface LLMsTxtItem {
   /**
    * Display text for the link
    */
-  title: string;
+  title: string
 
   /**
    * URL for the link (preferably to markdown files)
    */
-  url: string;
+  url: string
 
   /**
    * Optional description for the link
    */
-  description?: string;
+  description?: string
 }
 
 /**
@@ -66,15 +66,15 @@ export interface LLMsTxtHandlerConfig {
   /**
    * Base URL for the application
    */
-  baseUrl?: string;
+  baseUrl?: string
 
   /**
    * Default configuration to use if no page-specific config is found
    */
-  defaultConfig?: LLMsTxtConfig;
+  defaultConfig?: LLMsTxtConfig
 
   /**
    * Custom generator function
    */
-  generator?: (config: LLMsTxtConfig) => string;
+  generator?: (config: LLMsTxtConfig) => string
 }

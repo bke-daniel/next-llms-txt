@@ -13,49 +13,50 @@ npm install next-llms-txt
 2. Create `lib/llmstxt.ts`:
 
 ```typescript
-import { createLLMsTxtHandlers } from 'next-llms-txt';
+import { createLLMsTxtHandlers } from 'next-llms-txt'
 
 export const { GET } = createLLMsTxtHandlers({
-  title: "My Next.js App",
-  description: "A modern web application built with Next.js",
+  title: 'My Next.js App',
+  description: 'A modern web application built with Next.js',
   sections: [
     {
-      title: "Documentation",
+      title: 'Documentation',
       items: [
         {
-          title: "Getting Started",
-          url: "/docs/getting-started",
-          description: "Learn how to set up and use the app"
+          title: 'Getting Started',
+          url: '/docs/getting-started',
+          description: 'Learn how to set up and use the app'
         },
         {
-          title: "API Reference",
-          url: "/docs/api",
-          description: "Complete API documentation"
+          title: 'API Reference',
+          url: '/docs/api',
+          description: 'Complete API documentation'
         }
       ]
     },
     {
-      title: "Resources",
+      title: 'Resources',
       items: [
         {
-          title: "GitHub Repository",
-          url: "https://github.com/yourusername/yourproject"
+          title: 'GitHub Repository',
+          url: 'https://github.com/yourusername/yourproject'
         },
         {
-          title: "Community Forum",
-          url: "/community"
+          title: 'Community Forum',
+          url: '/community'
         }
       ]
     }
   ]
-});
+})
 ```
 
 3. Create `app/llms.txt/route.ts`:
 
 ```typescript
-import { GET } from "@/lib/llmstxt";
-export { GET };
+import { GET } from '@/lib/llmstxt'
+
+export { GET }
 ```
 
 4. Visit `/llms.txt` in your browser to see the generated file!

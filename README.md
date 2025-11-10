@@ -31,39 +31,39 @@ The recommended approach follows the Auth.js pattern where you define your confi
 Create a file to define your llms.txt content (e.g., `lib/llmstxt.ts`):
 
 ```typescript
-import { createLLMsTxtHandlers } from 'next-llms-txt';
+import { createLLMsTxtHandlers } from 'next-llms-txt'
 
 export const { GET } = createLLMsTxtHandlers({
-  title: "My Awesome Project",
-  description: "A brief summary of what your project does",
+  title: 'My Awesome Project',
+  description: 'A brief summary of what your project does',
   sections: [
     {
-      title: "Documentation",
+      title: 'Documentation',
       items: [
         {
-          title: "Getting Started",
-          url: "/docs/getting-started",
-          description: "Quick intro for new users"
+          title: 'Getting Started',
+          url: '/docs/getting-started',
+          description: 'Quick intro for new users'
         },
         {
-          title: "API Reference",
-          url: "/docs/api",
-          description: "Complete API documentation"
+          title: 'API Reference',
+          url: '/docs/api',
+          description: 'Complete API documentation'
         }
       ]
     },
     {
-      title: "Examples",
+      title: 'Examples',
       items: [
         {
-          title: "Basic Example",
-          url: "/examples/basic",
-          description: "Simple example to get started"
+          title: 'Basic Example',
+          url: '/examples/basic',
+          description: 'Simple example to get started'
         }
       ]
     }
   ]
-});
+})
 ```
 
 #### 2. Create the API route
@@ -71,8 +71,9 @@ export const { GET } = createLLMsTxtHandlers({
 Create an API route file at `app/llms.txt/route.ts`:
 
 ```typescript
-import { GET } from "@/lib/llmstxt";
-export { GET };
+import { GET } from '@/lib/llmstxt'
+
+export { GET }
 ```
 
 That's it! Your site will now serve an llms.txt file at `/llms.txt`.
@@ -124,13 +125,13 @@ The main configuration object for your llms.txt content:
 ```typescript
 interface LLMsTxtConfig {
   /** Title (H1 header - REQUIRED) */
-  title: string;
-  
+  title: string
+
   /** Brief summary (optional blockquote) */
-  description?: string;
-  
+  description?: string
+
   /** Sections to include */
-  sections?: LLMsTxtSection[];
+  sections?: LLMsTxtSection[]
 }
 ```
 
@@ -141,10 +142,10 @@ A section in your llms.txt file:
 ```typescript
 interface LLMsTxtSection {
   /** Section title (H2 header) */
-  title: string;
-  
+  title: string
+
   /** List of items in this section */
-  items: LLMsTxtItem[];
+  items: LLMsTxtItem[]
 }
 ```
 
@@ -155,13 +156,13 @@ An item within a section:
 ```typescript
 interface LLMsTxtItem {
   /** Display text for the link */
-  title: string;
-  
+  title: string
+
   /** URL for the link */
-  url: string;
-  
+  url: string
+
   /** Optional description */
-  description?: string;
+  description?: string
 }
 ```
 

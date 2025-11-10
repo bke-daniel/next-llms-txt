@@ -1,4 +1,4 @@
-import type { LLMsTxtConfig } from '../src/types';
+import type { LLMsTxtConfig } from '../src/types'
 
 /**
  * Test utility functions and common configurations
@@ -6,12 +6,12 @@ import type { LLMsTxtConfig } from '../src/types';
 
 export const testConfigs = {
   minimal: (): LLMsTxtConfig => ({
-    title: 'Test Project'
+    title: 'Test Project',
   }),
 
   withDescription: (): LLMsTxtConfig => ({
     title: 'Test Project',
-    description: 'A test project for demonstration'
+    description: 'A test project for demonstration',
   }),
 
   withSections: (): LLMsTxtConfig => ({
@@ -24,13 +24,13 @@ export const testConfigs = {
           {
             title: 'Getting Started',
             url: '/docs/getting-started',
-            description: 'Learn the basics'
+            description: 'Learn the basics',
           },
           {
             title: 'API Reference',
-            url: '/docs/api'
-          }
-        ]
+            url: '/docs/api',
+          },
+        ],
       },
       {
         title: 'Examples',
@@ -38,11 +38,11 @@ export const testConfigs = {
           {
             title: 'Basic Example',
             url: '/examples/basic',
-            description: 'Simple usage example'
-          }
-        ]
-      }
-    ]
+            description: 'Simple usage example',
+          },
+        ],
+      },
+    ],
   }),
 
   large: (sections = 10, itemsPerSection = 5): LLMsTxtConfig => ({
@@ -53,32 +53,34 @@ export const testConfigs = {
       items: Array.from({ length: itemsPerSection }, (_, j) => ({
         title: `Item ${j + 1} in Section ${i + 1}`,
         url: `/section-${i + 1}/item-${j + 1}`,
-        description: `Description for item ${j + 1} in section ${i + 1}`
-      }))
-    }))
-  })
-};
+        description: `Description for item ${j + 1} in section ${i + 1}`,
+      })),
+    })),
+  }),
+}
 
 /**
  * Validates that content follows llmstxt.org specification
  */
 export function validateLLMsTxtFormat(content: string): boolean {
-  const lines = content.split('\n').filter(line => line.length > 0);
-  
-  if (lines.length === 0) return false;
-  
+  const lines = content.split('\n').filter(line => line.length > 0)
+
+  if (lines.length === 0)
+    return false
+
   // First line must be H1 title
-  if (!lines[0].match(/^# .+/)) return false;
-  
+  if (!lines[0].match(/^# .+/))
+    return false
+
   // Check for valid structure
   for (const line of lines) {
     // Only allow H1 titles, H2 sections, blockquotes, and markdown lists
     if (!line.match(/^(# |## |> |- \[.+\]\(.+\)(?:: .+)?$)/)) {
-      return false;
+      return false
     }
   }
-  
-  return true;
+
+  return true
 }
 
 /**
@@ -88,37 +90,38 @@ export function createMockRequest(url = 'http://localhost:3000/llms.txt'): any {
   return {
     url,
     method: 'GET',
-    headers: new Map()
-  };
+    headers: new Map(),
+  }
 }
 
 /**
  * Extracts sections from generated content for testing
  */
-export function extractSections(content: string): { title: string; items: string[] }[] {
-  const lines = content.split('\n');
-  const sections: { title: string; items: string[] }[] = [];
-  let currentSection: { title: string; items: string[] } | null = null;
-  
+export function extractSections(content: string): { title: string, items: string[] }[] {
+  const lines = content.split('\n')
+  const sections: { title: string, items: string[] }[] = []
+  let currentSection: { title: string, items: string[] } | null = null
+
   for (const line of lines) {
     if (line.match(/^## .+/)) {
       if (currentSection) {
-        sections.push(currentSection);
+        sections.push(currentSection)
       }
       currentSection = {
         title: line.substring(3),
-        items: []
-      };
-    } else if (line.match(/^- \[.+\]/)) {
+        items: [],
+      }
+    }
+    else if (line.match(/^- \[.+\]/)) {
       if (currentSection) {
-        currentSection.items.push(line);
+        currentSection.items.push(line)
       }
     }
   }
-  
+
   if (currentSection) {
-    sections.push(currentSection);
+    sections.push(currentSection)
   }
-  
-  return sections;
+
+  return sections
 }

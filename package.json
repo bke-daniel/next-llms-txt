@@ -1,10 +1,21 @@
 {
   "name": "next-llms-txt",
+  "type": "module",
   "version": "0.1.0",
   "description": "A Next.js plugin to generate llms.txt files for AI documentation",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "author": {
+    "name": "Daniel Birke",
+    "url": "https://birke.io"
+  },
+  "license": "MIT",
+  "keywords": [
+    "nextjs",
+    "llms",
+    "llms-txt",
+    "ai",
+    "documentation",
+    "plugin"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -12,6 +23,9 @@
       "require": "./dist/index.js"
     }
   },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -22,28 +36,19 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:e2e": "jest --config jest.e2e.config.js"
+    "test:e2e": "jest --config jest.e2e.config.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
-  "keywords": [
-    "nextjs",
-    "llms",
-    "llms-txt",
-    "ai",
-    "documentation",
-    "plugin"
-  ],
-  "author": {
-    "name": "Daniel Birke",
-    "url": "https://birke.io"
-  },
-  "license": "MIT",
   "peerDependencies": {
     "next": "^15.0.0 || ^16.0.0"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^6.2.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^24.10.0",
     "@types/supertest": "^6.0.2",
+    "eslint": "^9.39.1",
     "jest": "^29.7.0",
     "jest-environment-node": "^29.7.0",
     "next": "^16.0.1",

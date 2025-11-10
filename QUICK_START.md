@@ -13,31 +13,32 @@ npm install next-llms-txt
 ### 1. Create `lib/llmstxt.ts`
 
 ```typescript
-import { createLLMsTxtHandlers } from 'next-llms-txt';
+import { createLLMsTxtHandlers } from 'next-llms-txt'
 
 export const { GET } = createLLMsTxtHandlers({
-  title: "My App",
-  description: "Brief description of your app",
+  title: 'My App',
+  description: 'Brief description of your app',
   sections: [
     {
-      title: "Documentation",
+      title: 'Documentation',
       items: [
         {
-          title: "Getting Started",
-          url: "/docs/start",
-          description: "Quick start guide"
+          title: 'Getting Started',
+          url: '/docs/start',
+          description: 'Quick start guide'
         }
       ]
     }
   ]
-});
+})
 ```
 
 ### 2. Create `app/llms.txt/route.ts`
 
 ```typescript
-import { GET } from "@/lib/llmstxt";
-export { GET };
+import { GET } from '@/lib/llmstxt'
+
+export { GET }
 ```
 
 ### 3. Done!
@@ -59,20 +60,20 @@ Visit `http://localhost:3000/llms.txt` to see your generated file.
 
 ```typescript
 interface LLMsTxtConfig {
-  title: string;                    // Required
-  description?: string;              // Optional
-  sections?: LLMsTxtSection[];      // Optional
+  title: string // Required
+  description?: string // Optional
+  sections?: LLMsTxtSection[] // Optional
 }
 
 interface LLMsTxtSection {
-  title: string;                    // H2 heading
-  items: LLMsTxtItem[];            // List items
+  title: string // H2 heading
+  items: LLMsTxtItem[] // List items
 }
 
 interface LLMsTxtItem {
-  title: string;                    // Link text
-  url: string;                      // Link URL
-  description?: string;             // Optional description
+  title: string // Link text
+  url: string // Link URL
+  description?: string // Optional description
 }
 ```
 
@@ -90,15 +91,15 @@ interface LLMsTxtItem {
 ```typescript
 sections: [
   {
-    title: "Documentation",
+    title: 'Documentation',
     items: [/* docs */]
   },
   {
-    title: "Examples", 
+    title: 'Examples',
     items: [/* examples */]
   },
   {
-    title: "Community",
+    title: 'Community',
     items: [/* community links */]
   }
 ]
@@ -111,9 +112,9 @@ createLLMsTxtHandlers({
   defaultConfig: { /* your config */ },
   generator: (config) => {
     // Custom markdown generation
-    return `# ${config.title}\n...`;
+    return `# ${config.title}\n...`
   }
-});
+})
 ```
 
 ## Help
