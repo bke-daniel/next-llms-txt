@@ -26,6 +26,10 @@
  * ```
  */
 
+export { LLMsTxtAutoDiscovery } from './discovery'
+export type { PageInfo } from './discovery'
+export { generateLLMsTxt } from './generator'
+export { createEnhancedLLMsTxtHandlers, createLLMsTxtHandlers, createPageLLMsTxtHandlers } from './handler'
 // Auto-discovery class
 // Types
 // Markdown generator
@@ -39,7 +43,3 @@ export type {
   LLMsTxtItem,
   LLMsTxtSection,
 } from './types'
-export { LLMsTxtAutoDiscovery } from './discovery'
-export { generateLLMsTxt } from './generator'
-export { createLLMsTxtHandlers, createEnhancedLLMsTxtHandlers, createPageLLMsTxtHandlers } from './handler'
-export type { PageInfo } from './discovery'
