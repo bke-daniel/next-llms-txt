@@ -149,7 +149,7 @@ async function handlePageRequest(
 /**
  * Helper functions.
  */
-function getAutoDiscoveryConfig(handlerConfig: LLMsTxtHandlerConfig): AutoDiscoveryConfig {
+export function getAutoDiscoveryConfig(handlerConfig: LLMsTxtHandlerConfig): AutoDiscoveryConfig {
   if (typeof handlerConfig.autoDiscovery === 'object') {
     return handlerConfig.autoDiscovery
   }
@@ -159,7 +159,7 @@ function getAutoDiscoveryConfig(handlerConfig: LLMsTxtHandlerConfig): AutoDiscov
   return { baseUrl: handlerConfig.baseUrl }
 }
 
-function normalizePath(path: string): string {
+export function normalizePath(path: string): string {
   let normalized = path.endsWith('/index') ? path.slice(0, -5) || '/' : path
   if (normalized.length > 1 && normalized.endsWith('/')) {
     normalized = normalized.slice(0, -1)
