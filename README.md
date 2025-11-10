@@ -190,9 +190,42 @@ This package follows the [llmstxt.org specification](https://llmstxt.org). The g
 - **H2 sections**: Organized categories
 - **Markdown lists**: Links with optional descriptions
 
+## Development
+
+### Building the Package
+
+```bash
+# Install dependencies
+npm install
+
+# Build the package
+npm run build
+
+# Watch mode for development
+npm run dev
+```
+
+### Publishing to npm
+
+The package is configured for easy publishing to npm:
+
+```bash
+# Build and publish
+npm publish
+```
+
+The `prepublishOnly` script will automatically build the package before publishing.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Guidelines
+
+1. Follow the existing code style
+2. Add tests for new features
+3. Update documentation as needed
+4. Ensure TypeScript types are properly exported
 
 ## License
 

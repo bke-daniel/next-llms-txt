@@ -1,0 +1,31 @@
+# Source files (only dist is published)
+src/
+tsconfig.json
+
+# Development files
+node_modules/
+*.log
+.DS_Store
+
+# Git files
+.git/
+.gitignore
+
+# Examples (kept in repo but not in npm package)
+examples/
+
+# Test files
+*.test.ts
+*.test.js
+__tests__/
+coverage/
+
+# Build artifacts
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Environment
+.env*
+!.env.example
