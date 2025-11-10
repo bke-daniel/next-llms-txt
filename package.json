@@ -1,5 +1,8 @@
 {
   "name": "next-llms-txt",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "version": "0.1.0",
   "description": "A Next.js plugin to generate llms.txt files for AI documentation",
