@@ -1,5 +1,7 @@
 # next-llms-txt
 
+# next-llms-txt
+
 <p align="center">
   <a href="https://llmstxt.org">
     <img src="https://img.shields.io/badge/llms.txt-compatible-green" alt="llms.txt compatible" />
@@ -16,12 +18,354 @@
 </p>
 
 <p align="center">
-  <strong>The complete Next.js toolkit for generating LLM-optimized documentation</strong>
+  <strong>The complete Next.js toolkit for generating LLM-optimized documentation.</strong>
 </p>
 
 <p align="center">
   Automatically generate <a href="https://llmstxt.org">llms.txt</a> files to make your website more accessible to Large Language Models like ChatGPT, Claude, and Gemini.
 </p>
+
+---
+
+## Table of Contents
+
+- [Why next-llms-txt?](#why-next-llms-txt)
+- [Core Concepts](#core-concepts)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Guides](#guides)
+  - [1. Basic Manual Setup](#1-basic-manual-setup)
+  - [2. Auto-Discovery Setup](#2-auto-discovery-setup)
+  - [3. Per-Page Content with `.html.md`](#3-per-page-content-with-htmlmd)
+- [API Reference](#api-reference)
+- [Best Practices](#best-practices)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Why next-llms-txt?
+
+Modern web applications built with frameworks like Next.js often rely on client-side rendering and complex component structures. This can make it difficult for Large Language Models (LLMs) to parse and understand the core content of a website.
+
+The `llms.txt` standard solves this by providing a structured markdown file that acts as a sitemap for AI. `next-llms-txt` is the definitive tool for integrating this standard into any Next.js project, offering a seamless developer experience with powerful features.
+
+- ✨ **Automated Content Discovery**: Scans your project to find pages and automatically generates `llms.txt` entries.
+- 🚀 **Zero-Configuration by Default**: Works out of the box with sensible defaults for any Next.js project.
+- 🔄 **Universal Next.js Support**: Native integration with both App Router and Pages Router.
+- 📝 **Flexible Content Sources**: Define `llms.txt` content by exporting a `llmstxt` object from your pages or let the library fall back to your existing Next.js `metadata` exports.
+- 🌐 **Advanced URL Resolution**: Intelligently maps web routes like `/services/consulting` or `/about.html` to their corresponding content files, including `.html.md` for raw text access.
+- 🎨 **Fully Customizable**: Override the default behavior with custom configurations and content generators.
+- 🧪 **Reliable and Tested**: A comprehensive test suite ensures correctness and stability.
+
+## Core Concepts
+
+Understanding these concepts will help you get the most out of `next-llms-txt`.
+
+### 1. Auto-Discovery
+
+The most powerful feature of `next-llms-txt`. When enabled, the library scans your `src/app` and `src/pages` directories to find all discoverable pages. It then builds a complete `llms.txt` file based on the content it finds.
+
+### 2. Content Sources
+
+For auto-discovery to work, pages must provide content information. The library looks for one of two sources in your page files (e.g., `page.tsx`):
+
+1. **`llmstxt` Export (Recommended)**: An explicit `llmstxt` object that gives you full control over the title and description.
+
+    ```typescript
+    // app/about/page.tsx
+    export const llmstxt = {
+      title: 'About Our Company',
+      description: 'Learn about our mission and values.'
+    };
+    ```
+
+2. **`metadata` Export (Fallback)**: If no `llmstxt` object is found, the library will use your existing Next.js `metadata` export as a fallback.
+
+    ```typescript
+    // app/about/page.tsx
+    export const metadata = {
+      title: 'About Us', // Used as the llms.txt title
+      description: 'Our company history.' // Used as the llms.txt description
+    };
+    ```
+
+### 3. URL Resolution and `.html.md`
+
+LLMs prefer raw text over parsing complex HTML. `next-llms-txt` facilitates this with a special convention:
+
+- A page at the URL `/services/consulting` can have its raw content defined in a file at `/services/consulting.html.md`.
+- The library's `createPageLLMsTxtHandlers` creates a special API route that can serve the content of these `.html.md` files.
+- The auto-discovery system automatically finds these `.html.md` files and maps them to the correct web URL. This means a request to `/services/consulting` can be resolved to the content in `/services/consulting.html.md`.
+
+This allows you to provide clean, structured text to LLMs without affecting your user-facing pages.
+
+## Quick Start
+
+Get up and running in 30 seconds.
+
+1. **Install the package:**
+
+    ```bash
+    npm install next-llms-txt
+    ```
+
+2. **Create a route handler at `app/llms.txt/route.ts`:**
+
+    ```typescript
+    // app/llms.txt/route.ts
+    import { createLLMsTxtHandlers } from 'next-llms-txt';
+
+    export const { GET } = createLLMsTxtHandlers({
+      title: 'My Website',
+      description: 'Learn about my awesome project.',
+      sections: [{
+        title: 'Main Pages',
+        items: [{
+          title: 'Getting Started',
+          url: '/docs',
+          description: 'Everything you need to know to get started.'
+        }]
+      }]
+    });
+    ```
+
+3. **Start your development server** and visit `http://localhost:3000/llms.txt`. That's it! 🎉
+
+## Installation
+
+```bash
+# npm
+npm install next-llms-txt
+
+# yarn
+yarn add next-llms-txt
+
+# pnpm
+pnpm add next-llms-txt
+
+# bun
+bun add next-llms-txt
+```
+
+## Guides
+
+Follow these guides to implement `next-llms-txt` in your project.
+
+### 1. Basic Manual Setup
+
+This approach gives you full control by letting you define the `llms.txt` content manually. It's perfect for smaller sites or when you want to be explicit.
+
+**Create `app/llms.txt/route.ts`:**
+
+```typescript
+import { createLLMsTxtHandlers } from 'next-llms-txt';
+
+export const { GET } = createLLMsTxtHandlers({
+  title: 'My Awesome Project',
+  description: 'A comprehensive toolkit for developers.',
+  sections: [
+    {
+      title: 'Documentation',
+      items: [
+        {
+          title: 'Getting Started',
+          url: 'https://example.com/docs/getting-started',
+          description: 'A quick introduction for new users.'
+        },
+        {
+          title: 'API Reference',
+          url: 'https://example.com/docs/api',
+          description: 'Complete API documentation for the project.'
+        }
+      ]
+    }
+  ]
+});
+```
+
+### 2. Auto-Discovery Setup
+
+Let `next-llms-txt` do the heavy lifting. This setup automatically scans your project and builds the `llms.txt` file from your pages.
+
+**Step 1: Add content sources to your pages.**
+
+In each page you want to include (e.g., `app/services/page.tsx`), export a `llmstxt` or `metadata` object.
+
+```typescript
+// app/services/page.tsx
+import type { Metadata } from 'next';
+
+// Provide an llmstxt export (recommended)
+export const llmstxt = {
+  title: 'Our Services',
+  description: 'Explore the professional services we offer.'
+};
+
+// Or, the library can use your existing metadata as a fallback
+export const metadata: Metadata = {
+  title: 'Our Services',
+  description: 'Explore the professional services we offer.'
+};
+
+export default function ServicesPage() {
+  return <div>Our Services</div>;
+}
+```
+
+**Step 2: Create the enhanced route handler.**
+
+Use `createEnhancedLLMsTxtHandlers` to enable auto-discovery.
+
+```typescript
+// app/llms.txt/route.ts
+import { createEnhancedLLMsTxtHandlers } from 'next-llms-txt';
+
+export const { GET } = createEnhancedLLMsTxtHandlers({
+  // You can still provide a main title and description
+  title: 'My Website',
+  description: 'Automatically discovered content from my Next.js pages.',
+
+  // Enable auto-discovery
+  autoDiscovery: {
+    baseUrl: 'https://example.com' // Required for generating absolute URLs
+  }
+});
+```
+
+The handler will now automatically find your pages and generate the `llms.txt` file.
+
+### 3. Per-Page Content with `.html.md`
+
+To provide raw markdown content for specific pages, you can create `.html.md` files. The `createPageLLMsTxtHandlers` function creates a special API route to serve this content.
+
+**Step 1: Create your markdown content files.**
+
+Place a markdown file next to your page, naming it with the `.html.md` extension.
+
+```
+/src/app
+  /services
+    /consulting
+      page.tsx
+      page.html.md  <-- Markdown content for the /services/consulting page
+```
+
+**Step 2: Create a dynamic API route to serve the content.**
+
+This route will catch requests for your pages and serve the corresponding markdown.
+
+```typescript
+// app/api/llms-txt/[...slug]/route.ts
+import { createPageLLMsTxtHandlers } from 'next-llms-txt';
+
+// This handler serves the content of .html.md files
+export const { GET } = createPageLLMsTxtHandlers('https://example.com', {
+  autoDiscovery: {
+    baseUrl: 'https://example.com'
+  }
+});
+```
+
+Now, when an LLM sees a URL like `https://example.com/services/consulting` in your main `llms.txt`, it can request the content from your API route, which will serve the text from `page.html.md`.
+
+## API Reference
+
+### Core Functions
+
+#### `createLLMsTxtHandlers(config)`
+
+Creates a basic `llms.txt` handler for manual configuration.
+
+```typescript
+import { createLLMsTxtHandlers } from 'next-llms-txt';
+
+const { GET } = createLLMsTxtHandlers({
+  title: 'My Site',
+  description: 'Site description',
+  sections: [/* ... */]
+});
+```
+
+#### `createEnhancedLLMsTxtHandlers(config)`
+
+Creates an advanced handler with auto-discovery capabilities.
+
+```typescript
+import { createEnhancedLLMsTxtHandlers } from 'next-llms-txt';
+
+const { GET } = createEnhancedLLMsTxtHandlers({
+  title: 'My Site',
+  autoDiscovery: {
+    baseUrl: 'https://example.com',
+    appDir: 'src/app',      // Default: 'src/app'
+    pagesDir: 'src/pages',  // Default: 'src/pages'
+  }
+});
+```
+
+#### `createPageLLMsTxtHandlers(baseUrl, config?)`
+
+Creates a handler for serving per-page content from `.html.md` files. Typically used in a dynamic API route.
+
+```typescript
+import { createPageLLMsTxtHandlers } from 'next-llms-txt';
+
+const { GET } = createPageLLMsTxtHandlers('https://example.com', {
+  autoDiscovery: { baseUrl: 'https://example.com' }
+});
+```
+
+### Type Definitions
+
+The library is written in TypeScript and exports all types for a fully typed experience.
+
+- `LLMsTxtConfig`: The main configuration object for `llms.txt` content.
+- `LLMsTxtSection`: A section within the `llms.txt` file, containing a title and items.
+- `LLMsTxtItem`: An individual link, with a title, URL, and optional description.
+- `AutoDiscoveryConfig`: Configuration for the auto-discovery system.
+- `EnhancedHandlerConfig`: Configuration for the enhanced handlers, including auto-discovery settings.
+
+## Best Practices
+
+- **Use Absolute URLs**: Always provide a `baseUrl` in your configuration to ensure all generated URLs are absolute, as required by the `llms.txt` standard.
+- **Prefer `llmstxt` Exports**: While the `metadata` fallback is convenient, using an explicit `llmstxt` export gives you more control and makes your intent clear.
+- **Keep Descriptions Concise**: Write clear and concise descriptions for your pages and sections. Think about what an LLM would need to understand the content.
+- **Disable Warnings in Production**: In your `autoDiscovery` config, set `showWarnings: false` for production builds to avoid polluting logs.
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to set up the development environment, run tests, and submit your changes.
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/bke-daniel/next-llms-txt.git
+cd next-llms-txt
+
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/bke-daniel/next-llms-txt/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/bke-daniel/next-llms-txt/discussions)
+- 💬 **Questions**: [GitHub Discussions](https://github.com/bke-daniel/next-llms-txt/discussions/categories/q-a)
+
+---
+
+<div align="center">
+  <strong>next-llms-txt</strong> - Making AI-friendly documentation effortless in Next.js
+  <br/>
+  <sub>Built with ❤️ by the open source community</sub>
+</div>
 
 ---
 
