@@ -114,7 +114,7 @@ Get up and running in 30 seconds.
     npm install next-llms-txt
     ```
 
-2. **Create a middleware file at `src/middleware.ts`:**
+2. **Add middleware-first integration in `src/middleware.ts`:**
 
     ```typescript
     // src/middleware.ts
@@ -130,12 +130,9 @@ Get up and running in 30 seconds.
 
     export async function middleware(request: NextRequest) {
       const { pathname } = request.nextUrl;
-
-      // Handle llms.txt and per-page .html.md requests
       if (pathname === '/llms.txt' || pathname.endsWith('.html.md')) {
         return await handleLLmsTxt(request);
       }
-
       return NextResponse.next();
     }
 
@@ -144,7 +141,40 @@ Get up and running in 30 seconds.
     };
     ```
 
-3. **Start your development server** and visit `http://localhost:3000/llms.txt`. That's it! 🎉
+3. **Add content sources to your pages:**
+
+    Export a `llmstxt` object (recommended) or use Next.js `metadata` as fallback in your page files:
+
+    ```typescript
+    // src/app/services/page.tsx
+    export const llmstxt = {
+      title: 'Our Services',
+      description: 'Explore the professional services we offer.'
+    }
+    // or
+    export const metadata = {
+      title: 'Our Services',
+      description: 'Explore the professional services we offer.'
+    }
+    ```
+
+4. **Provide raw markdown for LLMs (optional):**
+
+    Add `.html.md` files next to your pages for clean text delivery:
+
+    ```
+    /src/app/services/page.html.md
+    ```
+
+5. **Run tests and check coverage:**
+
+    ```bash
+    npm test -- --coverage
+    ```
+
+    All logic is covered by a comprehensive test suite. Coverage thresholds are enforced in CI.
+
+6. **Start your development server** and visit `http://localhost:3000/llms.txt`.
 
 ## Installation
 
