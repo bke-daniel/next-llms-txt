@@ -4,13 +4,21 @@
     "access": "public"
   },
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Next.js plugin to generate llms.txt files for AI documentation",
   "author": {
     "name": "Daniel Birke",
     "url": "https://birke.io"
   },
   "license": "MIT",
+  "homepage": "https://github.com/bke-daniel/next-llms-txt#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bke-daniel/next-llms-txt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bke-daniel/next-llms-txt/issues"
+  },
   "keywords": [
     "nextjs",
     "llms",
