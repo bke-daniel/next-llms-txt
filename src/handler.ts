@@ -5,13 +5,31 @@ import { LLMsTxtAutoDiscovery } from './discovery'
 import { generateLLMsTxt } from './generator'
 
 /**
- * Creates a versatile handler for generating llms.txt files.
+ * Creates a handler for generating llms.txt files in Next.js middleware.
  *
  * This function acts as a single entry point for creating both a site-wide `llms.txt`
  * and per-page `*.html.md` files, with optional auto-discovery of page configurations.
+ * Designed to work seamlessly with Next.js middleware to intercept `/llms.txt` and `/*.html.md` requests.
  *
  * @param config - The configuration for the handler.
- * @returns An object with a `GET` method for use in a Next.js route handler.
+ * @returns An object with a `GET` method for use in Next.js middleware or route handlers.
+ *
+ * @example
+ * ```typescript
+ * // src/middleware.ts
+ * const { GET: handleLLmsTxt } = createLLmsTxt({
+ *   autoDiscovery: {
+ *     baseUrl: 'https://example.com',
+ *   },
+ * });
+ *
+ * export async function middleware(request: NextRequest) {
+ *   if (request.nextUrl.pathname === '/llms.txt' || request.nextUrl.pathname.endsWith('.html.md')) {
+ *     return await handleLLmsTxt(request);
+ *   }
+ *   return NextResponse.next();
+ * }
+ * ```
  */
 export function createLLmsTxt(
   config: LLMsTxtConfig | LLMsTxtHandlerConfig,
@@ -98,7 +116,9 @@ async function handlePageRequest(
   const discovery = new LLMsTxtAutoDiscovery(discoveryConfig)
   const pages = await discovery.discoverPages()
 
-  const requestedRoute = normalizePath(pathname)
+  // Strip .html.md extension to get the actual route
+  const routePath = pathname.replace(/\.html\.md$/, '')
+  const requestedRoute = normalizePath(routePath)
   const matchingPage = pages.find(page => normalizePath(page.route) === requestedRoute)
 
   if (!matchingPage?.config) {

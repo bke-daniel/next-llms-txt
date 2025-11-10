@@ -4,17 +4,16 @@
 ### Core Functionality
 
 1. **`llms.txt` Generation**: The package must generate markdown content that adheres to the `llmstxt.org` specification, creating both a main site-wide file and individual files for specific pages.
-2. **Next.js Integration**: It provides a handler function intended for use within a Next.js project, typically inside a configuration file (e.g., `next.config.js` or a dedicated config file) to avoid cluttering the `app` directory.
+2. **Next.js Integration**: It provides a handler function designed for use in Next.js middleware (`src/middleware.ts`), intercepting requests to `/llms.txt` and `/*.html.md` without cluttering the `app` directory.
 
 ### API and Configuration
->
-> copilot info: I really want to challenge this as it is not need on my book. If we can replace this with a next.js like config i am happy
 
-1. **Main Entry Point**: A single function, `createUnifiedLLMsTxtHandlers`, serves as the public API.
-2. **Handler Return**: This function returns an object containing a `GET` method suitable for a Next.js route handler.
-3. **Configuration Object**: The main function accepts a configuration object that can be either:
+1. **Main Entry Point**: A single function, `createLLmsTxt`, serves as the public API.
+2. **Handler Return**: This function returns an object containing a `GET` method suitable for Next.js middleware.
+3. **Middleware-First Design**: The package is designed to work with Next.js middleware, intercepting `/llms.txt` and `/*.html.md` requests.
+4. **Configuration Object**: The main function accepts a configuration object that can be either:
     * A simple `LLMsTxtConfig` for a basic, static `llms.txt` file.
-    * An `EnhancedHandlerConfig` to enable advanced features like auto-discovery.
+    * An `LLMsTxtHandlerConfig` with `autoDiscovery` to enable advanced features like auto-discovery.
 
 ### Auto-Discovery
 

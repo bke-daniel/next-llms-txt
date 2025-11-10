@@ -108,24 +108,34 @@ Get up and running in 30 seconds.
     npm install next-llms-txt
     ```
 
-2. **Create a route handler at `app/llms.txt/route.ts`:**
+2. **Create a middleware file at `src/middleware.ts`:**
 
     ```typescript
-    // app/llms.txt/route.ts
-    import { createLLMsTxtHandlers } from 'next-llms-txt';
+    // src/middleware.ts
+    import { NextResponse } from 'next/server';
+    import type { NextRequest } from 'next/server';
+    import { createLLmsTxt } from 'next-llms-txt';
 
-    export const { GET } = createLLMsTxtHandlers({
-      title: 'My Website',
-      description: 'Learn about my awesome project.',
-      sections: [{
-        title: 'Main Pages',
-        items: [{
-          title: 'Getting Started',
-          url: '/docs',
-          description: 'Everything you need to know to get started.'
-        }]
-      }]
+    const { GET: handleLLmsTxt } = createLLmsTxt({
+      autoDiscovery: {
+        baseUrl: process.env.VERCEL_URL || 'http://localhost:3000',
+      },
     });
+
+    export async function middleware(request: NextRequest) {
+      const { pathname } = request.nextUrl;
+
+      // Handle llms.txt and per-page .html.md requests
+      if (pathname === '/llms.txt' || pathname.endsWith('.html.md')) {
+        return await handleLLmsTxt(request);
+      }
+
+      return NextResponse.next();
+    }
+
+    export const config = {
+      matcher: ['/llms.txt', '/:path*.html.md'],
+    };
     ```
 
 3. **Start your development server** and visit `http://localhost:3000/llms.txt`. That's it! 🎉

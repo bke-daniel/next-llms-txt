@@ -5,7 +5,7 @@
   },
   "type": "module",
   "version": "0.1.1",
-  "description": "A Next.js plugin to generate llms.txt files for AI documentation",
+  "description": "A Next.js middleware plugin to generate llms.txt files for AI documentation",
   "author": {
     "name": "Daniel Birke",
     "url": "https://birke.io"
