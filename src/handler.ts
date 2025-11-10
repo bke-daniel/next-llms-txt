@@ -1,8 +1,33 @@
+/**
+ * Manual llms.txt handler (manual config only)
+ */
 import type { NextRequest } from 'next/server'
 import type { AutoDiscoveryConfig, LLMsTxtConfig, LLMsTxtHandlerConfig } from './types'
 import { NextResponse } from 'next/server'
 import { LLMsTxtAutoDiscovery } from './discovery'
 import { generateLLMsTxt } from './generator'
+
+export function createLLMsTxtHandlers(config: LLMsTxtConfig) {
+  return createLLmsTxt(config)
+}
+
+/**
+ * Enhanced llms.txt handler (auto-discovery)
+ */
+export function createEnhancedLLMsTxtHandlers(config: LLMsTxtHandlerConfig) {
+  return createLLmsTxt(config)
+}
+
+/**
+ * Per-page .html.md handler (for dynamic API routes)
+ */
+export function createPageLLMsTxtHandlers(baseUrl: string, config?: Partial<LLMsTxtHandlerConfig>) {
+  const autoDiscovery = typeof config?.autoDiscovery === 'object' ? { ...config.autoDiscovery, baseUrl } : { baseUrl }
+  return createLLmsTxt({
+    autoDiscovery,
+    ...config,
+  })
+}
 
 /**
  * Creates a handler for generating llms.txt files in Next.js middleware.

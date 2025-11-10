@@ -26,15 +26,12 @@
  * ```
  */
 
-// Export supporting components and types
-export { LLMsTxtAutoDiscovery } from './discovery'
-
-export type { PageInfo } from './discovery'
-
-export { generateLLMsTxt } from './generator'
-// Export the main handler creation function
-export { createLLmsTxt } from './handler'
-// Export core types
+// Auto-discovery class
+// Types
+// Markdown generator
+// Core handler for manual config
+// Enhanced handler for auto-discovery
+// Per-page .html.md handler
 export type {
   AutoDiscoveryConfig,
   LLMsTxtConfig,
@@ -42,3 +39,7 @@ export type {
   LLMsTxtItem,
   LLMsTxtSection,
 } from './types'
+export { LLMsTxtAutoDiscovery } from './discovery'
+export { generateLLMsTxt } from './generator'
+export { createLLMsTxtHandlers, createEnhancedLLMsTxtHandlers, createPageLLMsTxtHandlers } from './handler'
+export type { PageInfo } from './discovery'
