@@ -153,6 +153,6 @@ export const { GET } = createLLMsTxtHandlers({
 Use the Optional section for:
 
 - Legacy documentation
-- Advanced configuration guides  
+- Advanced configuration guides
 - Secondary resources
 - External dependencies documentation
