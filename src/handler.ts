@@ -61,7 +61,13 @@ export function createLLmsTxt(
 ): {
   GET: (request: NextRequest) => Promise<NextResponse>
 } {
+  const isManualConfig = !('defaultConfig' in config) && !!(config as any).title
+  const isAutoDiscovery = !!(config as any).autoDiscovery
   const handlerConfig = ('defaultConfig' in config ? config : { defaultConfig: config }) as LLMsTxtHandlerConfig
+
+  if ((isManualConfig && isAutoDiscovery) || (handlerConfig.defaultConfig && handlerConfig.autoDiscovery)) {
+    throw new Error('Cannot use both manual config and auto-discovery together. Choose one.')
+  }
 
   if (!handlerConfig.defaultConfig?.title && !handlerConfig.autoDiscovery) {
     throw new Error(
