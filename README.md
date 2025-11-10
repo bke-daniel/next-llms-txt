@@ -12,6 +12,12 @@
   <a href="https://www.npmjs.com/package/next-llms-txt">
     <img src="https://img.shields.io/npm/dm/next-llms-txt" alt="npm downloads" />
   </a>
+  <a href="https://github.com/bke-daniel/next-llms-txt/actions/workflows/test.yml">
+    <img src="https://github.com/bke-daniel/next-llms-txt/actions/workflows/test.yml/badge.svg" alt="tests" />
+  </a>
+  <a href="https://codecov.io/gh/bke-daniel/next-llms-txt">
+    <img src="https://codecov.io/gh/bke-daniel/next-llms-txt/branch/main/graph/badge.svg" alt="codecov" />
+  </a>
   <a href="https://github.com/bke-daniel/next-llms-txt/blob/main/LICENSE">
     <img src="https://img.shields.io/npm/l/next-llms-txt" alt="license" />
   </a>

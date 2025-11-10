@@ -20,6 +20,14 @@ export default {
     '!src/index.ts', // Exclude barrel exports from coverage
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary', 'json'],
+  coverageThreshold: {
+    global: {
+      branches: 50,
+      functions: 55,
+      lines: 60,
+      statements: 60,
+    },
+  },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
 }
