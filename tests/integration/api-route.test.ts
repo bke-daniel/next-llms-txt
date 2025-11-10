@@ -139,4 +139,59 @@ describe('integration: LLMs.txt API Route', () => {
       expect(item).toMatch(/^- \[.+\]\(.+\)(?:: .+)?$/)
     })
   })
+
+  it('should generate llms.txt with optional section through API route', async () => {
+    const configWithOptional: LLMsTxtConfig = {
+      title: 'Test Project with Optional',
+      description: 'Testing optional section',
+      sections: [
+        {
+          title: 'Core Documentation',
+          items: [
+            {
+              title: 'Getting Started',
+              url: '/docs/getting-started',
+            },
+          ],
+        },
+      ],
+      optional: [
+        {
+          title: 'Advanced Topics',
+          url: '/docs/advanced',
+          description: 'For experienced users',
+        },
+        {
+          title: 'Legacy Documentation',
+          url: '/docs/legacy',
+        },
+      ],
+    }
+
+    const { GET } = createLLMsTxtHandlers(configWithOptional)
+
+    const request = new NextRequest('http://localhost:3000/llms.txt', {
+      method: 'GET',
+    })
+
+    const response = await GET(request)
+    const content = await response.text()
+
+    // Verify response
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Content-Type')).toBe('text/markdown; charset=utf-8')
+
+    // Verify content structure
+    const lines = content.split('\n').filter(line => line.trim() !== '')
+
+    // Should contain Optional section
+    const optionalSectionIndex = lines.findIndex(line => line === '## Optional')
+    expect(optionalSectionIndex).toBeGreaterThan(-1)
+
+    // Verify optional items are present
+    const optionalItems = lines.slice(optionalSectionIndex + 1).filter(line => line.startsWith('- ['))
+    expect(optionalItems).toHaveLength(2)
+    expect(optionalItems[0]).toBe('- [Advanced Topics](/docs/advanced): For experienced users')
+    expect(optionalItems[1]).toBe('- [Legacy Documentation](/docs/legacy)')
+  })
 })

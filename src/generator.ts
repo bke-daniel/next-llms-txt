@@ -10,6 +10,9 @@ import type { LLMsTxtConfig } from './types'
  * ## Section (H2)
  * - [Link Title](url): Description
  *
+ * ## Optional (special section for secondary information)
+ * - [Link Title](url): Description
+ *
  * @param config - The llms.txt configuration
  * @returns The generated llms.txt content as markdown
  */
@@ -38,6 +41,18 @@ export function generateLLMsTxt(config: LLMsTxtConfig): string {
 
       lines.push('')
     }
+  }
+
+  // Optional section (special meaning - can be skipped for shorter context)
+  if (config.optional && config.optional.length > 0) {
+    lines.push('## Optional')
+
+    for (const item of config.optional) {
+      const description = item.description ? `: ${item.description}` : ''
+      lines.push(`- [${item.title}](${item.url})${description}`)
+    }
+
+    lines.push('')
   }
 
   return `${lines.join('\n').trim()}\n`

@@ -19,6 +19,12 @@ export interface LLMsTxtConfig {
    * Each section will be rendered as an H2 header with markdown list items
    */
   sections?: LLMsTxtSection[]
+
+  /**
+   * Optional section with secondary information that can be skipped for shorter context
+   * This section has special meaning in the llmstxt.org specification
+   */
+  optional?: LLMsTxtItem[]
 }
 
 /**

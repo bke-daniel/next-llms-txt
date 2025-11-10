@@ -113,3 +113,46 @@ export { GET };
 import { GET } from "@/lib/llmstxt-es";
 export { GET };
 ```
+
+## Optional Section
+
+The `optional` field follows the [llmstxt.org specification](http://llmstxt.org) for secondary information that can be skipped if a shorter context is needed:
+
+```typescript
+export const { GET } = createLLMsTxtHandlers({
+  title: 'My Project',
+  description: 'A brief summary',
+  sections: [
+    {
+      title: 'Core Documentation',
+      items: [
+        {
+          title: 'Getting Started',
+          url: '/docs/getting-started',
+          description: 'Essential setup and usage',
+        },
+      ],
+    },
+  ],
+  // Optional section - secondary information that can be skipped
+  optional: [
+    {
+      title: 'Advanced Configuration',
+      url: '/docs/advanced-config',
+      description: 'Detailed configuration options for power users',
+    },
+    {
+      title: 'Legacy Documentation',
+      url: '/docs/legacy',
+      description: 'Documentation for previous versions',
+    },
+  ],
+})
+```
+
+Use the Optional section for:
+
+- Legacy documentation
+- Advanced configuration guides  
+- Secondary resources
+- External dependencies documentation
