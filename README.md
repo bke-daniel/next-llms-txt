@@ -221,12 +221,26 @@ The `prepublishOnly` script will automatically build the package before publishi
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+### Development Setup
+
+The project uses Husky for pre-commit hooks to ensure code quality:
+
+```bash
+# Install dependencies (this will setup Husky automatically)
+npm install
+
+# The pre-commit hook will automatically run:
+# 1. npm run lint:fix - Auto-fix linting issues
+# 2. npm test - Run all tests
+```
+
 ### Guidelines
 
 1. Follow the existing code style
 2. Add tests for new features
 3. Update documentation as needed
 4. Ensure TypeScript types are properly exported
+5. Code will be automatically formatted on commit via Husky pre-commit hooks
 
 ## License
 

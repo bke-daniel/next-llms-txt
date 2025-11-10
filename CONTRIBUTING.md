@@ -17,6 +17,18 @@ cd next-llms-txt
 npm install
 ```
 
+This will automatically set up Husky pre-commit hooks that will:
+
+- Run `npm run lint:fix` to auto-fix code formatting
+- Run `npm test` to ensure all tests pass
+
+1. **Build the project**
+
+This will automatically set up Husky pre-commit hooks that will:
+
+- Run `npm run lint:fix` to auto-fix code formatting
+- Run `npm test` to ensure all tests pass
+
 3. **Build the project**
 
 ```bash
@@ -92,6 +104,7 @@ Follow conventional commits:
 - `test:` - Adding tests
 
 Examples:
+
 ```
 feat: add support for dynamic content
 fix: handle empty sections correctly
@@ -136,6 +149,7 @@ Currently, the project doesn't have automated tests. When adding tests:
 ## Questions?
 
 Feel free to:
+
 - Open an issue for discussion
 - Ask questions in pull requests
 - Suggest improvements
