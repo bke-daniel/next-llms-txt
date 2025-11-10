@@ -18,7 +18,11 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "jest --config jest.e2e.config.js"
   },
   "keywords": [
     "nextjs",
@@ -28,16 +32,25 @@
     "documentation",
     "plugin"
   ],
-  "author": "",
+  "author": {
+    "name": "Daniel Birke",
+    "url": "https://birke.io"
+  },
   "license": "MIT",
   "peerDependencies": {
-    "next": "^14.0.0 || ^15.0.0 || ^16.0.0"
+    "next": "^15.0.0 || ^16.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/node": "^24.10.0",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
     "next": "^16.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3"
   }
