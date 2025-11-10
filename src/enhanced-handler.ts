@@ -103,12 +103,12 @@ export function createPageLLMsTxtHandlers(
 
       // Handle .html.md extension
       if (pathname.endsWith('.html.md')) {
-        pathname = pathname.replace('.html.md', '')
+        pathname = pathname.slice(0, -3)
       }
 
-      // Handle index.html.md
-      if (pathname.endsWith('/index')) {
-        pathname = pathname.replace('/index', '') || '/'
+      // Handle index.html
+      if (pathname.endsWith('/index.html')) {
+        pathname = pathname.slice(0, -10) || '/'
       }
 
       // Support trailing slash variations
@@ -126,11 +126,27 @@ export function createPageLLMsTxtHandlers(
       const pages = await discovery.discoverPages()
 
       // Find matching page
-      const matchingPage = pages.find(page =>
-        page.route === pathname
-        || page.route === `${pathname}/`
-        || page.route === pathname.replace(/\/$/, ''),
-      )
+      const matchingPage = pages.find((page) => {
+        // Normalize the discovered page route by removing the .html extension.
+        // e.g., '/services/no-export.html' becomes '/services/no-export'
+        const normalizedPageRoute = page.route.endsWith('.html')
+          ? page.route.slice(0, -5)
+          : page.route
+
+        // Normalize the incoming request pathname by removing trailing slashes and the .html extension.
+        // e.g., '/services/no-export/' becomes '/services/no-export'
+        // e.g., '/services/no-export.html' becomes '/services/no-export'
+        let normalizedPathname = pathname
+        if (normalizedPathname.length > 1 && normalizedPathname.endsWith('/')) {
+          normalizedPathname = normalizedPathname.slice(0, -1)
+        }
+        if (normalizedPathname.endsWith('.html')) {
+          normalizedPathname = normalizedPathname.slice(0, -5)
+        }
+
+        // Compare the normalized paths.
+        return normalizedPageRoute === normalizedPathname
+      })
 
       if (!matchingPage?.config) {
         return new NextResponse('Page not found or no llms.txt configuration available', {

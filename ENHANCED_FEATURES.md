@@ -22,8 +22,7 @@ The enhanced `next-llms-txt` system provides comprehensive automatic page discov
 ### 🌐 **Flexible URL Support**
 
 - Site-wide llms.txt at `/llms.txt`
-- Individual page llms.txt at any route with `.html.md` extension
-- Supports trailing slash variations
+- Individual page llms.txt at any route. For a page at `/services/consulting`, the llms.txt can be accessed at `/services/consulting.html.md`.
 - Handles index routes (`/index.html.md` → `/`)
 
 ### ⚠️ **Intelligent Warning System**

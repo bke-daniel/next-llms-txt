@@ -41,9 +41,9 @@ import { GET } from '@/lib/llmstxt'
 export { GET }
 ```
 
-### 3. Done!
+### 3. Done
 
-Visit `http://localhost:3000/llms.txt` to see your generated file.
+Visit `http://localhost:3000/llms.txt` to see your generated file. You can also visit individual pages with a `.html.md` extension to see the llms.txt for that page, e.g. `http://localhost:3000/docs/start.html.md`.
 
 ## Output
 

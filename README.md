@@ -51,6 +51,10 @@
 
 Think of it as a sitemap for AI - it tells language models what your website contains and where to find important information.
 
+The key difference is that `llms.txt` can point to markdown files that represent the content of a page, rather than the page itself. For example, for a page at `/services/consulting`, the `llms.txt` file can point to `/services/consulting.html.md`, which is a markdown representation of the page's content. This allows LLMs to get the raw text content of a page without having to parse HTML and JavaScript.
+
+This library handles all of this for you, including the automatic generation of these `.html.md` files.
+
 ## Features
 
 - ✨ **Auto-Discovery**: Automatically scan your Next.js app and generate llms.txt from your pages

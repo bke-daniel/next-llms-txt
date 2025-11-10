@@ -18,7 +18,6 @@ describe('complete llms.txt system integration', () => {
         baseUrl: 'https://www.next-llms-txt.com',
         autoDiscovery: {
           baseUrl: 'https://www.next-llms-txt.com',
-          baseUrl: 'https://www.next-llms-txt.com',
           rootDir: testProjectPath,
         },
       })
@@ -52,7 +51,7 @@ describe('complete llms.txt system integration', () => {
       })
 
       // Test homepage
-      const homeRequest = new NextRequest('https://www.next-llms-txt.com/index.html.md')
+      const homeRequest = new NextRequest('https://www.next-llms-txt.com/')
       const homeResponse = await GET(homeRequest)
 
       expect(homeResponse.status).toBe(200)
@@ -62,13 +61,13 @@ describe('complete llms.txt system integration', () => {
       expect(homeContent).toContain('https://www.next-llms-txt.com/')
 
       // Test services page
-      const servicesRequest = new NextRequest('https://www.next-llms-txt.com/services.html.md')
+      const servicesRequest = new NextRequest('https://www.next-llms-txt.com/services.html')
       const servicesResponse = await GET(servicesRequest)
 
       expect(servicesResponse.status).toBe(200)
       const servicesContent = await servicesResponse.text()
       expect(servicesContent).toContain('# Services Overview')
-      expect(servicesContent).toContain('https://www.next-llms-txt.com/services')
+      expect(servicesContent).toContain('https://www.next-llms-txt.com/services.html')
     })
 
     it('should handle pages with metadata fallback', async () => {
@@ -80,7 +79,7 @@ describe('complete llms.txt system integration', () => {
         },
       })
 
-      const request = new NextRequest('https://www.next-llms-txt.com/services/no-export.html.md')
+      const request = new NextRequest('https://www.next-llms-txt.com/services/no-export.html')
       const response = await GET(request)
 
       expect(response.status).toBe(200)
@@ -98,7 +97,7 @@ describe('complete llms.txt system integration', () => {
         },
       })
 
-      const request = new NextRequest('https://www.next-llms-txt.com/services/no-export-at-all.html.md')
+      const request = new NextRequest('https://www.next-llms-txt.com/services/no-export-at-all.html')
       const response = await GET(request)
 
       expect(response.status).toBe(404)
