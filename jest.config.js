@@ -23,10 +23,10 @@ export default {
   coverageReporters: ['text', 'lcov', 'html', 'json-summary', 'json'],
   coverageThreshold: {
     global: {
-      branches: 50,
-      functions: 55,
-      lines: 60,
-      statements: 60,
+      branches: 55,
+      functions: 67,
+      lines: 70,
+      statements: 70,
     },
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
