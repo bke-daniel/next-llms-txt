@@ -4,7 +4,7 @@
     "access": "public"
   },
   "type": "module",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A Next.js middleware plugin to generate llms.txt files for AI documentation",
   "author": {
     "name": "Daniel Birke",
