@@ -131,13 +131,8 @@ export class LLMsTxtAutoDiscovery {
           const pageInfo = this.analyzePage(fullPath, normalizedRoute)
           pages.push(pageInfo)
         }
-        else if (entry.name.endsWith('.html.md')) {
-          const filename = entry.name.replace(/\.html\.md$/, '.html')
-          const route = path.posix.join(routePrefix, filename)
-          const normalizedRoute = this.normalizeRoute(route)
-          const pageInfo = this.analyzePage(fullPath, normalizedRoute)
-          pages.push(pageInfo)
-        }
+        // Note: .html.md files are NOT separate pages, they're alternative
+        // representations of existing page.tsx files, served via middleware
       }
     }
 
@@ -175,13 +170,8 @@ export class LLMsTxtAutoDiscovery {
           const pageInfo = this.analyzePage(fullPath, normalizedRoute)
           pages.push(pageInfo)
         }
-        else if (entry.name.endsWith('.html.md')) {
-          const filename = entry.name.replace(/\.html\.md$/, '.html')
-          const route = path.posix.join(routePrefix, filename)
-          const normalizedRoute = this.normalizeRoute(route)
-          const pageInfo = this.analyzePage(fullPath, normalizedRoute)
-          pages.push(pageInfo)
-        }
+        // Note: .html.md files are NOT separate pages, they're alternative
+        // representations of existing .tsx/.ts files, served via middleware
       }
     }
 
@@ -327,20 +317,8 @@ export class LLMsTxtAutoDiscovery {
   }
 
   private normalizeRoute(route: string): string {
-    // Convert .html.md to .html
-    if (route.endsWith('.html.md')) {
-      route = route.slice(0, -3)
-    }
-
-    // Convert /index.html to /
-    if (route.endsWith('/index.html')) {
-      route = route.slice(0, -11) || '/'
-    }
-
-    // Remove .html extension
-    if (route.endsWith('.html')) {
-      route = route.slice(0, -5)
-    }
+    // Note: .html.md files are no longer processed by discovery,
+    // they're handled by middleware at request time
 
     // Ensure route starts with /
     if (!route.startsWith('/')) {
