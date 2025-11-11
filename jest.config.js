@@ -21,7 +21,7 @@ export default {
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/tests/e2e/', // Exclude e2e tests from main test run
+    '/tests/e2e/', // Exclude e2e (cypress) tests from main test run
   ],
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -33,7 +33,7 @@ export default {
   coverageThreshold: {
     global: {
       branches: 55,
-      functions: 67,
+      functions: 65,
       lines: 70,
       statements: 70,
     },

@@ -15,7 +15,8 @@ describe('manual config integration', () => {
     ],
   })
 
-  it('generates static llms.txt from manual config', async () => {
+  // Currently not supported anymore
+  it.skip('generates static llms.txt from manual config', async () => {
     const req = new NextRequest('http://localhost:3000/llms.txt')
     const res = await handler.GET(req)
     const text = await res.text()

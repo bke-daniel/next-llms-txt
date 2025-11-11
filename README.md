@@ -1,7 +1,5 @@
 # next-llms-txt
 
-# next-llms-txt
-
 <p align="center">
   <a href="https://llmstxt.org">
     <img src="https://img.shields.io/badge/llms.txt-compatible-green" alt="llms.txt compatible" />
@@ -26,6 +24,8 @@
 <p align="center">
   <strong>The complete Next.js toolkit for generating LLM-optimized documentation.</strong>
 </p>
+
+<p style="color: red">This is WIP progress, but it's working as expected already. Help is highly appreciated.</p>
 
 <p align="center">
   Automatically generate <a href="https://llmstxt.org">llms.txt</a> files to make your website more accessible to Large Language Models like ChatGPT, Claude, and Gemini.
@@ -68,7 +68,7 @@ Understanding these concepts will help you get the most out of `next-llms-txt`.
 
 ### 1. Auto-Discovery
 
-The most powerful feature of `next-llms-txt`. When enabled, the library scans your `src/app` and `src/pages` directories to find all discoverable pages. It then builds a complete `llms.txt` file based on the content it finds.
+The most powerful feature of `next-llms-txt`. When enabled, the library scans your `src/app` or `src/pages` directories to find all discoverable pages. It then builds a complete `llms.txt` file based on the content it finds.
 
 ### 2. Content Sources
 
@@ -114,31 +114,34 @@ Get up and running in 30 seconds.
     npm install next-llms-txt
     ```
 
-2. **Add middleware-first integration in `src/middleware.ts`:**
+2. **Add middleware-first integration in `src/proxy.ts`:**
 
     ```typescript
     // src/middleware.ts
-    import { NextResponse } from 'next/server';
-    import type { NextRequest } from 'next/server';
-    import { createLLmsTxt } from 'next-llms-txt';
+    import type { NextRequest } from 'next/server'
+    import { NextResponse } from 'next/server'
+    import { createLLmsTxt } from '@/code-version'
 
     const { GET: handleLLmsTxt } = createLLmsTxt({
+      baseUrl: 'http://localhost:3000',
       autoDiscovery: {
-        baseUrl: process.env.VERCEL_URL || 'http://localhost:3000',
+        baseUrl: 'http://localhost:3000',
+        appDir: 'app', // must be set in our case because there's no src dir
       },
-    });
+    })
 
-    export async function middleware(request: NextRequest) {
-      const { pathname } = request.nextUrl;
+    export default async function middleware(request: NextRequest) {
+      const { pathname } = request.nextUrl
       if (pathname === '/llms.txt' || pathname.endsWith('.html.md')) {
-        return await handleLLmsTxt(request);
+        return await handleLLmsTxt(request)
       }
-      return NextResponse.next();
+      return NextResponse.next()
     }
 
     export const config = {
       matcher: ['/llms.txt', '/:path*.html.md'],
-    };
+    }
+
     ```
 
 3. **Add content sources to your pages:**
@@ -158,21 +161,21 @@ Get up and running in 30 seconds.
     }
     ```
 
-4. **Provide raw markdown for LLMs (optional):**
+5. **Add llms.txt to your app folder:**
 
-    Add `.html.md` files next to your pages for clean text delivery:
+    ```typescript
+    // src/app/llms.txt/route.ts
+    import { createLLmsTxt } from '@/code-version'
+
+    export const { GET } = createLLmsTxt({
+      title: 'Next.js next-llms-txt is awesome!',
+      // Enable auto-discovery
+      autoDiscovery: {
+        baseUrl: 'https://example.com', // Required for generating absolute URLs
+      },
+    })
 
     ```
-    /src/app/services/page.html.md
-    ```
-
-5. **Run tests and check coverage:**
-
-    ```bash
-    npm test -- --coverage
-    ```
-
-    All logic is covered by a comprehensive test suite. Coverage thresholds are enforced in CI.
 
 6. **Start your development server** and visit `http://localhost:3000/llms.txt`.
 
@@ -195,6 +198,7 @@ bun add next-llms-txt
 ## Guides
 
 Follow these guides to implement `next-llms-txt` in your project.
+<p style="color: red;">Everything below here is deprecated and needs to be updated.</p>
 
 ### 1. Basic Manual Setup
 

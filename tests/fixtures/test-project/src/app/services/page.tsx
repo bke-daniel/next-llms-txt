@@ -6,5 +6,5 @@ export const llmstxt: LLMsTxtConfig = {
 }
 
 export default function ServicesPage() {
-  return 'Services Overview'
+  return <h1>Services Overview</h1>
 }
