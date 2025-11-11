@@ -25,7 +25,7 @@
   <strong>The complete Next.js toolkit for generating LLM-optimized documentation.</strong>
 </p>
 
-<p style="color: red">This is WIP progress, but it's working as expected already. Help is highly appreciated.</p>
+<p style="color: red">This is package is WIP, but it's working as expected already. Help is highly appreciated.</p>
 
 <p align="center">
   Automatically generate <a href="https://llmstxt.org">llms.txt</a> files to make your website more accessible to Large Language Models like ChatGPT, Claude, and Gemini.
