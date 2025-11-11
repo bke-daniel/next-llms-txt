@@ -4,7 +4,7 @@
     "access": "public"
   },
   "type": "module",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A Next.js middleware plugin to generate llms.txt files for AI documentation",
   "author": {
     "name": "Daniel Birke",
@@ -64,12 +64,15 @@
     "react-dom": "^19.2.0",
     "typescript": "^5.9.3"
   },
-  "devDependencies": {
-    "@antfu/eslint-config": "^6.2.0",
+  "dependencies": {
     "@babel/generator": "^7.28.5",
     "@babel/parser": "^7.28.5",
     "@babel/traverse": "^7.28.5",
     "@babel/types": "^7.28.5",
+    "debug": "^4.4.3"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^6.2.0",
     "@swc/core": "^1.15.1",
     "@types/jest": "^29.5.14",
     "@types/node": "^24.10.0",
