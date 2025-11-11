@@ -1,11 +1,11 @@
 import type { NextRequest } from 'next/server'
-import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types'
+import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types.js'
 import { NextResponse } from 'next/server'
-import createMarkdownResponse from './create-markdown-response'
-import { LLMsTxtAutoDiscovery } from './discovery'
-import { generateLLMsTxt } from './generator'
-import { getAutoDiscoveryConfig } from './get-auto-discovery-config'
-import normalizePath from './normalize-path'
+import createMarkdownResponse from './create-markdown-response.js'
+import { LLMsTxtAutoDiscovery } from './discovery.js'
+import { generateLLMsTxt } from './generator.js'
+import { getAutoDiscoveryConfig } from './get-auto-discovery-config.js'
+import normalizePath from './normalize-path.js'
 
 /**
  * Handles requests for per-page *.html.md files.

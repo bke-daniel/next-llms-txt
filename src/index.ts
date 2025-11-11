@@ -26,10 +26,10 @@
  * ```
  */
 
-export { LLMsTxtAutoDiscovery } from './discovery'
-export type { PageInfo } from './discovery'
-export { generateLLMsTxt } from './generator'
-export { createLLmsTxt } from './handler'
+export { LLMsTxtAutoDiscovery } from './discovery.js'
+export type { PageInfo } from './discovery.js'
+export { generateLLMsTxt } from './generator.js'
+export { createLLmsTxt } from './handler.js'
 
 export type {
   AutoDiscoveryConfig,
@@ -37,4 +37,4 @@ export type {
   LLMsTxtHandlerConfig,
   LLMsTxtItem,
   LLMsTxtSection,
-} from './types'
+} from './types.js'

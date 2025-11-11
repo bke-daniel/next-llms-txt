@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server'
-import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types'
+import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types.js'
 import { NextResponse } from 'next/server'
-import handlePageRequest from './handle-page-request'
-import handleSiteRequest from './handle-site-request'
-import validateConfig from './validate-config'
+import handlePageRequest from './handle-page-request.js'
+import handleSiteRequest from './handle-site-request.js'
+import validateConfig from './validate-config.js'
 
 /**
  * Creates a handler for generating llms.txt files in Next.js middleware.

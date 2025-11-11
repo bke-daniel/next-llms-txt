@@ -1,4 +1,4 @@
-import type { AutoDiscoveryConfig, LLMsTxtConfig } from './types'
+import type { AutoDiscoveryConfig, LLMsTxtConfig } from './types.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'

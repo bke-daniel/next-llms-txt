@@ -1,4 +1,4 @@
-import type { PageInfo } from './discovery'
+import type { PageInfo } from './discovery.js'
 
 export type { PageInfo }
 

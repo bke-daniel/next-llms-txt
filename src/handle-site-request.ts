@@ -1,9 +1,9 @@
 import type { NextRequest, NextResponse } from 'next/server'
-import type { LLMsTxtHandlerConfig } from './types'
-import createMarkdownResponse from './create-markdown-response'
-import { LLMsTxtAutoDiscovery } from './discovery'
-import { generateLLMsTxt } from './generator'
-import { getAutoDiscoveryConfig } from './get-auto-discovery-config'
+import type { LLMsTxtHandlerConfig } from './types.js'
+import createMarkdownResponse from './create-markdown-response.js'
+import { LLMsTxtAutoDiscovery } from './discovery.js'
+import { generateLLMsTxt } from './generator.js'
+import { getAutoDiscoveryConfig } from './get-auto-discovery-config.js'
 
 /**
  * Handles requests for the site-wide llms.txt file.

@@ -1,4 +1,4 @@
-import type { AutoDiscoveryConfig, LLMsTxtHandlerConfig } from './types'
+import type { AutoDiscoveryConfig, LLMsTxtHandlerConfig } from './types.js'
 
 export function getAutoDiscoveryConfig(handlerConfig: LLMsTxtHandlerConfig): AutoDiscoveryConfig {
   if (typeof handlerConfig.autoDiscovery === 'object') {

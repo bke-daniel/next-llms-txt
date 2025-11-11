@@ -1,7 +1,19 @@
 /** @type {import('jest').Config} */
 export default {
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
+  extensionsToTreatAsEsm: ['.ts'],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+  transform: {
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        useESM: true,
+      },
+    ],
+  },
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: [
     '**/__tests__/**/*.ts',
@@ -11,9 +23,6 @@ export default {
     '/node_modules/',
     '/tests/e2e/', // Exclude e2e tests from main test run
   ],
-  transform: {
-    '^.+\\.ts$': 'ts-jest',
-  },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',

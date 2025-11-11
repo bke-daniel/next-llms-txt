@@ -1,4 +1,4 @@
-import type { LLMsTxtConfig, PageInfo } from './types'
+import type { LLMsTxtConfig, PageInfo } from './types.js'
 
 /**
  * Generates llms.txt content following the llmstxt.org specification

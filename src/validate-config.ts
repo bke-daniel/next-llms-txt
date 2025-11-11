@@ -1,4 +1,4 @@
-import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types'
+import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types.js'
 // TODO Create tests for this
 
 /**

@@ -1,5 +1,5 @@
-import type { LLMsTxtHandlerConfig } from './types'
-import { createLLmsTxt } from './handler'
+import type { LLMsTxtHandlerConfig } from './types.js'
+import { createLLmsTxt } from './handler.js'
 
 /**
  * Per-page .html.md handler (for dynamic API routes)
