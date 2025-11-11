@@ -4,7 +4,7 @@
     "access": "public"
   },
   "type": "module",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A Next.js middleware plugin to generate llms.txt files for AI documentation",
   "author": {
     "name": "Daniel Birke",
@@ -41,8 +41,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --target es2022",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --target es2022",
+    "build": "tsup src/index.ts",
+    "dev": "rm -rf dist && tsup src/index.ts --watch",
     "prepublishOnly": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch",

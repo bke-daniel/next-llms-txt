@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "jsx": "react",
-    "lib": ["ES2020"],
-    "rootDir": "./src",
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -17,6 +17,11 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
