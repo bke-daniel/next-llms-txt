@@ -1,4 +1,3 @@
-// app/llms.txt/route.ts
 import { createLLmsTxt } from '@/code-version'
 
 export const { GET } = createLLmsTxt({

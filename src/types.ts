@@ -86,7 +86,7 @@ export interface LLMsTxtHandlerConfig {
   /**
    * Default configuration to use if no page-specific config is found
    */
-  defaultConfig?: LLMsTxtConfig
+  // defaultConfig?: LLMsTxtConfig
 
   /**
    * Custom generator function

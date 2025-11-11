@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types.js'
+import type { LLMsTxtHandlerConfig } from './types.js'
 import { NextResponse } from 'next/server'
 import handlePageRequest from './handle-page-request.js'
 import handleSiteRequest from './handle-site-request.js'
@@ -33,7 +33,7 @@ import validateConfig from './validate-config.js'
  * ```
  */
 export function createLLmsTxt(
-  config: LLMsTxtConfig | LLMsTxtHandlerConfig,
+  config: LLMsTxtHandlerConfig,
 ): {
   GET: (request: NextRequest) => Promise<NextResponse>
 } {
