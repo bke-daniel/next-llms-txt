@@ -78,6 +78,6 @@ jobs:
       - name: Check build artifacts
         run: |
           ls -la dist/
-          test -f dist/index.js
+          test -f dist/index.mjs.map
           test -f dist/index.mjs
           test -f dist/index.d.ts
