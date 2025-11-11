@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { createLLmsTxt } from '../../src/handler'
+import createMockRequest from '../create-mock-request'
 
 describe('middleware integration', () => {
   const { GET: handleLLmsTxt } = createLLmsTxt({
@@ -9,16 +10,6 @@ describe('middleware integration', () => {
       description: 'Test site description',
     },
   })
-
-  function createMockRequest(pathname: string): NextRequest {
-    const url = `http://localhost:3000${pathname}`
-    return {
-      url,
-      nextUrl: {
-        pathname,
-      },
-    } as NextRequest
-  }
 
   describe('path interception', () => {
     it('should intercept /llms.txt requests', async () => {

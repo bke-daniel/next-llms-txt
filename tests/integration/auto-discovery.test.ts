@@ -1,9 +1,9 @@
 import path from 'node:path'
 import { NextRequest } from 'next/server'
-import { createEnhancedLLMsTxtHandlers } from '../../src/handler'
+import { createLLmsTxt } from '../../src/handler'
 
 describe('auto-discovery integration', () => {
-  const handler = createEnhancedLLMsTxtHandlers({
+  const handler = createLLmsTxt({
     title: 'Test Site',
     description: 'Auto-discovery test',
     autoDiscovery: {

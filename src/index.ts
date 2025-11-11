@@ -29,13 +29,8 @@
 export { LLMsTxtAutoDiscovery } from './discovery'
 export type { PageInfo } from './discovery'
 export { generateLLMsTxt } from './generator'
-export { createEnhancedLLMsTxtHandlers, createLLMsTxtHandlers, createPageLLMsTxtHandlers } from './handler'
-// Auto-discovery class
-// Types
-// Markdown generator
-// Core handler for manual config
-// Enhanced handler for auto-discovery
-// Per-page .html.md handler
+export { createLLmsTxt } from './handler'
+
 export type {
   AutoDiscoveryConfig,
   LLMsTxtConfig,

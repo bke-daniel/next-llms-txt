@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
-import { createLLMsTxtHandlers } from '../../src/handler'
+import { createLLmsTxt } from '../../src/handler'
 
 describe('manual config integration', () => {
-  const handler = createLLMsTxtHandlers({
+  const handler = createLLmsTxt({
     title: 'Manual Site',
     description: 'Manual config test',
     sections: [

@@ -1,18 +1,8 @@
-import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { createLLmsTxt } from '../../src/handler'
+import createMockRequest from '../create-mock-request'
 
 describe('route-to-file mapping', () => {
-  function createMockRequest(pathname: string): NextRequest {
-    const url = `http://localhost:3000${pathname}`
-    return {
-      url,
-      nextUrl: {
-        pathname,
-      },
-    } as NextRequest
-  }
-
   describe('page.tsx files', () => {
     it('should successfully return content for /services.html.md', async () => {
       const { GET: handler } = createLLmsTxt({

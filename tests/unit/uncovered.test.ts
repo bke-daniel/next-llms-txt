@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
-import { getAutoDiscoveryConfig, normalizePath } from '../../src/handler'
+import { getAutoDiscoveryConfig } from '../../src/get-auto-discovery-config'
+import normalizePath from '../../src/normalize-path'
 
 describe('uncovered logic tests', () => {
   it('merges config in constructor', () => {

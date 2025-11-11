@@ -1,22 +1,12 @@
-import type { NextRequest } from 'next/server'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
 import { createLLmsTxt } from '../../src/handler'
+import createMockRequest from '../create-mock-request'
 
 describe('configuration scenarios - group 4: missing configuration handling', () => {
   const baseConfig = {
     baseUrl: 'http://localhost:3000',
     appDir: './tests/fixtures/test-project/src/app',
     rootDir: process.cwd(),
-  }
-
-  function createMockRequest(pathname: string): NextRequest {
-    const url = `http://localhost:3000${pathname}`
-    return {
-      url,
-      nextUrl: {
-        pathname,
-      },
-    } as NextRequest
   }
 
   describe('pages without config', () => {
