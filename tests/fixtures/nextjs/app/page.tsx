@@ -1,0 +1,12 @@
+export default function Page() {
+  return (
+    <>
+      <h1>next-llms-txt test-server</h1>
+      <ul>
+        <li><a href="/all-exports/">All Exports</a></li>
+        <li><a href="/metadata-only/">Metadata Only</a></li>
+        <li><a href="/no-exports/">No Export at all</a></li>
+      </ul>
+    </>
+  )
+}

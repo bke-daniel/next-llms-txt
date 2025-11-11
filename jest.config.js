@@ -21,7 +21,7 @@ export default {
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/tests/e2e/', // Exclude e2e tests from main test run
+    '/tests/e2e/', // Exclude e2e (cypress) tests from main test run
   ],
   collectCoverageFrom: [
     'src/**/*.ts',

@@ -26,9 +26,9 @@
  * ```
  */
 
-export { LLMsTxtAutoDiscovery } from './discovery.js'
+// export { LLMsTxtAutoDiscovery } from './discovery.js'
 export type { PageInfo } from './discovery.js'
-export { generateLLMsTxt } from './generator.js'
+// export { generateLLMsTxt } from './generator.js'
 export { createLLmsTxt } from './handler.js'
 
 export type {

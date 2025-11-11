@@ -26,7 +26,8 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "cypress.d.ts"
   ],
   "exclude": [
     "node_modules",
