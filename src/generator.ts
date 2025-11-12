@@ -20,9 +20,9 @@ export function generateLLMsTxt(
   config: LLMsTxtConfig,
   pages: PageInfo[] = [],
 ): string {
-  const header = [`# ${config.title}`]
+  const header = [`# ${config.title.trimStart()}`]
   if (config.description) {
-    header.push(`> ${config.description}`)
+    header.push(`> ${config.description.trimStart()}`)
   }
 
   const contentBlocks: string[] = []
