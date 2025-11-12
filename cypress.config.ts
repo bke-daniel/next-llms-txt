@@ -1,7 +1,9 @@
 import { defineConfig } from 'cypress'
 
 export default defineConfig({
+  // currently not needed
   component: {
+
     devServer: {
       framework: 'next',
       bundler: 'webpack',
@@ -11,5 +13,6 @@ export default defineConfig({
   e2e: {
     specPattern: 'tests/e2e/**/*.cy.{js,jsx,ts,tsx}',
     baseUrl: 'http://localhost:3000',
+    screenshotOnRunFailure: false,
   },
 })
