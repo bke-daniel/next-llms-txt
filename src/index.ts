@@ -30,6 +30,7 @@
 export type { PageInfo } from './discovery.js'
 // export { generateLLMsTxt } from './generator.js'
 export { createLLmsTxt } from './handler.js'
+export { isLLMsTxtPath, LLMs_TXT_MATCHER } from './llms-txt-matcher.js'
 
 export type {
   AutoDiscoveryConfig,
