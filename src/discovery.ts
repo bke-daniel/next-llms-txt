@@ -252,59 +252,6 @@ export class LLMsTxtAutoDiscovery {
   }
 
   /**
-   * Extracts llmstxt configuration from page content
-   */
-  private extractLLMsTxtConfig(content: string, route: string): LLMsTxtConfig {
-    // This method is now replaced by AST parsing in analyzePage
-    return this.generateMockConfig(route)
-  }
-
-  /**
-   * Extracts configuration from Next.js metadata
-   */
-  private extractMetadataConfig(content: string, route: string): LLMsTxtConfig {
-    // This method is now replaced by AST parsing in analyzePage
-    return this.generateMockConfig(route)
-  }
-
-  /**
-   * Generates mock configuration based on route
-   */
-  private generateMockConfig(route: string): LLMsTxtConfig {
-    const configs: Record<string, LLMsTxtConfig> = {
-      '/': {
-        title: 'Next.js LLMs.txt Demo',
-        description: 'Homepage demonstrating automatic llms.txt generation',
-      },
-      '/services': {
-        title: 'Services Overview',
-        description: 'Complete overview of all available services',
-      },
-      '/services/a': {
-        title: 'Service A',
-        description: 'Advanced AI consulting and implementation',
-      },
-      '/services/b': {
-        title: 'Service B',
-        description: 'Machine learning model development and deployment',
-      },
-      '/services/c': {
-        title: 'Service C',
-        description: 'Data analytics and business intelligence solutions',
-      },
-      '/services/no-export': {
-        title: 'Service Without Export',
-        description: 'This service uses metadata fallback for llms.txt generation',
-      },
-    }
-
-    return configs[route] || {
-      title: this.generatePageTitle(route),
-      description: `Auto-generated page for ${route}`,
-    }
-  }
-
-  /**
    * Utility methods
    */
   private directoryExists(dir: string): boolean {
