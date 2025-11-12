@@ -12,6 +12,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
+    "types": [
+      "cypress"
+    ],
     "strict": true,
     "strictNullChecks": true,
     "declaration": true,
@@ -26,8 +29,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*",
-    "cypress.d.ts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
