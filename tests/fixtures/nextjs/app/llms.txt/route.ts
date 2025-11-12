@@ -1,9 +1,4 @@
 import { createLLmsTxt } from '@/code-version'
+import llmsTxtConfig from '../../llms-txt-config.js'
 
-export const { GET } = createLLmsTxt({
-  title: 'Next.js App Directory Fixture',
-  // Enable auto-discovery
-  autoDiscovery: {
-    baseUrl: 'https://example.com', // Required for generating absolute URLs
-  },
-})
+export const { GET } = createLLmsTxt(llmsTxtConfig)

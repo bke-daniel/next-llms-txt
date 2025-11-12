@@ -1,12 +1,9 @@
-export const metadata = {
-  title: 'Service Without Export',
-  description: 'This service uses metadata fallback for llms.txt generation',
-}
+export { metadata } from '@/fixtures/static-next-exports.js'
 
 export default function MetadataOnlyPage() {
   return (
     <>
-      <h1>Nested page without Export</h1>
+      <h1>Page without llmstxt export</h1>
       <p>But with static metadata</p>
     </>
   )
