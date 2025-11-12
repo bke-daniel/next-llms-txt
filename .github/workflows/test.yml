@@ -35,6 +35,43 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage -- --testPathIgnorePatterns=e2e
 
+      - name: Upload coverage to Codecov
+        if: matrix.node-version == 22
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info,./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-${{ matrix.node-version }}
+          fail_ci_if_error: false
+
+      - name: Upload coverage artifact
+        if: matrix.node-version == 22
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+      - name: Normalize coverage summary
+        if: matrix.node-version == 22
+        run: |
+          if [ -f ./coverage/coverage-summary.json ]; then
+            node ./scripts/normalize-coverage.js || echo "Normalization failed, continuing"
+          else
+            echo "No coverage summary to normalize"
+          fi
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request' && matrix.node-version == 22
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          coverage-file: ./coverage/coverage-summary.json
+          base-coverage-file: ./coverage/coverage-summary.json
+          annotations: all
+          package-manager: npm
+          skip-step: all
+
   e2e-test:
     runs-on: ubuntu-latest
     needs: test
