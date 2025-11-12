@@ -96,8 +96,8 @@ export class LLMsTxtAutoDiscovery {
     }
 
     return {
-      title: 'Next.js LLMs.txt Demo Site',
-      description: 'Comprehensive llms.txt generation with automatic page discovery',
+      title: this.config.pageTitle,
+      description: this.config.pageDescription,
       sections: Object.entries(sections)
         .filter(([, items]) => items.length > 0)
         .map(([title, items]) => ({ title, items })),
