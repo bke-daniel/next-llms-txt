@@ -114,13 +114,13 @@ Get up and running in 30 seconds.
     npm install next-llms-txt
     ```
 
-2. **Add middleware-first integration in `src/proxy.ts`:**
+2. **Add proxy-first integration in `src/proxy.ts`:**
 
     ```typescript
-    // src/middleware.ts
+    // src/proxy.ts
     import type { NextRequest } from 'next/server'
     import { NextResponse } from 'next/server'
-    import { createLLmsTxt } from '@/code-version'
+    import { createLLmsTxt, isLLMsTxtPath, LLMs_TXT_MATCHER } from 'next-llms-txt'
 
     const { GET: handleLLmsTxt } = createLLmsTxt({
       baseUrl: 'http://localhost:3000',
@@ -130,18 +130,17 @@ Get up and running in 30 seconds.
       },
     })
 
-    export default async function middleware(request: NextRequest) {
+    export default async function proxy(request: NextRequest) {
       const { pathname } = request.nextUrl
-      if (pathname === '/llms.txt' || pathname.endsWith('.html.md')) {
-        return await handleLLmsTxt(request)
-      }
+      if (isLLMsTxtPath(pathname)) return await handleLLmsTxt(request)
       return NextResponse.next()
     }
 
     export const config = {
-      matcher: ['/llms.txt', '/:path*.html.md'],
+      matcher: LLMs_TXT_MATCHER,
+      // or with existing matchers
+      matcher: ['/about/:path*', ...LLMs_TXT_MATCHER]
     }
-
     ```
 
 3. **Add content sources to your pages:**
@@ -873,6 +872,31 @@ const { GET } = createLLMsTxtHandlers({
 ```
 
 ## Examples
+
+### Matcher Usage Examples
+
+#### Extending the matcher
+
+```typescript
+import { LLMs_TXT_MATCHER } from 'next-llms-txt'
+
+export const EXTENDED_MATCHER = [
+  ...LLMs_TXT_MATCHER,
+  '/custom-endpoint',
+  '/api/llms-txt',
+]
+```
+
+#### Simple matcher function usage
+
+```typescript
+import { isLLMsTxtPath } from 'next-llms-txt'
+
+const path = '/docs/intro.html.md'
+if (isLLMsTxtPath(path)) {
+  // Handle llms.txt or .html.md request
+}
+```
 
 ### Blog Site Example
 
