@@ -2,6 +2,14 @@ import type { LLMsTxtHandlerConfig } from '../../src/types'
 import { getAutoDiscoveryConfig } from '../../src/get-auto-discovery-config'
 
 describe('getAutoDiscoveryConfig', () => {
+  it('handles autoDiscovery as boolean', () => {
+    const config = { autoDiscovery: true, baseUrl: 'https://baz.com' }
+    expect(getAutoDiscoveryConfig(config as any)).toEqual({ baseUrl: 'https://baz.com' })
+  })
+
+  it('throws with malformed config', () => {
+    expect(() => getAutoDiscoveryConfig({ autoDiscovery: 123 } as any)).toThrow()
+  })
   it('returns autoDiscovery object if present', () => {
     const config: LLMsTxtHandlerConfig = { autoDiscovery: { baseUrl: 'https://foo.com' } }
     expect(getAutoDiscoveryConfig(config as any)).toEqual({ baseUrl: 'https://foo.com' })

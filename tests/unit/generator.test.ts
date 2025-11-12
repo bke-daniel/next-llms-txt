@@ -2,6 +2,26 @@ import type { LLMsTxtConfig } from '../../src/types'
 import { generateLLMsTxt } from '../../src/generator'
 
 describe('generateLLMsTxt', () => {
+  it('handles empty config', () => {
+    const result = generateLLMsTxt({ title: '' })
+    expect(result).toContain('# ')
+  })
+
+  it('handles missing sections and optional', () => {
+    const config = { title: 'Demo' }
+    const result = generateLLMsTxt(config)
+    expect(result).toContain('# Demo')
+    expect(result).not.toContain('## Section')
+    expect(result).not.toContain('## Optional')
+  })
+
+  it('handles invalid input types gracefully', () => {
+    // @ts-expect-error Testing null input for error handling
+    expect(() => generateLLMsTxt(null)).toThrow()
+    // @ts-expect-error Testing undefined input for error handling
+    expect(() => generateLLMsTxt(undefined)).toThrow()
+  })
+
   it('generates markdown with title and description', () => {
     const config: LLMsTxtConfig = {
       title: 'Demo Title',
