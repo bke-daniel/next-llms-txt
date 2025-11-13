@@ -43,7 +43,7 @@ export class LLMsTxtAutoDiscovery {
     }
 
     // Load TypeScript path aliases from tsconfig.json
-    this.loadTsConfigPaths()
+    // this.loadTsConfigPaths()
   }
 
   /**
@@ -395,11 +395,7 @@ export class LLMsTxtAutoDiscovery {
     node: t.Expression | null | undefined,
     ast: t.File,
     currentFilePath: string,
-  ): any {
-    if (this.config.showWarnings) {
-      console.log('Extracting object expression from node:', node)
-    }
-
+  ) {
     // Case 1: Direct object expression
     if (t.isObjectExpression(node)) {
       const obj: { [key: string]: any } = {}

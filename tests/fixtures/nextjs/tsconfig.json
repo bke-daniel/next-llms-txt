@@ -20,7 +20,7 @@
         "!../nextjs/*"
       ],
       "@/build-version": [
-        "../../../dist/index.js"
+        "../../../dist/index.mjs"
       ],
       "@/code-version": [
         "../../../src/index.ts"

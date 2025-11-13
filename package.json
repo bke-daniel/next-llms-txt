@@ -4,7 +4,7 @@
     "access": "public"
   },
   "type": "module",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "workspaces": [
     "tests/fixtures/nextjs"
   ],
@@ -53,9 +53,9 @@
     "dev": "rm -rf dist && tsup src/index.ts --watch",
     "prepublishOnly": "npm run build",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --coverageReporters=text-lcov --coverageReporters=json-summary --coverageReporters=lcov --coverageReporters=html",
-    "test:coverage:ci": "jest --coverage --coverageReporters=json-summary --coverageReporters=lcov",
+    "test:watch": "npx jest --clearCache && jest --watch",
+    "test:coverage": "npx jest --clearCache && jest --coverage --coverageReporters=text-lcov --coverageReporters=json-summary --coverageReporters=lcov --coverageReporters=html",
+    "test:coverage:ci": "npx jest --clearCache && jest --coverage --coverageReporters=json-summary --coverageReporters=lcov",
     "test:e2e": "concurrently -k -n server,cypress -c blue,green \"npm run -w nextjs-e2e-test-server dev\" \"npm run cypress:run\"",
     "server:dev": "npm run -w nextjs-e2e-test-server dev",
     "lint": "eslint .",
