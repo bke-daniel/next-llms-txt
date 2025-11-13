@@ -96,6 +96,7 @@ export interface LLMsTxtHandlerConfig {
   /**
    * Enable automatic page discovery
    */
+  // TODO make this boolean as well
   autoDiscovery?: AutoDiscoveryConfig
 
   /**

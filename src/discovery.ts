@@ -43,7 +43,7 @@ export class LLMsTxtAutoDiscovery {
     }
 
     // Load TypeScript path aliases from tsconfig.json
-    // this.loadTsConfigPaths()
+    this.loadTsConfigPaths()
   }
 
   /**
@@ -135,7 +135,7 @@ export class LLMsTxtAutoDiscovery {
    */
   private loadTsConfigPaths(): void {
     try {
-      const tsconfigPath = path.join(this.config.autoDiscovery?.rootDir || process.cwd(), 'tsconfig.json')
+      const tsconfigPath = path.join(this.config.autoDiscovery?.rootDir || process.env.PWD || '.', 'tsconfig.json')
       if (fs.existsSync(tsconfigPath)) {
         const tsconfigContent = fs.readFileSync(tsconfigPath, 'utf-8')
 
@@ -180,7 +180,7 @@ export class LLMsTxtAutoDiscovery {
   async discoverPages(): Promise<PageInfo[]> {
     const pages: PageInfo[] = []
     // Discover App Router pages
-    const appDir = path.join(this.config.autoDiscovery!.rootDir!, this.config.autoDiscovery!.appDir!)
+    const appDir = path.join(this.config.autoDiscovery!.rootDir || '', this.config.autoDiscovery!.appDir || '')
     if (this.directoryExists(appDir)) {
       const appPages = await this.discoverAppPages(appDir)
       pages.push(...appPages)

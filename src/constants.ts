@@ -10,7 +10,7 @@ export const DEFAULT_CONFIG = {
   autoDiscovery: {
     appDir: 'src/app',
     pagesDir: 'src/pages',
-    rootDir: process.cwd(),
+    rootDir: process.env.PWD,
   },
   // TODO get this from next.config.XX if possible
   trailingSlash: true,
