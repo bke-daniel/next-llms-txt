@@ -1,3 +1,8 @@
+export const metadata = {
+  title: 'next-llms-txt test-server',
+  description: 'This is a test server for next-llms-txt\'s e2e tests',
+}
+
 export default function Page() {
   return (
     <>

@@ -11,6 +11,14 @@
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "paths": {
+      "@/test/constants": [
+        "./tests/constants.ts"
+      ],
+      "@/src/*": [
+        "./src/*"
+      ]
+    },
     "resolveJsonModule": true,
     "types": [
       "cypress"

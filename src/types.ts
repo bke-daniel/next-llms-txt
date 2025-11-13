@@ -86,22 +86,27 @@ export interface LLMsTxtHandlerConfig {
   /**
    * Default configuration to use if no page-specific config is found
    */
-  // defaultConfig?: LLMsTxtConfig
+  defaultConfig?: LLMsTxtConfig
 
   /**
    * Custom generator function
    */
-  generator?: (config: LLMsTxtConfig, pages?: PageInfo[]) => string
+  generator?: (config: LLMsTxtConfig, pages?: PageInfo[]) => string | undefined
 
   /**
    * Enable automatic page discovery
    */
-  autoDiscovery?: boolean | AutoDiscoveryConfig
+  autoDiscovery?: AutoDiscoveryConfig
 
   /**
    * Support trailing slash variations
    */
   trailingSlash?: boolean
+
+  /**
+   * Whether to show warnings during development
+   */
+  showWarnings?: boolean
 }
 
 /**
@@ -109,9 +114,13 @@ export interface LLMsTxtHandlerConfig {
  */
 export interface AutoDiscoveryConfig {
   /**
-   * Base URL for the application
+   * Will be used for the llms.txt
    */
-  baseUrl: string
+  // pageTitle: string
+  /**
+   * Will be used for the llms.txt
+   */
+  // pageDescription: string
 
   /**
    * App directory path (for App Router)
@@ -121,15 +130,10 @@ export interface AutoDiscoveryConfig {
   /**
    * Pages directory path (for Pages Router)
    */
-  pagesDir?: string
+  // pagesDir?: string
 
   /**
    * Project root directory
    */
   rootDir?: string
-
-  /**
-   * Whether to show warnings during development
-   */
-  showWarnings?: boolean
 }

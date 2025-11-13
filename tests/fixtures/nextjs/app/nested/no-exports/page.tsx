@@ -1,4 +1,4 @@
-export default function NoExportAtAllPage() {
+export default function NestedNoExportAtAllPage() {
   return (
     <>
       <h1>Nested page with no exports</h1>

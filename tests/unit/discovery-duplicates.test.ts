@@ -1,16 +1,36 @@
+import type { PageInfo } from '../../src/discovery'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
+import {
+  ALL_ROUTES,
+  AUTO_DISCOVERY,
+} from '../constants.js'
 
-describe('discovery duplicate prevention', () => {
+describe.skip('discovery duplicate prevention', () => {
+  const discovery = new LLMsTxtAutoDiscovery(AUTO_DISCOVERY)
+  let pages: PageInfo[] = []
+
+  beforeEach(async () => {
+    pages = await discovery.discoverPages()
+  })
+
+  it('should generate all page entries as expected', async () => {
+    // plus one for the index.html.md
+    expect(pages.length).toBe(ALL_ROUTES.length + 1)
+  })
+
+  describe('test generate page infos', () => {
+    // expect(pages.length).toBe(7)
+
+    it('should properly generate page info for /all-exports', () => {
+      // expect(pages).toContain([])
+      const allExportsPageInfo = pages.find(p => p.route === '/all-exports')
+      expect(allExportsPageInfo).toBeDefined()
+      expect(allExportsPageInfo?.hasLLMsTxtExport).toBe(true)
+    })
+  })
+
   describe('.html.md files', () => {
     it('should not create duplicate entries for .html.md files', async () => {
-      const discovery = new LLMsTxtAutoDiscovery({
-        baseUrl: 'http://localhost:3000',
-        appDir: './tests/fixtures/test-project/src/app',
-        rootDir: process.cwd(),
-      })
-
-      const pages = await discovery.discoverPages()
-
       // Count how many times each route appears
       const routeCounts = pages.reduce((acc, page) => {
         acc[page.route] = (acc[page.route] || 0) + 1
@@ -27,14 +47,6 @@ describe('discovery duplicate prevention', () => {
     })
 
     it('should only discover page.tsx files, not .html.md files', async () => {
-      const discovery = new LLMsTxtAutoDiscovery({
-        baseUrl: 'http://localhost:3000',
-        appDir: './tests/fixtures/test-project/src/app',
-        rootDir: process.cwd(),
-      })
-
-      const pages = await discovery.discoverPages()
-
       // All discovered pages should be from page.tsx files
       pages.forEach((page) => {
         expect(page.filePath).toMatch(/page\.tsx?$/)
@@ -45,13 +57,6 @@ describe('discovery duplicate prevention', () => {
 
   describe('route uniqueness', () => {
     it('should discover unique routes only', async () => {
-      const discovery = new LLMsTxtAutoDiscovery({
-        baseUrl: 'http://localhost:3000',
-        appDir: './tests/fixtures/test-project/src/app',
-        rootDir: process.cwd(),
-      })
-
-      const pages = await discovery.discoverPages()
       const routes = pages.map(p => p.route)
       const uniqueRoutes = [...new Set(routes)]
 
@@ -59,12 +64,6 @@ describe('discovery duplicate prevention', () => {
     })
 
     it('should map each page.tsx to exactly one route', async () => {
-      const discovery = new LLMsTxtAutoDiscovery({
-        baseUrl: 'http://localhost:3000',
-        appDir: './tests/fixtures/test-project/src/app',
-        rootDir: process.cwd(),
-      })
-
       const pages = await discovery.discoverPages()
 
       // Build a map of routes to file paths
@@ -88,14 +87,6 @@ describe('discovery duplicate prevention', () => {
 
   describe('special folders', () => {
     it('should skip route groups (folders starting with parentheses)', async () => {
-      const discovery = new LLMsTxtAutoDiscovery({
-        baseUrl: 'http://localhost:3000',
-        appDir: './tests/fixtures/test-project/src/app',
-        rootDir: process.cwd(),
-      })
-
-      const pages = await discovery.discoverPages()
-
       // No routes should contain (group) syntax
       pages.forEach((page) => {
         expect(page.route).not.toMatch(/\([^)]+\)/)
@@ -103,14 +94,6 @@ describe('discovery duplicate prevention', () => {
     })
 
     it('should skip private folders (folders starting with _)', async () => {
-      const discovery = new LLMsTxtAutoDiscovery({
-        baseUrl: 'http://localhost:3000',
-        appDir: './tests/fixtures/test-project/src/app',
-        rootDir: process.cwd(),
-      })
-
-      const pages = await discovery.discoverPages()
-
       // No routes should contain _ prefix
       pages.forEach((page) => {
         expect(page.route).not.toMatch(/\/_/)

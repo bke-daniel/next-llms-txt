@@ -1,11 +1,17 @@
 import type { NextRequest } from 'next/server'
 import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types.js'
 import { NextResponse } from 'next/server'
+import { PAGE_ERROR_NOTIFICATION } from './constants.js'
 import createMarkdownResponse from './create-markdown-response.js'
 import { LLMsTxtAutoDiscovery } from './discovery.js'
 import { generateLLMsTxt } from './generator.js'
-import { getAutoDiscoveryConfig } from './get-auto-discovery-config.js'
+// import { getAutoDiscoveryConfig } from './get-auto-discovery-config.js'
 import normalizePath from './normalize-path.js'
+
+const errorResponse = new NextResponse(
+  'Auto-discovery must be enabled for page-specific llms.txt files.',
+  { status: 400 },
+)
 
 /**
  * Handles requests for per-page *.html.md files.
@@ -15,15 +21,12 @@ export default async function handlePageRequest(
   handlerConfig: LLMsTxtHandlerConfig,
 ): Promise<NextResponse> {
   if (!handlerConfig.autoDiscovery) {
-    return new NextResponse(
-      'Auto-discovery must be enabled for page-specific llms.txt files.',
-      { status: 400 },
-    )
+    return errorResponse
   }
 
   const { pathname } = new URL(request.url)
-  const discoveryConfig = getAutoDiscoveryConfig(handlerConfig)
-  const discovery = new LLMsTxtAutoDiscovery(discoveryConfig)
+  // const discoveryConfig = getAutoDiscoveryConfig(handlerConfig)
+  const discovery = new LLMsTxtAutoDiscovery(handlerConfig)
   const pages = await discovery.discoverPages()
 
   // Strip .html.md extension to get the actual route
@@ -32,7 +35,7 @@ export default async function handlePageRequest(
   const matchingPage = pages.find(page => normalizePath(page.route) === requestedRoute)
 
   if (!matchingPage?.config) {
-    return new NextResponse('Page not found or no llms.txt configuration available.', { status: 404 })
+    return new NextResponse(PAGE_ERROR_NOTIFICATION, { status: 404 })
   }
 
   const pageConfig: LLMsTxtConfig = {
@@ -42,7 +45,7 @@ export default async function handlePageRequest(
         title: 'This Page',
         items: [{
           title: matchingPage.config.title,
-          url: `${discoveryConfig.baseUrl}${requestedRoute}`,
+          url: `${handlerConfig.baseUrl}${requestedRoute}`,
           description: matchingPage.config.description,
         }],
       },
@@ -53,5 +56,8 @@ export default async function handlePageRequest(
     ? handlerConfig.generator(pageConfig)
     : generateLLMsTxt(pageConfig)
 
+  if (!content) {
+    return errorResponse
+  }
   return createMarkdownResponse(content)
 }

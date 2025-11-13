@@ -1,9 +1,8 @@
-const paths = ['/all-exports', '/metadata-only', '/no-exports']
-const nestedPaths = paths.map(p => `/nested${p}`)
+import { nestedRoutes, routes } from '@test/constants'
 
 describe('test page accessibility', () => {
   describe('test actual routes', () => {
-    paths.forEach((path) => {
+    routes.forEach((path) => {
       it(`should be able to visit "${path}"`, () => {
         cy.visit(path)
         cy
@@ -12,7 +11,7 @@ describe('test page accessibility', () => {
       })
     })
 
-    nestedPaths.forEach((path) => {
+    nestedRoutes.forEach((path) => {
       it(`should be able to visit "${path}"`, () => {
         cy.visit(path)
         cy
@@ -23,7 +22,7 @@ describe('test page accessibility', () => {
   })
 
   describe('test md routes', () => {
-    paths.forEach((path) => {
+    routes.forEach((path) => {
       const mdPath = `${path}.html.md`
       it(`should be able to visit "${mdPath}"`, () => {
         // Start from the index page
@@ -37,7 +36,7 @@ describe('test page accessibility', () => {
   })
 
   describe.skip('test nested md routes', () => {
-    nestedPaths.forEach((path) => {
+    routes.forEach((path) => {
       const mdPath = `${path}.html.md`
       it(`should be able to visit "${mdPath}"`, () => {
         // Start from the index page

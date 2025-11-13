@@ -1,5 +1,7 @@
-export { metadata } from '@/fixtures/static-next-exports.js'
-
+export const metadata = {
+  title: 'This is the metadata export',
+  description: 'This shouldn\'t be used for generation when llmstxt export exist!',
+}
 export default function MetadataOnlyPage() {
   return (
     <>

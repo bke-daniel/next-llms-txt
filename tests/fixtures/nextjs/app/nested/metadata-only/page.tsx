@@ -1,9 +1,9 @@
 export const metadata = {
-  title: 'Service Without Export',
-  description: 'This service uses metadata fallback for llms.txt generation',
+  title: 'This is the metadata export',
+  description: 'This shouldn\'t be used for generation when llmstxt export exist!',
 }
 
-export default function MetadataOnlyPage() {
+export default function NestedMetadataOnlyPage() {
   return (
     <>
       <h1>Nested page without llmstxt export</h1>
