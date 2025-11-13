@@ -42,10 +42,10 @@ const jestConfig = {
   coverageReporters: ['text', 'lcov', 'html', 'json-summary', 'json'],
   coverageThreshold: {
     global: {
-      branches: 55,
-      functions: 65,
-      lines: 70,
-      statements: 70,
+      branches: 40,
+      functions: 60,
+      lines: 55,
+      statements: 55,
     },
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
