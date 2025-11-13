@@ -7,10 +7,10 @@ export const metadata = {
   description: 'This shouldn\'t be used for generation when llmstxt export exist!',
 }
 
-export default function AllExportsPage() {
+export default function NestedAllExportsPage() {
   return (
     <>
-      <h1>Page with all exports</h1>
+      <h1>Nested page with all exports</h1>
     </>
   )
 }

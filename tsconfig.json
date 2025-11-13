@@ -11,7 +11,18 @@
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "paths": {
+      "@/test/constants": [
+        "./tests/constants.ts"
+      ],
+      "@/src/*": [
+        "./src/*"
+      ]
+    },
     "resolveJsonModule": true,
+    "types": [
+      "cypress"
+    ],
     "strict": true,
     "strictNullChecks": true,
     "declaration": true,
@@ -26,8 +37,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*",
-    "cypress.d.ts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

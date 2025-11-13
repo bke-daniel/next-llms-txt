@@ -8,7 +8,7 @@ describe('auto-discovery integration', () => {
     description: 'Auto-discovery test',
     autoDiscovery: {
       rootDir: path.resolve(__dirname, '../tests/fixtures/test-project'),
-      appDir: 'src/app',
+      appDir: '/app',
       baseUrl: 'http://localhost:3000',
     },
   })

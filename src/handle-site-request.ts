@@ -3,7 +3,7 @@ import type { LLMsTxtHandlerConfig } from './types.js'
 import createMarkdownResponse from './create-markdown-response.js'
 import { LLMsTxtAutoDiscovery } from './discovery.js'
 import { generateLLMsTxt } from './generator.js'
-import { getAutoDiscoveryConfig } from './get-auto-discovery-config.js'
+// import { getAutoDiscoveryConfig } from './get-auto-discovery-config.js'
 
 /**
  * Handles requests for the site-wide llms.txt file.
@@ -16,8 +16,8 @@ export default async function handleSiteRequest(
   let pages = (handlerConfig as any).pages || []
 
   if (handlerConfig.autoDiscovery) {
-    const discoveryConfig = getAutoDiscoveryConfig(handlerConfig)
-    const discovery = new LLMsTxtAutoDiscovery(discoveryConfig)
+    // const discoveryConfig = getAutoDiscoveryConfig(handlerConfig)
+    const discovery = new LLMsTxtAutoDiscovery(handlerConfig)
     const discoveredPages = await discovery.discoverPages()
     pages = [...pages, ...discoveredPages]
 

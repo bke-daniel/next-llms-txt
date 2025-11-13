@@ -2,10 +2,11 @@ export const metadata = {
   title: 'This is the metadata export',
   description: 'This shouldn\'t be used for generation when llmstxt export exist!',
 }
-export default function MetadataOnlyPage() {
+
+export default function NestedMetadataOnlyPage() {
   return (
     <>
-      <h1>Page without llmstxt export</h1>
+      <h1>Nested page without llmstxt export</h1>
       <p>But with static metadata</p>
     </>
   )

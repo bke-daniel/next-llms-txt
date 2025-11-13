@@ -1,20 +1,14 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { createLLmsTxt } from '@/code-version'
+import { createLLmsTxt, isLLMsTxtPath } from '@/code-version'
+import llmsTxtConfig from './llms-txt-config.js'
 
-const { GET: handleLLmsTxt } = createLLmsTxt({
-  baseUrl: 'http://localhost:3000',
-  autoDiscovery: {
-    baseUrl: 'http://localhost:3000',
-    appDir: 'app', // must be set in our case because there's no src dir
-  },
-})
+const { GET: handleLLmsTxt } = createLLmsTxt(llmsTxtConfig)
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  if (pathname === '/llms.txt' || pathname.endsWith('.html.md')) {
+  if (isLLMsTxtPath(pathname))
     return await handleLLmsTxt(request)
-  }
   return NextResponse.next()
 }
 

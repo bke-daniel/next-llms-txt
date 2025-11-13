@@ -1,15 +1,11 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { createLLmsTxt } from '../../src/handler'
+import { LLMS_TXT_HANDLER_CONFIG } from '../constants'
 import createMockRequest from '../create-mock-request'
 
 describe('middleware integration', () => {
-  const { GET: handleLLmsTxt } = createLLmsTxt({
-    defaultConfig: {
-      title: 'Test Site',
-      description: 'Test site description',
-    },
-  })
+  const { GET: handleLLmsTxt } = createLLmsTxt(LLMS_TXT_HANDLER_CONFIG)
 
   describe('path interception', () => {
     it('should intercept /llms.txt requests', async () => {
@@ -22,19 +18,8 @@ describe('middleware integration', () => {
     })
 
     it('should intercept .html.md requests', async () => {
-      const { GET: handler } = createLLmsTxt({
-        defaultConfig: {
-          title: 'Test Site',
-          description: 'Test description',
-        },
-        autoDiscovery: {
-          baseUrl: 'http://localhost:3000',
-          appDir: './tests/fixtures/test-project/src/app',
-        },
-      })
-
-      const request = createMockRequest('/services.html.md')
-      const response = await handler(request)
+      const request = createMockRequest('/all-exports.html.md')
+      const response = await handleLLmsTxt(request)
 
       expect(response).toBeInstanceOf(NextResponse)
       // Should return either 200 (found) or 404 (not found), but not crash
@@ -42,19 +27,8 @@ describe('middleware integration', () => {
     })
 
     it('should handle nested paths with .html.md', async () => {
-      const { GET: handler } = createLLmsTxt({
-        defaultConfig: {
-          title: 'Test Site',
-          description: 'Test description',
-        },
-        autoDiscovery: {
-          baseUrl: 'http://localhost:3000',
-          appDir: './tests/fixtures/test-project/src/app',
-        },
-      })
-
-      const request = createMockRequest('/services/consulting.html.md')
-      const response = await handler(request)
+      const request = createMockRequest('/nested/all-exports.html.md')
+      const response = await handleLLmsTxt(request)
 
       expect(response).toBeInstanceOf(NextResponse)
       expect([200, 404]).toContain(response.status)
@@ -109,38 +83,16 @@ describe('middleware integration', () => {
 
   describe('path normalization', () => {
     it('should strip .html.md extension when matching routes', async () => {
-      const { GET: handler } = createLLmsTxt({
-        defaultConfig: {
-          title: 'Test Site',
-          description: 'Test description',
-        },
-        autoDiscovery: {
-          baseUrl: 'http://localhost:3000',
-          appDir: './tests/fixtures/test-project/src/app',
-        },
-      })
-
-      const request = createMockRequest('/services.html.md')
-      const response = await handler(request)
+      const request = createMockRequest('/all-exports.html.md')
+      const response = await handleLLmsTxt(request)
 
       // Should attempt to find /services route (not /services.html.md)
       expect(response).toBeInstanceOf(NextResponse)
     })
 
     it('should handle trailing slashes correctly', async () => {
-      const { GET: handler } = createLLmsTxt({
-        defaultConfig: {
-          title: 'Test Site',
-          description: 'Test description',
-        },
-        autoDiscovery: {
-          baseUrl: 'http://localhost:3000',
-          appDir: './tests/fixtures/test-project/src/app',
-        },
-      })
-
       const request = createMockRequest('/services/.html.md')
-      const response = await handler(request)
+      const response = await handleLLmsTxt(request)
 
       expect(response).toBeInstanceOf(NextResponse)
     })
