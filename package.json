@@ -52,7 +52,7 @@
     "build": "tsup src/index.ts",
     "dev": "rm -rf dist && tsup src/index.ts --watch",
     "prepublishOnly": "npm run build",
-    "test": "jest",
+    "test": "npx jest --clearCache && jest",
     "test:watch": "npx jest --clearCache && jest --watch",
     "test:coverage": "npx jest --clearCache && jest --coverage --coverageReporters=text-lcov --coverageReporters=json-summary --coverageReporters=lcov --coverageReporters=html",
     "test:coverage:ci": "npx jest --clearCache && jest --coverage --coverageReporters=json-summary --coverageReporters=lcov",

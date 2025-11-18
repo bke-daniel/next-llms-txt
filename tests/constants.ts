@@ -57,3 +57,32 @@ export const LLMS_TXT_HANDLER_CONFIG = Object.freeze<LLMsTxtHandlerConfig>({
 })
 
 export const LLMS_TXT_HANDLER = createLLmsTxt(LLMS_TXT_HANDLER_CONFIG)
+
+export const FULL_LLMS_TXT_CONFIG: LLMsTxtConfig = {
+  title: 'Test LLMs.txt',
+  description: 'This is a test llms.txt file',
+  sections: [
+    {
+      title: 'Main Section',
+      description: 'This is the main section',
+      items: [
+        {
+          title: 'Item One',
+          url: '/item-one',
+          description: 'Description for item one',
+        },
+        {
+          title: 'Item Two',
+          url: '/item-two',
+        },
+      ],
+    },
+  ],
+  optional: [
+    {
+      title: 'Optional Item',
+      url: '/optional-item',
+      description: 'This is an optional item',
+    },
+  ],
+}

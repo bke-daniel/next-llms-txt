@@ -73,7 +73,11 @@ export class LLMsTxtAutoDiscovery {
 
             this.pathAliases.push({
               prefix: cleanAlias,
-              replacement: path.resolve(this.config.autoDiscovery?.rootDir || process.cwd(), baseUrl, target),
+              replacement: path.resolve(
+                this.config.autoDiscovery?.rootDir || process.cwd(),
+                baseUrl,
+                target,
+              ),
             })
           }
         }
@@ -318,20 +322,50 @@ export class LLMsTxtAutoDiscovery {
       const obj: { [key: string]: any } = {}
       for (const prop of node.properties) {
         if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
-          if (t.isStringLiteral(prop.value)) {
-            obj[prop.key.name] = prop.value.value
+          const key = prop.key.name
+          const value = prop.value
+
+          if (t.isStringLiteral(value)) {
+            obj[key] = value.value
           }
-          else if (t.isTemplateLiteral(prop.value)) {
-            obj[prop.key.name] = prop.value.quasis.map(q => q.value.raw).join('')
+          else if (t.isTemplateLiteral(value)) {
+            obj[key] = value.quasis.map(q => q.value.raw).join('')
           }
-          else if (t.isNumericLiteral(prop.value)) {
-            obj[prop.key.name] = prop.value.value
+          else if (t.isNumericLiteral(value)) {
+            obj[key] = value.value
           }
-          else if (t.isBooleanLiteral(prop.value)) {
-            obj[prop.key.name] = prop.value.value
+          else if (t.isBooleanLiteral(value)) {
+            obj[key] = value.value
+          }
+          else if (t.isArrayExpression(value)) {
+            obj[key] = value.elements.map((el) => {
+              if (t.isObjectExpression(el)) {
+                return this.extractObjectExpression(el, ast, currentFilePath)
+              }
+              else if (t.isStringLiteral(el)) {
+                return el.value
+              }
+              else if (t.isNumericLiteral(el)) {
+                return el.value
+              }
+              else if (t.isBooleanLiteral(el)) {
+                return el.value
+              }
+              else if (el == null) {
+                return null
+              }
+              else {
+                // For nested arrays or other types
+                return el
+              }
+            })
+          }
+          else if (t.isObjectExpression(value)) {
+            obj[key] = this.extractObjectExpression(value, ast, currentFilePath)
           }
         }
       }
+
       return obj
     }
 
@@ -342,10 +376,9 @@ export class LLMsTxtAutoDiscovery {
       }
 
       let resolvedValue: any
-
-      // ⬇️ WICHTIG: Arrow Functions verwenden! ⬇️
+      // Important, use arrow funcs because of 'this'
       traverse(ast, {
-        ImportDeclaration: (path) => { // ← Arrow Function!
+        ImportDeclaration: (path) => {
           const importPath = path.node
           for (const specifier of importPath.specifiers) {
             if (t.isImportSpecifier(specifier)
@@ -402,7 +435,7 @@ export class LLMsTxtAutoDiscovery {
           }
         },
 
-        VariableDeclaration: (path) => { // ← Arrow Function!
+        VariableDeclaration: (path) => {
           for (const declaration of path.node.declarations) {
             if (t.isIdentifier(declaration.id) && declaration.id.name === node.name) {
               if (declaration.init) {

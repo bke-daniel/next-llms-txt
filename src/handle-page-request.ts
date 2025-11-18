@@ -38,26 +38,14 @@ export default async function handlePageRequest(
     return new NextResponse(PAGE_ERROR_NOTIFICATION, { status: 404 })
   }
 
-  const pageConfig: LLMsTxtConfig = {
-    ...matchingPage.config,
-    sections: [
-      {
-        title: 'This Page',
-        items: [{
-          title: matchingPage.config.title,
-          url: `${handlerConfig.baseUrl}${requestedRoute}`,
-          description: matchingPage.config.description,
-        }],
-      },
-    ],
-  }
-
+  // handles custom generator if provided
   const content = handlerConfig.generator
-    ? handlerConfig.generator(pageConfig)
-    : generateLLMsTxt(pageConfig)
+    ? handlerConfig.generator(matchingPage.config)
+    // why not pass pages? because this is a single page request
+    : generateLLMsTxt(matchingPage.config)
 
-  if (!content) {
+  if (!content)
     return errorResponse
-  }
+
   return createMarkdownResponse(content)
 }
