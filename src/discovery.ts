@@ -7,6 +7,7 @@ import { parse } from '@babel/parser'
 import traverse from '@babel/traverse'
 import * as t from '@babel/types'
 import { DEFAULT_CONFIG } from './constants.js'
+import stripJsonComments from './strip-json-comments.js'
 
 /**
  * Information about a discovered page
@@ -47,90 +48,6 @@ export class LLMsTxtAutoDiscovery {
   }
 
   /**
-   * Strip JSON/JSONC comments
-   * Handles single-line (//), multi-line comments and trailing commas
-   */
-  private stripJsonComments(jsonString: string): string {
-    let result = ''
-    let i = 0
-    let inString = false
-    let inComment = false
-    let commentType: 'line' | 'block' | null = null
-
-    while (i < jsonString.length) {
-      const char = jsonString[i]
-      const nextChar = jsonString[i + 1]
-
-      // Handle string boundaries (with proper escape handling)
-      if (!inComment && char === '"' && (i === 0 || jsonString[i - 1] !== '\\')) {
-        inString = !inString
-        result += char
-        i++
-        continue
-      }
-
-      // If we're in a string, just copy the character
-      if (inString) {
-        result += char
-        i++
-        continue
-      }
-
-      // Handle end of line comment
-      if (inComment && commentType === 'line' && (char === '\n' || char === '\r')) {
-        inComment = false
-        commentType = null
-        result += char // Keep newlines
-        i++
-        continue
-      }
-
-      // Handle end of block comment
-      if (inComment && commentType === 'block' && char === '*' && nextChar === '/') {
-        inComment = false
-        commentType = null
-        result += '  ' // Replace with spaces
-        i += 2
-        continue
-      }
-
-      // If we're in a comment, replace with space (preserve positions)
-      if (inComment) {
-        result += (char === '\n' || char === '\r') ? char : ' '
-        i++
-        continue
-      }
-
-      // Check for start of line comment
-      if (char === '/' && nextChar === '/') {
-        inComment = true
-        commentType = 'line'
-        result += '  '
-        i += 2
-        continue
-      }
-
-      // Check for start of block comment
-      if (char === '/' && nextChar === '*') {
-        inComment = true
-        commentType = 'block'
-        result += '  '
-        i += 2
-        continue
-      }
-
-      // Regular character
-      result += char
-      i++
-    }
-
-    // Remove trailing commas
-    result = result.replace(/,\s*(\}|\])/g, '$1')
-
-    return result
-  }
-
-  /**
    * Load TypeScript path aliases from tsconfig.json
    */
   private loadTsConfigPaths(): void {
@@ -140,7 +57,7 @@ export class LLMsTxtAutoDiscovery {
         const tsconfigContent = fs.readFileSync(tsconfigPath, 'utf-8')
 
         // Strip comments from JSONC
-        const cleanedContent = this.stripJsonComments(tsconfigContent)
+        const cleanedContent = stripJsonComments(tsconfigContent)
 
         const tsconfig = JSON.parse(cleanedContent)
         const compilerOptions = tsconfig.compilerOptions || {}
@@ -156,7 +73,11 @@ export class LLMsTxtAutoDiscovery {
 
             this.pathAliases.push({
               prefix: cleanAlias,
-              replacement: path.resolve(this.config.autoDiscovery?.rootDir || process.cwd(), baseUrl, target),
+              replacement: path.resolve(
+                this.config.autoDiscovery?.rootDir || process.cwd(),
+                baseUrl,
+                target,
+              ),
             })
           }
         }
@@ -401,20 +322,50 @@ export class LLMsTxtAutoDiscovery {
       const obj: { [key: string]: any } = {}
       for (const prop of node.properties) {
         if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
-          if (t.isStringLiteral(prop.value)) {
-            obj[prop.key.name] = prop.value.value
+          const key = prop.key.name
+          const value = prop.value
+
+          if (t.isStringLiteral(value)) {
+            obj[key] = value.value
           }
-          else if (t.isTemplateLiteral(prop.value)) {
-            obj[prop.key.name] = prop.value.quasis.map(q => q.value.raw).join('')
+          else if (t.isTemplateLiteral(value)) {
+            obj[key] = value.quasis.map(q => q.value.raw).join('')
           }
-          else if (t.isNumericLiteral(prop.value)) {
-            obj[prop.key.name] = prop.value.value
+          else if (t.isNumericLiteral(value)) {
+            obj[key] = value.value
           }
-          else if (t.isBooleanLiteral(prop.value)) {
-            obj[prop.key.name] = prop.value.value
+          else if (t.isBooleanLiteral(value)) {
+            obj[key] = value.value
+          }
+          else if (t.isArrayExpression(value)) {
+            obj[key] = value.elements.map((el) => {
+              if (t.isObjectExpression(el)) {
+                return this.extractObjectExpression(el, ast, currentFilePath)
+              }
+              else if (t.isStringLiteral(el)) {
+                return el.value
+              }
+              else if (t.isNumericLiteral(el)) {
+                return el.value
+              }
+              else if (t.isBooleanLiteral(el)) {
+                return el.value
+              }
+              else if (el == null) {
+                return null
+              }
+              else {
+                // For nested arrays or other types
+                return el
+              }
+            })
+          }
+          else if (t.isObjectExpression(value)) {
+            obj[key] = this.extractObjectExpression(value, ast, currentFilePath)
           }
         }
       }
+
       return obj
     }
 
@@ -425,10 +376,9 @@ export class LLMsTxtAutoDiscovery {
       }
 
       let resolvedValue: any
-
-      // ⬇️ WICHTIG: Arrow Functions verwenden! ⬇️
+      // Important, use arrow funcs because of 'this'
       traverse(ast, {
-        ImportDeclaration: (path) => { // ← Arrow Function!
+        ImportDeclaration: (path) => {
           const importPath = path.node
           for (const specifier of importPath.specifiers) {
             if (t.isImportSpecifier(specifier)
@@ -485,7 +435,7 @@ export class LLMsTxtAutoDiscovery {
           }
         },
 
-        VariableDeclaration: (path) => { // ← Arrow Function!
+        VariableDeclaration: (path) => {
           for (const declaration of path.node.declarations) {
             if (t.isIdentifier(declaration.id) && declaration.id.name === node.name) {
               if (declaration.init) {

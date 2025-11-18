@@ -7,6 +7,7 @@ export default function MetadataOnlyPage() {
     <>
       <h1>Page without llmstxt export</h1>
       <p>But with static metadata</p>
+      <a href="/metadata-only.html.md">Metadata Only Markdown</a>
     </>
   )
 }

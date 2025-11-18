@@ -1,87 +1,74 @@
 import type { LLMsTxtConfig } from '../../src/types'
 import { generateLLMsTxt } from '../../src/generator'
-
-const mockLlmsTxtConfig: LLMsTxtConfig = {
-  title: 'Test LLMs.txt',
-  description: 'This is a test llms.txt file',
-  sections: [
-    {
-      title: 'Main Section',
-      description: 'This is the main section',
-      items: [
-        {
-          title: 'Item One',
-          url: '/item-one',
-          description: 'Description for item one',
-        },
-        {
-          title: 'Item Two',
-          url: '/item-two',
-        },
-      ],
-    },
-  ],
-  optional: [
-    {
-      title: 'Optional Item',
-      url: '/optional-item',
-      description: 'This is an optional item',
-    },
-  ],
-}
+import { FULL_LLMS_TXT_CONFIG } from '../constants'
 
 describe('generateLLMsTxt', () => {
   describe('config cases', () => {
     it('handles empty config', () => {
-      // TODO I'd say this shouldn't do nothing?!
+      // TODO I'd say this should do nothing?!
       const result = generateLLMsTxt({ title: '' })
       expect(result).toContain('# ')
     })
 
-    it('handles invalid input types gracefully', () => {
-      // @ts-expect-error Testing null input for error handling
-      expect(() => generateLLMsTxt(null)).toThrow()
-      // @ts-expect-error Testing undefined input for error handling
-      expect(() => generateLLMsTxt(undefined)).toThrow()
-    })
+    describe('missing / wrong configs', () => {
+      it('handles invalid input types gracefully', () => {
+        // @ts-expect-error Testing null input for error handling
+        expect(() => generateLLMsTxt(null)).toThrow()
+        // @ts-expect-error Testing undefined input for error handling
+        expect(() => generateLLMsTxt(undefined)).toThrow()
+      })
 
-    it('handles missing sections and optional', () => {
-      const config: LLMsTxtConfig = { title: 'Demo' }
-      const result = generateLLMsTxt(config)
-      expect(result).toContain('# Demo')
-      expect(result).not.toContain('## Section')
-      expect(result).not.toContain('## Optional')
-    })
+      it('handles missing sections and optional', () => {
+        const config: LLMsTxtConfig = { title: 'Demo' }
+        const result = generateLLMsTxt(config)
+        expect(result).toContain('# Demo')
+        expect(result).not.toContain('## Section')
+        expect(result).not.toContain('## Optional')
+      })
 
-    it('handles undefined sections and optional', () => {
-      const config: LLMsTxtConfig = { title: 'Demo', sections: undefined, optional: undefined }
-      const result = generateLLMsTxt(config)
-      expect(result).toContain('# Demo')
-      expect(result).not.toContain('## Section')
-      expect(result).not.toContain('## Optional')
-    })
+      it('handles undefined sections and optional', () => {
+        const config: LLMsTxtConfig = {
+          title: FULL_LLMS_TXT_CONFIG.title,
+          sections: undefined,
+          optional: undefined,
+        }
+        const result = generateLLMsTxt(config)
+        expect(result).toContain(`# ${FULL_LLMS_TXT_CONFIG.title}`)
+        expect(result).not.toContain('## Section')
+        expect(result).not.toContain('## Optional')
+      })
 
-    it('handles null sections and optional', () => {
-      // @ts-expect-error Testing null input for error handling
-      const config: LLMsTxtConfig = { title: 'Demo', sections: null, optional: null }
-      const result = generateLLMsTxt(config)
-      expect(result).toContain('# Demo')
-      expect(result).not.toContain('## Section')
-      expect(result).not.toContain('## Optional')
+      it('handles null sections and optional', () => {
+        // @ts-expect-error Testing null input for error handling
+        const config: LLMsTxtConfig = { title: 'Demo', sections: null, optional: null }
+        const result = generateLLMsTxt(config)
+        expect(result).toContain('# Demo')
+        expect(result).not.toContain('## Section')
+        expect(result).not.toContain('## Optional')
+      })
+
+      it('should handle empty arrays', () => {
+        const config: LLMsTxtConfig = { title: 'Demo', sections: [], optional: [] }
+        const result = generateLLMsTxt(config)
+        expect(result).toContain('# Demo')
+        expect(result).not.toContain('## Section')
+        expect(result).not.toContain('## Optional')
+      })
     })
   })
 
   describe('main', () => {
     it('should generate all parts', () => {
-      const result = generateLLMsTxt(mockLlmsTxtConfig)
-      expect(result).toContain('# Test LLMs.txt')
-      expect(result).toContain('> This is a test llms.txt file')
+      const result = generateLLMsTxt(FULL_LLMS_TXT_CONFIG)
+      expect(result).toContain(`# ${FULL_LLMS_TXT_CONFIG.title}`)
+      expect(result).toContain(`> ${FULL_LLMS_TXT_CONFIG.description}`)
       expect(result).toContain('## Main Section')
       expect(result).toContain('- [Item One](/item-one): Description for item one')
       expect(result).toContain('- [Item Two](/item-two)')
       expect(result).toContain('## Optional')
       expect(result).toContain('- [Optional Item](/optional-item): This is an optional item')
     })
+
     it('should generate markdown with title and description', () => {
       const config: LLMsTxtConfig = {
         title: 'Demo Title',

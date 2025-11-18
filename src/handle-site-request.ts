@@ -33,9 +33,13 @@ export default async function handleSiteRequest(
     throw new Error('LLMs.txt configuration must have a title.')
   }
 
+  // handles custom generator if provided
   const content = handlerConfig.generator
     ? handlerConfig.generator(finalConfig, pages)
     : generateLLMsTxt(finalConfig, pages)
+
+  if (!content)
+    throw new Error('Couldn\'t generate Config')
 
   return createMarkdownResponse(content)
 }

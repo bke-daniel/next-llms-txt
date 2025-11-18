@@ -16,14 +16,16 @@ export const BASE_URL = 'http://localhost:3000'
 /**
  * Routes for testing which reflect next js urls like '/all-exports'
  */
-export const routes = ['/', '/all-exports', '/metadata-only', '/llms-txt-only', '/no-exports']
+export const routes = ['/', '/all-exports', '/metadata-only', '/llms-txt-only', '/no-exports', '/full-test']
   .sort()
 /**
  * Nested routes for testing which reflect next js urls like '/nested/all-exports'
  */
 export const nestedRoutes = routes
   .map(p => `/nested${p}`)
-  .filter(r => r !== '/nested/')
+  // full-test page doesn't exist in nested folder
+  .filter(r => r.includes('full') ? false : r !== '/nested/')
+  .filter(Boolean)
   .sort()
 
 export const ALL_ROUTES = Object.freeze([...routes, ...nestedRoutes].sort())
@@ -57,3 +59,32 @@ export const LLMS_TXT_HANDLER_CONFIG = Object.freeze<LLMsTxtHandlerConfig>({
 })
 
 export const LLMS_TXT_HANDLER = createLLmsTxt(LLMS_TXT_HANDLER_CONFIG)
+
+export const FULL_LLMS_TXT_CONFIG: LLMsTxtConfig = {
+  title: 'Test LLMs.txt',
+  description: 'This is a test llms.txt file',
+  sections: [
+    {
+      title: 'Main Section',
+      description: 'This is the main section',
+      items: [
+        {
+          title: 'Item One',
+          url: '/item-one',
+          description: 'Description for item one',
+        },
+        {
+          title: 'Item Two',
+          url: '/item-two',
+        },
+      ],
+    },
+  ],
+  optional: [
+    {
+      title: 'Optional Item',
+      url: '/optional-item',
+      description: 'This is an optional item',
+    },
+  ],
+}
