@@ -16,14 +16,16 @@ export const BASE_URL = 'http://localhost:3000'
 /**
  * Routes for testing which reflect next js urls like '/all-exports'
  */
-export const routes = ['/', '/all-exports', '/metadata-only', '/llms-txt-only', '/no-exports']
+export const routes = ['/', '/all-exports', '/metadata-only', '/llms-txt-only', '/no-exports', '/full-test']
   .sort()
 /**
  * Nested routes for testing which reflect next js urls like '/nested/all-exports'
  */
 export const nestedRoutes = routes
   .map(p => `/nested${p}`)
-  .filter(r => r !== '/nested/')
+  // full-test page doesn't exist in nested folder
+  .filter(r => r.includes('full') ? false : r !== '/nested/')
+  .filter(Boolean)
   .sort()
 
 export const ALL_ROUTES = Object.freeze([...routes, ...nestedRoutes].sort())
