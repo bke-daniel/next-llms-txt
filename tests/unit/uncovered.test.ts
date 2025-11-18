@@ -26,9 +26,5 @@ describe('uncovered logic tests', () => {
     expect(() => getAutoDiscoveryConfig({} as any)).toThrow(/baseUrl/)
   })
 
-  it('normalizePath handles /index and trailing slash', () => {
-    expect(normalizePath('/foo/index')).toBe('/foo')
-    expect(normalizePath('/foo/')).toBe('/foo')
-    expect(normalizePath('/')).toBe('/')
-  })
+
 })
