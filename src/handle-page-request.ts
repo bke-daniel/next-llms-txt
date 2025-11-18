@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types.js'
+import type { LLMsTxtHandlerConfig } from './types.js'
 import { NextResponse } from 'next/server'
 import { PAGE_ERROR_NOTIFICATION } from './constants.js'
 import createMarkdownResponse from './create-markdown-response.js'
