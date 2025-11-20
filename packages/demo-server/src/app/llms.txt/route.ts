@@ -1,4 +1,4 @@
-import { createLLmsTxt } from '@/code-version'
-import llmsTxtConfig from '../../llms-txt-config.js'
+import { createLLmsTxt } from 'next-llms-txt'
+import llmsTxtConfig from '../../llms-txt-config'
 
 export const { GET } = createLLmsTxt(llmsTxtConfig)
