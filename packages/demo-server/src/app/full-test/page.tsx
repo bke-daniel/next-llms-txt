@@ -1,4 +1,4 @@
-import type { LLMsTxtConfig } from '@/code-version'
+import type { LLMsTxtConfig } from 'next-llms-txt'
 
 export const llmstxt: LLMsTxtConfig = {
   title: 'Test LLMs.txt',

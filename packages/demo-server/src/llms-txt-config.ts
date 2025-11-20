@@ -5,7 +5,6 @@ const llmsTxtConfig: LLMsTxtHandlerConfig = {
     title: 'next-llms-txt test-server',
     description: 'This is a test server for next-llms-txt\'s e2e tests',
   },
-  baseUrl: 'http://localhost:3000',
   autoDiscovery: {
     appDir: 'src/app',
   },
