@@ -11,6 +11,7 @@ export default function NestedAllExportsPage() {
   return (
     <>
       <h1>Nested page with all exports</h1>
+      <a href="/nested/all-exports.html.md">Nested with all exports llms.txt markdown</a>
     </>
   )
 }

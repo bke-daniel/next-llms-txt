@@ -1,5 +1,4 @@
 import type { LLMsTxtHandlerConfig } from 'next-llms-txt'
-import path from 'node:path'
 
 const llmsTxtConfig: LLMsTxtHandlerConfig = {
   defaultConfig: {
@@ -8,8 +7,7 @@ const llmsTxtConfig: LLMsTxtHandlerConfig = {
   },
   baseUrl: 'http://localhost:3000',
   autoDiscovery: {
-    rootDir: path.resolve(path.dirname('')),
-    appDir: '/app',
+    appDir: "src/app"
   },
 }
 export default llmsTxtConfig
