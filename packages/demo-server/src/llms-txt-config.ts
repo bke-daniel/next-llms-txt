@@ -7,7 +7,7 @@ const llmsTxtConfig: LLMsTxtHandlerConfig = {
   },
   baseUrl: 'http://localhost:3000',
   autoDiscovery: {
-    appDir: "src/app"
+    appDir: 'src/app',
   },
 }
 export default llmsTxtConfig

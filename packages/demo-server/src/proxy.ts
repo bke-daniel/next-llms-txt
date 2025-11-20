@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
 import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt'
+import { NextResponse } from 'next/server'
 import llmsTxtConfig from './llms-txt-config'
 
 const { GET: handleLLmsTxt } = createLLmsTxt(llmsTxtConfig)
