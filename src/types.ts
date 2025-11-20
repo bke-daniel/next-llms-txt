@@ -86,7 +86,7 @@ export interface LLMsTxtHandlerConfig {
   /**
    * Default configuration to use if no page-specific config is found
    */
-  defaultConfig?: LLMsTxtConfig
+  defaultConfig?: LLMsTxtConfig | boolean
 
   /**
    * Custom generator function
@@ -97,7 +97,7 @@ export interface LLMsTxtHandlerConfig {
    * Enable automatic page discovery
    */
   // TODO make this boolean as well
-  autoDiscovery?: AutoDiscoveryConfig
+  autoDiscovery?: AutoDiscoveryConfig | boolean
 
   /**
    * Support trailing slash variations

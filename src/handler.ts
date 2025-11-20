@@ -3,6 +3,7 @@ import type { LLMsTxtHandlerConfig } from './types.js'
 import { NextResponse } from 'next/server'
 import handlePageRequest from './handle-page-request.js'
 import handleSiteRequest from './handle-site-request.js'
+import validateConfig from './validate-config.js'
 
 /**
  * Creates a handler for generating llms.txt files in Next.js middleware.
@@ -38,14 +39,14 @@ export function createLLmsTxt(
 } {
   const GET = async (request: NextRequest): Promise<NextResponse> => {
     const { pathname } = new URL(request.url)
-    // const handlerConfig = validateConfig(config)
+    const handlerConfig = validateConfig(config)
     try {
       // Route to the appropriate handler based on the request path
       if (pathname === '/llms.txt') {
-        return handleSiteRequest(request, config)
+        return handleSiteRequest(request, handlerConfig)
       }
       else {
-        return handlePageRequest(request, config)
+        return handlePageRequest(request, handlerConfig)
       }
     }
     catch (error) {

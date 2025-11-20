@@ -1,17 +1,9 @@
-import path from 'node:path'
 import { NextRequest } from 'next/server'
 import { createLLmsTxt } from '../../src/handler'
+import { LLMS_TXT_HANDLER_CONFIG } from '../constants'
 
 describe('auto-discovery integration', () => {
-  const handler = createLLmsTxt({
-    title: 'Test Site',
-    description: 'Auto-discovery test',
-    autoDiscovery: {
-      rootDir: path.resolve(__dirname, '../tests/fixtures/test-project'),
-      appDir: '/app',
-      baseUrl: 'http://localhost:3000',
-    },
-  })
+  const handler = createLLmsTxt(LLMS_TXT_HANDLER_CONFIG)
 
   // TODO Fix
   it.skip('generates site-wide llms.txt with discovered pages', async () => {

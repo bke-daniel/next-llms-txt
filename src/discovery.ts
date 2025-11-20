@@ -286,6 +286,7 @@ export class LLMsTxtAutoDiscovery {
       else if (metadataConfig) {
         pageInfo.hasMetadataFallback = true
         pageInfo.config = {
+          // TODO Should we support template strings?
           title: metadataConfig.title || this.generatePageTitle(route),
           description: metadataConfig.description || `Page: ${route}`,
         }
