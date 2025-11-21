@@ -32,7 +32,7 @@ export const llmstxt: LLMsTxtConfig = {
 export default function FullTestPage() {
   return (
     <>
-      <h1>Full Test Page</h1>
+      <h1 className="text-3xl font-bold">Full Test Page</h1>
       <a href="/full-test.html.md">Full Test Markdown</a>
     </>
   )

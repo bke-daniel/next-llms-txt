@@ -32,4 +32,10 @@ describe('normalize path unit tests', () => {
     const result = normalizePath(input)
     expect(result).toBe(expected)
   })
+
+  it('handles /index and trailing slash', () => {
+    expect(normalizePath('/foo/index')).toBe('/foo')
+    expect(normalizePath('/foo/')).toBe('/foo')
+    expect(normalizePath('/')).toBe('/')
+  })
 })

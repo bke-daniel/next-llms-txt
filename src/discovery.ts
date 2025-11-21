@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import type { LLMsTxtConfig, LLMsTxtHandlerConfig } from './types.js'
+import type { LLMsTxtConfig, RequiredLLMsTxtHandlerConfig } from './types.ts'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
@@ -33,15 +33,15 @@ interface PathAlias {
  * Auto-discovery system for Next.js pages and their llms.txt configurations
  */
 export class LLMsTxtAutoDiscovery {
-  private config: LLMsTxtHandlerConfig
+  /**
+   * Handler configuration with all keys required
+   */
+  private config: RequiredLLMsTxtHandlerConfig
   private warnings: string[] = []
   private pathAliases: PathAlias[] = []
 
-  constructor(config: LLMsTxtHandlerConfig) {
-    this.config = {
-      ...DEFAULT_CONFIG,
-      ...config,
-    }
+  constructor(config: RequiredLLMsTxtHandlerConfig) {
+    this.config = config
 
     // Load TypeScript path aliases from tsconfig.json
     this.loadTsConfigPaths()
@@ -286,6 +286,7 @@ export class LLMsTxtAutoDiscovery {
       else if (metadataConfig) {
         pageInfo.hasMetadataFallback = true
         pageInfo.config = {
+          // TODO Should we support template strings?
           title: metadataConfig.title || this.generatePageTitle(route),
           description: metadataConfig.description || `Page: ${route}`,
         }

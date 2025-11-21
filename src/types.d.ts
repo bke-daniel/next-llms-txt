@@ -97,7 +97,7 @@ export interface LLMsTxtHandlerConfig {
    * Enable automatic page discovery
    */
   // TODO make this boolean as well
-  autoDiscovery?: AutoDiscoveryConfig
+  autoDiscovery?: AutoDiscoveryConfig | boolean
 
   /**
    * Support trailing slash variations
@@ -137,4 +137,14 @@ export interface AutoDiscoveryConfig {
    * Project root directory
    */
   rootDir?: string
+}
+
+/**
+ * LLMs.txt handler configuration with all keys required except 'generator'
+ * @internal
+ */
+export type RequiredLLMsTxtHandlerConfig = Required<
+  Omit<LLMsTxtHandlerConfig, 'generator' | 'autoDiscovery'>
+> & Pick<LLMsTxtHandlerConfig, 'generator'> & {
+  autoDiscovery: Required<AutoDiscoveryConfig>
 }

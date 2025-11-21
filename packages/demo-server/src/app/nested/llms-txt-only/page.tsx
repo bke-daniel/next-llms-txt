@@ -3,11 +3,10 @@ export const llmstxt = {
   description: 'Is used for generation when it exists.',
 }
 
-export default function LlmsTxtOnlyPage() {
+export default function NestedLlmsTxtOnlyPage() {
   return (
     <>
       <h1 className="text-3xl font-bold">Nested page with only llmstxt export</h1>
-      <a href="/llms-txt-only.html.md">LLMs.txt Only Markdown</a>
     </>
   )
 }

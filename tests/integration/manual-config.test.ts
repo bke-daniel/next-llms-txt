@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createLLmsTxt } from '../../src/handler'
+import { BASE_URL } from '../constants'
 
 describe('manual config integration', () => {
   const handler = createLLmsTxt({
@@ -9,7 +10,7 @@ describe('manual config integration', () => {
       {
         title: 'Docs',
         items: [
-          { title: 'Intro', url: 'http://localhost:3000/docs/intro', description: 'Getting started' },
+          { title: 'Intro', url: `${BASE_URL}/docs/intro`, description: 'Getting started' },
         ],
       },
     ],
@@ -17,7 +18,7 @@ describe('manual config integration', () => {
 
   // Currently not supported anymore
   it.skip('generates static llms.txt from manual config', async () => {
-    const req = new NextRequest('http://localhost:3000/llms.txt')
+    const req = new NextRequest(`${BASE_URL}/llms.txt`)
     const res = await handler.GET(req)
     const text = await res.text()
     expect(text).toContain('# Manual Site')
@@ -26,8 +27,8 @@ describe('manual config integration', () => {
   })
 
   it('returns 404 for .html.md when not discovered', async () => {
-    const req = new NextRequest('http://localhost:3000/unknown.html.md')
+    const req = new NextRequest(`${BASE_URL}/unknown.html.md`)
     const res = await handler.GET(req)
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(404)
   })
 })

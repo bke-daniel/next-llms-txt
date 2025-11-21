@@ -1,4 +1,5 @@
 import type { LLMsTxtConfig } from '../src/types'
+import { BASE_URL } from './constants'
 
 /**
  * Test utility functions and common configurations
@@ -86,7 +87,7 @@ export function validateLLMsTxtFormat(content: string): boolean {
 /**
  * Mock NextRequest for testing
  */
-export function createMockRequest(url = 'http://localhost:3000/llms.txt'): any {
+export function createMockRequest(url = `${BASE_URL}/llms.txt`): any {
   return {
     url,
     method: 'GET',

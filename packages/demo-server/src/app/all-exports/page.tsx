@@ -10,7 +10,7 @@ export const metadata = {
 export default function AllExportsPage() {
   return (
     <>
-      <h1>Page with all exports</h1>
+      <h1 className="text-3xl font-bold">Page with all exports</h1>
       <a href="/all-exports.html.md">All Exports Markdown</a>
     </>
   )
