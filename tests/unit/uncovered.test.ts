@@ -1,6 +1,5 @@
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
 import { getAutoDiscoveryConfig } from '../../src/get-auto-discovery-config'
-import normalizePath from '../../src/normalize-path'
 import { LLMS_TXT_HANDLER_CONFIG } from '../constants'
 
 describe('uncovered logic tests', () => {
@@ -25,6 +24,4 @@ describe('uncovered logic tests', () => {
   it('getAutoDiscoveryConfig throws if baseUrl missing', () => {
     expect(() => getAutoDiscoveryConfig({} as any)).toThrow(/baseUrl/)
   })
-
-
 })
