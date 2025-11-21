@@ -10,7 +10,7 @@ export const metadata = {
 export default function NestedAllExportsPage() {
   return (
     <>
-      <h1>Nested page with all exports</h1>
+      <h1 className="text-3xl font-bold">Nested page with all exports</h1>
       <a href="/nested/all-exports.html.md">Nested with all exports llms.txt markdown</a>
     </>
   )

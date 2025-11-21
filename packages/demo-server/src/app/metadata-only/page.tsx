@@ -5,7 +5,7 @@ export const metadata = {
 export default function MetadataOnlyPage() {
   return (
     <>
-      <h1>Page without llmstxt export</h1>
+      <h1 className="text-3xl font-bold">Page without llmstxt export</h1>
       <p>But with static metadata</p>
       <a href="/metadata-only.html.md">Metadata Only Markdown</a>
     </>

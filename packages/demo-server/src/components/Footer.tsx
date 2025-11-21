@@ -1,12 +1,12 @@
 import Image from 'next/image'
-import './footer.module.css'
 
 export default function Footer() {
   return (
-    <footer className="next-llms-txt-footer">
-      <ul className="mx-auto flex">
-        <li>
+    <footer className='flex justify-center mt-8' >
+      <ul className='list-none p-0 m-0 mt-4 flex justify-center flex-row'>
+        <li className='ml-4 mr-4 block'>
           <a
+            className='block'
             href="https://llmstxt.org"
           >
             <Image
@@ -17,8 +17,9 @@ export default function Footer() {
             />
           </a>
         </li>
-        <li>
+        <li className='ml-4 mr-4 block'>
           <a
+            className='block'
             href="https://www.npmjs.com/package/next-llms-txt"
           >
             <Image
@@ -29,8 +30,9 @@ export default function Footer() {
             />
           </a>
         </li>
-        <li>
+        <li className='ml-4 mr-4 block'>
           <a
+            className='block'
             href="https://www.npmjs.com/package/next-llms-txt"
           >
             <Image
@@ -41,8 +43,9 @@ export default function Footer() {
             />
           </a>
         </li>
-        <li>
+        <li className='ml-4 mr-4 block'>
           <a
+            className='block'
             href="https://github.com/bke-daniel/next-llms-txt/actions/workflows/test.yml"
           >
             <Image
@@ -53,8 +56,9 @@ export default function Footer() {
             />
           </a>
         </li>
-        <li>
+        <li className='ml-4 mr-4 block'>
           <a
+            className='block'
             href="https://codecov.io/gh/bke-daniel/next-llms-txt"
           >
             <Image
@@ -65,8 +69,9 @@ export default function Footer() {
             />
           </a>
         </li>
-        <li>
+        <li className='ml-4 mr-4 block'>
           <a
+            className='block'
             href="https://github.com/bke-daniel/next-llms-txt/blob/main/LICENSE"
           >
             <Image

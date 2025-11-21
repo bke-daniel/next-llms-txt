@@ -6,7 +6,7 @@ export const llmstxt = {
 export default function NestedLlmsTxtOnlyPage() {
   return (
     <>
-      <h1>Nested page with only llmstxt export</h1>
+      <h1 className="text-3xl font-bold">Nested page with only llmstxt export</h1>
     </>
   )
 }
