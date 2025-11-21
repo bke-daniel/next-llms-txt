@@ -1,15 +1,12 @@
 import type { LLMsTxtHandlerConfig } from 'next-llms-txt'
-import path from 'node:path'
 
 const llmsTxtConfig: LLMsTxtHandlerConfig = {
   defaultConfig: {
     title: 'next-llms-txt test-server',
     description: 'This is a test server for next-llms-txt\'s e2e tests',
   },
-  baseUrl: 'http://localhost:3000',
   autoDiscovery: {
-    rootDir: path.resolve(path.dirname('')),
-    appDir: '/app',
+    appDir: 'src/app',
   },
 }
 export default llmsTxtConfig

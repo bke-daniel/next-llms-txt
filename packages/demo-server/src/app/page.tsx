@@ -6,9 +6,12 @@ export const metadata = {
 export default function Page() {
   return (
     <>
-      <h1>next-llms-txt test-server</h1>
+      <h1>next-llms-txt demo server</h1>
       <ul>
+
+        <li><a href="/llms.txt/">/llms.txt with auto discovery</a></li>
         <li><a href="/all-exports/">All Exports</a></li>
+        <li><a href="/nested/all-exports/">Nested with all Exports</a></li>
         <li><a href="/metadata-only/">Metadata Only</a></li>
         <li><a href="/llms-txt-only/">LLMs.txt export Only</a></li>
         <li><a href="/no-exports/">No Export at all</a></li>

@@ -12,6 +12,7 @@ export default antfu({
     '**/*.md',
     'dist/**',
     'node_modules/**',
+    'packages/**',
   ],
   // Customize rules if needed
   rules: {
