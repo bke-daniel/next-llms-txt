@@ -4,7 +4,7 @@
     "access": "public"
   },
   "type": "module",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "workspaces": [
     "tests/fixtures/nextjs",
     "packages/demo-server"
