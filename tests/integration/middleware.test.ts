@@ -118,7 +118,7 @@ describe('middleware integration', () => {
       const request = createMockRequest('/about.html.md')
       const response = await handler(request)
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(404)
     })
   })
 

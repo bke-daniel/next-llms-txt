@@ -1,4 +1,5 @@
 import { defineConfig } from 'cypress'
+import { BASE_URL } from './tests/constants.js'
 
 export default defineConfig({
   // currently not needed
@@ -12,7 +13,7 @@ export default defineConfig({
 
   e2e: {
     specPattern: 'tests/e2e/**/*.cy.{js,jsx,ts,tsx}',
-    baseUrl: 'http://localhost:3000',
+    baseUrl: BASE_URL,
     screenshotOnRunFailure: false,
   },
 })

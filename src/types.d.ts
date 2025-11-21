@@ -86,7 +86,7 @@ export interface LLMsTxtHandlerConfig {
   /**
    * Default configuration to use if no page-specific config is found
    */
-  defaultConfig?: LLMsTxtConfig | boolean
+  defaultConfig?: LLMsTxtConfig
 
   /**
    * Custom generator function
@@ -137,4 +137,14 @@ export interface AutoDiscoveryConfig {
    * Project root directory
    */
   rootDir?: string
+}
+
+/**
+ * LLMs.txt handler configuration with all keys required except 'generator'
+ * @internal
+ */
+export type RequiredLLMsTxtHandlerConfig = Required<
+  Omit<LLMsTxtHandlerConfig, 'generator' | 'autoDiscovery'>
+> & Pick<LLMsTxtHandlerConfig, 'generator'> & {
+  autoDiscovery: Required<AutoDiscoveryConfig>
 }

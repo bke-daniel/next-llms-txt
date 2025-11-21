@@ -1,7 +1,26 @@
-import process
-  from 'node:process'
+import type { RequiredLLMsTxtHandlerConfig } from './types'
+import process from 'node:process'
 
-export const DEFAULT_CONFIG = {
+// TODO Improve this to work in both CJS and ESM reliably
+function getDirname(): string {
+  if (process.env.PWD !== undefined)
+    return process.env.PWD
+
+  if (typeof __dirname !== 'undefined') {
+    // CommonJS
+    return __dirname
+  }
+  // else if (typeof import.meta?.dirname !== 'undefined') {
+  //   return import.meta.dirname
+  // }
+  return '.'
+
+  // __dirname
+  //   ? path.join(__dirname, '..')
+  //   : path.join(import.meta.dirname, '..'),
+}
+
+export const DEFAULT_CONFIG: RequiredLLMsTxtHandlerConfig = {
   baseUrl: `http://localhost:${process.env.PORT || 3000}`,
   defaultConfig: {
     title: 'My llms.txt Site',
@@ -9,8 +28,8 @@ export const DEFAULT_CONFIG = {
   },
   autoDiscovery: {
     appDir: 'src/app',
-    pagesDir: 'src/pages',
-    rootDir: process.env.PWD,
+    // pagesDir: 'src/pages',
+    rootDir: getDirname(),
   },
   // TODO get this from next.config.XX if possible
   trailingSlash: true,
