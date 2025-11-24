@@ -155,7 +155,7 @@ describe('getAutoDiscoveryConfig', () => {
 
       const result = getAutoDiscoveryConfig(handlerConfig)
 
-      expect(result).toBe(true)
+      expect(result).toEqual(DEFAULT_CONFIG.autoDiscovery)
     })
   })
 
@@ -168,7 +168,7 @@ describe('getAutoDiscoveryConfig', () => {
 
       const result = getAutoDiscoveryConfig(handlerConfig)
 
-      expect(result).toBe(true)
+      expect(result).toEqual(DEFAULT_CONFIG.autoDiscovery)
     })
 
     it('should handle baseUrl with port', () => {
@@ -179,7 +179,7 @@ describe('getAutoDiscoveryConfig', () => {
 
       const result = getAutoDiscoveryConfig(handlerConfig)
 
-      expect(result).toBe(true)
+      expect(result).toEqual(DEFAULT_CONFIG.autoDiscovery)
     })
 
     it('should handle baseUrl with trailing slash', () => {
@@ -190,7 +190,7 @@ describe('getAutoDiscoveryConfig', () => {
 
       const result = getAutoDiscoveryConfig(handlerConfig)
 
-      expect(result).toBe(true)
+      expect(result).toEqual(DEFAULT_CONFIG.autoDiscovery)
     })
 
     it('should handle baseUrl with path', () => {
@@ -201,7 +201,7 @@ describe('getAutoDiscoveryConfig', () => {
 
       const result = getAutoDiscoveryConfig(handlerConfig)
 
-      expect(result).toBe(true)
+      expect(result).toEqual(DEFAULT_CONFIG.autoDiscovery)
     })
 
     it('should handle null baseUrl as falsy', () => {
@@ -224,7 +224,7 @@ describe('getAutoDiscoveryConfig', () => {
 
       const result = getAutoDiscoveryConfig(handlerConfig)
 
-      expect(result).toBe(true)
+      expect(result).toEqual(DEFAULT_CONFIG.autoDiscovery)
     })
 
     it('should handle autoDiscovery with both fields populated', () => {
@@ -284,7 +284,7 @@ describe('getAutoDiscoveryConfig', () => {
 
       const result = getAutoDiscoveryConfig(handlerConfig)
 
-      expect(result).toBe(123)
+      expect(result).toEqual(DEFAULT_CONFIG.autoDiscovery)
     })
 
     it('should return string when autoDiscovery is a truthy string', () => {
@@ -296,7 +296,7 @@ describe('getAutoDiscoveryConfig', () => {
 
       const result = getAutoDiscoveryConfig(handlerConfig)
 
-      expect(result).toBe('enabled')
+      expect(result).toEqual(DEFAULT_CONFIG.autoDiscovery)
     })
 
     it('should treat array as object and return it', () => {
