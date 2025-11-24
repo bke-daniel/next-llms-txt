@@ -1,9 +1,9 @@
 import type { NextRequest, NextResponse } from 'next/server'
-import type { LLMsTxtHandlerConfig } from './types.js'
+import type { LLMsTxtHandlerConfig, RequiredLLMsTxtHandlerConfig } from './types.js'
 import createMarkdownResponse from './create-markdown-response.js'
 import { LLMsTxtAutoDiscovery } from './discovery.js'
 import { generateLLMsTxt } from './generator.js'
-// import { getAutoDiscoveryConfig } from './get-auto-discovery-config.js'
+import mergeConfig from './merge-with-default-config.js'
 
 /**
  * Handles requests for the site-wide llms.txt file.
@@ -13,11 +13,11 @@ export default async function handleSiteRequest(
   handlerConfig: LLMsTxtHandlerConfig,
 ): Promise<NextResponse> {
   let finalConfig = handlerConfig.defaultConfig
-  let pages = (handlerConfig as any).pages || []
+  let pages: any[] = (handlerConfig as any).pages || []
 
   if (handlerConfig.autoDiscovery) {
-    // const discoveryConfig = getAutoDiscoveryConfig(handlerConfig)
-    const discovery = new LLMsTxtAutoDiscovery(handlerConfig as any)
+    const mergedConfig: RequiredLLMsTxtHandlerConfig = mergeConfig(handlerConfig)
+    const discovery = new LLMsTxtAutoDiscovery(mergedConfig)
     const discoveredPages = await discovery.discoverPages()
     pages = [...pages, ...discoveredPages]
 
