@@ -13,4 +13,17 @@ describe('normalize path unit tests', () => {
     expect(normalizePath('/foo/')).toBe('/foo')
     expect(normalizePath('/')).toBe('/')
   })
+
+  it('handles root index path', () => {
+    expect(normalizePath('/index')).toBe('/')
+  })
+
+  it('does not modify paths without trailing slash or index', () => {
+    expect(normalizePath('/about')).toBe('/about')
+    expect(normalizePath('/services/consulting')).toBe('/services/consulting')
+  })
+
+  it('handles nested index paths', () => {
+    expect(normalizePath('/deeply/nested/path/index')).toBe('/deeply/nested/path')
+  })
 })

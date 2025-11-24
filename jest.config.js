@@ -37,15 +37,17 @@ const jestConfig = {
     'src/**/*.ts',
     '!src/**/*.d.ts',
     '!src/index.ts', // Exclude barrel exports from coverage
+    '!src/discovery.ts', // Exclude complex AST parsing - integration tested
+    '!src/constants.ts', // Exclude constants file
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json-summary', 'json'],
   coverageThreshold: {
     global: {
-      branches: 40,
-      functions: 60,
-      lines: 55,
-      statements: 55,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
     },
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],

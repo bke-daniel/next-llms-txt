@@ -3,14 +3,7 @@ import { DEFAULT_CONFIG } from './constants'
 
 function mergeAutoDiscovery(
   inputAutoDiscovery: AutoDiscoveryConfig,
-
 ): RequiredLLMsTxtHandlerConfig['autoDiscovery'] {
-  if (
-    !inputAutoDiscovery
-    || typeof inputAutoDiscovery === 'boolean'
-  ) {
-    return DEFAULT_CONFIG.autoDiscovery
-  }
   return {
     ...DEFAULT_CONFIG.autoDiscovery,
     ...inputAutoDiscovery,
