@@ -5,11 +5,6 @@ import { LLMS_TXT_HANDLER_CONFIG } from '../constants'
 describe('uncovered logic tests', () => {
   const custom = new LLMsTxtAutoDiscovery(LLMS_TXT_HANDLER_CONFIG)
 
-  // TODO implement
-  it.skip('merges config in constructor', () => {
-
-  })
-
   it('discovers pages from pagesDir', async () => {
     const pages = await custom.discoverPages()
     expect(Array.isArray(pages)).toBe(true)

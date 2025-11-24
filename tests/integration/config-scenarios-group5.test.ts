@@ -16,15 +16,17 @@ describe('configuration scenarios - group 5: site-wide generation', () => {
       urls = allItems.map(item => item.url).sort()
     })
 
-    // FIXME
-    it.skip('should include pages with llmstxt in site-wide file', async () => {
-      expect(urls).toContain(ROUTES_WITH_EXPORTS.map(r => BASE_URL + r))
+    it('should include pages with llmstxt in site-wide file', async () => {
+      ROUTES_WITH_EXPORTS.forEach((route) => {
+        expect(urls).toContain(BASE_URL + route)
+      })
     })
 
-    // FIXME
-    it.skip('should include pages with metadata fallback in site-wide file', async () => {
+    it('should include pages with metadata fallback in site-wide file', async () => {
       const urls = allItems.map(item => item.url)
-      expect(urls).toContain(ROUTES_WITH_EXPORTS.map(r => BASE_URL + r))
+      ROUTES_WITH_EXPORTS.forEach((route) => {
+        expect(urls).toContain(BASE_URL + route)
+      })
     })
 
     it('should exclude pages without any config from site-wide file', async () => {

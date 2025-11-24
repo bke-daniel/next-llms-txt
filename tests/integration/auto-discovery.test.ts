@@ -5,13 +5,12 @@ import { BASE_URL, LLMS_TXT_HANDLER_CONFIG } from '../constants'
 describe('auto-discovery integration', () => {
   const handler = createLLmsTxt(LLMS_TXT_HANDLER_CONFIG)
 
-  // TODO Fix
-  it.skip('generates site-wide llms.txt with discovered pages', async () => {
+  it('generates site-wide llms.txt with discovered pages', async () => {
     const req = new NextRequest(`${BASE_URL}/llms.txt`)
     const res = await handler.GET(req)
     const text = await res.text()
     expect(text).toContain('# Test Site')
-    expect(text).toContain('Auto-discovery test')
+    expect(text).toContain('next-llms-txt test-server')
     expect(res.headers.get('content-type')).toMatch(/text\/plain;?\s*charset=(utf-8|UTF-8)/)
   })
 

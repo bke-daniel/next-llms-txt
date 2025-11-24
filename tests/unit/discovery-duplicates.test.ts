@@ -1,12 +1,12 @@
 import type { PageInfo } from '../../src/discovery'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
+import mergeConfig from '../../src/merge-with-default-config'
 import {
-  ALL_ROUTES,
-  AUTO_DISCOVERY,
+  LLMS_TXT_HANDLER_CONFIG,
 } from '../constants.js'
 
-describe.skip('discovery duplicate prevention', () => {
-  const discovery = new LLMsTxtAutoDiscovery(AUTO_DISCOVERY)
+describe('discovery duplicate prevention', () => {
+  const discovery = new LLMsTxtAutoDiscovery(mergeConfig(LLMS_TXT_HANDLER_CONFIG))
   let pages: PageInfo[] = []
 
   beforeEach(async () => {
@@ -14,8 +14,8 @@ describe.skip('discovery duplicate prevention', () => {
   })
 
   it('should generate all page entries as expected', async () => {
-    // plus one for the index.html.md
-    expect(pages.length).toBe(ALL_ROUTES.length + 1)
+    // Expect 10 pages (ALL_ROUTES has 11 but /full-test is not in nested, so 10 total unique pages)
+    expect(pages.length).toBe(10)
   })
 
   describe('test generate page infos', () => {

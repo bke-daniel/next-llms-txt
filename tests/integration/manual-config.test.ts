@@ -16,16 +16,6 @@ describe('manual config integration', () => {
     ],
   })
 
-  // Currently not supported anymore
-  it.skip('generates static llms.txt from manual config', async () => {
-    const req = new NextRequest(`${BASE_URL}/llms.txt`)
-    const res = await handler.GET(req)
-    const text = await res.text()
-    expect(text).toContain('# Manual Site')
-    expect(text).toContain('Getting started')
-    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
-  })
-
   it('returns 404 for .html.md when not discovered', async () => {
     const req = new NextRequest(`${BASE_URL}/unknown.html.md`)
     const res = await handler.GET(req)
