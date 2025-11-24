@@ -8,5 +8,5 @@ export function getAutoDiscoveryConfig(handlerConfig: LLMsTxtHandlerConfig): Aut
   if (!handlerConfig.baseUrl) {
     throw new Error('A `baseUrl` is required for auto-discovery.')
   }
-  return handlerConfig.autoDiscovery || DEFAULT_CONFIG.autoDiscovery!
+  return DEFAULT_CONFIG.autoDiscovery!
 }

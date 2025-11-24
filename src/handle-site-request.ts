@@ -17,7 +17,7 @@ export default async function handleSiteRequest(
 
   if (handlerConfig.autoDiscovery) {
     // const discoveryConfig = getAutoDiscoveryConfig(handlerConfig)
-    const discovery = new LLMsTxtAutoDiscovery(handlerConfig)
+    const discovery = new LLMsTxtAutoDiscovery(handlerConfig as any)
     const discoveredPages = await discovery.discoverPages()
     pages = [...pages, ...discoveredPages]
 
