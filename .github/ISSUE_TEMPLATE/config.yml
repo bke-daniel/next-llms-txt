@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/bke-daniel/next-llms-txt/discussions
+    about: Ask questions and discuss with the community
+  - name: 📖 Documentation
+    url: https://github.com/bke-daniel/next-llms-txt#readme
+    about: Read the documentation
+  - name: 🐛 Report a Security Vulnerability
+    url: https://github.com/bke-daniel/next-llms-txt/security/advisories/new
+    about: Report security issues privately

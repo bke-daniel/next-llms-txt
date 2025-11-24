@@ -1,0 +1,29 @@
+---
+name: Documentation Issue
+about: Report an issue with documentation
+title: '[Docs]: '
+labels: ['documentation', 'needs triage']
+assignees: ''
+---
+
+## Documentation Issue
+
+Which documentation page or section has the issue?
+
+- [ ] README.md
+- [ ] API Reference
+- [ ] Quick Start Guide
+- [ ] Examples
+- [ ] Other (please specify)
+
+## Description
+
+Describe what's wrong or missing in the documentation:
+
+## Suggestion
+
+How should the documentation be improved?
+
+## Additional Context
+
+Any additional information that might help improve the documentation.

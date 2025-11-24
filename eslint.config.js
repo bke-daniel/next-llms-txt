@@ -13,6 +13,7 @@ export default antfu({
     'dist/**',
     'node_modules/**',
     'packages/**',
+    '.github/ISSUE_TEMPLATE/**/*',
   ],
   // Customize rules if needed
   rules: {
