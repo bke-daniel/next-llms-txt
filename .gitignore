@@ -9,3 +9,4 @@ out
 build
 *.tsbuildinfo
 tmp
+.github/ISSUE_TEMPLATE/**/*
