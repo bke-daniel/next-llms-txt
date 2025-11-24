@@ -15,9 +15,9 @@ const mockGenerateLLMsTxt = generateLLMsTxt as jest.MockedFunction<typeof genera
 
 beforeEach(() => {
   jest.clearAllMocks()
-    ; (LLMsTxtAutoDiscovery as jest.Mock).mockImplementation(() => ({
-      discoverPages: mockDiscoverPages,
-    }))
+  ; (LLMsTxtAutoDiscovery as jest.Mock).mockImplementation(() => ({
+    discoverPages: mockDiscoverPages,
+  }))
 })
 
 describe('handlePageRequest', () => {

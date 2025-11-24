@@ -185,14 +185,14 @@ describe('handleSiteRequest', () => {
 
         // Add pages to config (as done internally)
         ; (config as any).pages = [
-          {
-            route: '/manual-page',
-            config: {
-              title: 'Manual Page',
-              description: 'Manually added',
-            },
+        {
+          route: '/manual-page',
+          config: {
+            title: 'Manual Page',
+            description: 'Manually added',
           },
-        ]
+        },
+      ]
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
@@ -211,13 +211,13 @@ describe('handleSiteRequest', () => {
       }
 
         ; (config as any).pages = [
-          {
-            route: '/manual',
-            config: {
-              title: 'Manual',
-            },
+        {
+          route: '/manual',
+          config: {
+            title: 'Manual',
           },
-        ]
+        },
+      ]
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
@@ -558,11 +558,11 @@ describe('handleSiteRequest', () => {
       }
 
         ; (config as any).pages = [
-          {
-            route: '/custom',
-            config: { title: 'Custom Page' },
-          },
-        ]
+        {
+          route: '/custom',
+          config: { title: 'Custom Page' },
+        },
+      ]
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
