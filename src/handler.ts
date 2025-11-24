@@ -7,26 +7,28 @@ import mergeConfig from './merge-with-default-config.js'
 import validateConfig from './validate-config.js'
 
 /**
- * Creates a handler for generating llms.txt files in Next.js middleware.
+ * Creates a handler for generating llms.txt files in Next.js 16+ proxy.
  *
  * This function acts as a single entry point for creating both a site-wide `llms.txt`
  * and per-page `*.html.md` files, with optional auto-discovery of page configurations.
- * Designed to work seamlessly with Next.js middleware to intercept `/llms.txt` and `/*.html.md` requests.
+ * Designed to work seamlessly with Next.js 16+ proxy to intercept `/llms.txt` and `/*.html.md` requests.
  *
  * @param config - The configuration for the handler.
- * @returns An object with a `GET` method for use in Next.js middleware or route handlers.
+ * @returns An object with a `GET` method for use in Next.js proxy or route handlers.
  *
  * @example
  * ```typescript
- * // src/middleware.ts
+ * // src/proxy.ts
+ * import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt';
+ *
  * const { GET: handleLLmsTxt } = createLLmsTxt({
  *   autoDiscovery: {
  *     baseUrl: 'https://example.com',
  *   },
  * });
  *
- * export async function middleware(request: NextRequest) {
- *   if (request.nextUrl.pathname === '/llms.txt' || request.nextUrl.pathname.endsWith('.html.md')) {
+ * export default async function proxy(request: NextRequest) {
+ *   if (isLLMsTxtPath(request.nextUrl.pathname)) {
  *     return await handleLLmsTxt(request);
  *   }
  *   return NextResponse.next();

@@ -1,14 +1,14 @@
 /**
- * next-llms-txt - A Next.js plugin for generating llms.txt files
+ * next-llms-txt - A Next.js 16+ plugin for generating llms.txt files
  *
  * This package helps you generate llms.txt files following the llmstxt.org specification.
- * It provides a middleware-first approach for intercepting /llms.txt and /*.html.md requests,
+ * It provides a proxy-first approach for intercepting /llms.txt and /*.html.md requests,
  * with support for automatic page discovery and comprehensive site-wide llms.txt generation.
  *
  * @example
  * ```typescript
- * // src/middleware.ts
- * import { createLLmsTxt } from 'next-llms-txt';
+ * // src/proxy.ts
+ * import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt';
  *
  * const { GET: handleLLmsTxt } = createLLmsTxt({
  *   autoDiscovery: {
@@ -16,9 +16,9 @@
  *   },
  * });
  *
- * export async function middleware(request: NextRequest) {
+ * export default async function proxy(request: NextRequest) {
  *   const { pathname } = request.nextUrl;
- *   if (pathname === '/llms.txt' || pathname.endsWith('.html.md')) {
+ *   if (isLLMsTxtPath(pathname)) {
  *     return await handleLLmsTxt(request);
  *   }
  *   return NextResponse.next();

@@ -112,10 +112,10 @@ Get up and running in 30 seconds.
     npm install next-llms-txt
     ```
 
-2. **Add middleware integration in `src/middleware.ts`:**
+2. **Add proxy integration in `src/proxy.ts`:**
 
     ```typescript
-    // src/middleware.ts
+    // src/proxy.ts
     import type { NextRequest } from 'next/server'
     import { NextResponse } from 'next/server'
     import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt'
@@ -128,7 +128,7 @@ Get up and running in 30 seconds.
       },
     })
 
-    export async function middleware(request: NextRequest) {
+    export default async function proxy(request: NextRequest) {
       const { pathname } = request.nextUrl
       if (isLLMsTxtPath(pathname)) {
         return await handleLLmsTxt(request)
@@ -298,13 +298,13 @@ Place a markdown file next to your page, naming it with the `.html.md` extension
       page.html.md  <-- Markdown content for the /services/consulting page
 ```
 
-**Step 2: Configure middleware to handle `.html.md` requests.**
+**Step 2: Configure proxy to handle `.html.md` requests.**
 
-The middleware integration from the Quick Start already handles this:
+The proxy integration from the Quick Start already handles this:
 
 ```typescript
-// src/middleware.ts
-export function middleware(request: NextRequest) {
+// src/proxy.ts
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   // Handles both /llms.txt and /*.html.md paths
   if (isLLMsTxtPath(pathname)) {
@@ -378,7 +378,7 @@ The library is written in TypeScript and exports all types for a fully typed exp
 - **Use Absolute URLs**: Always provide a `baseUrl` in your configuration to ensure all generated URLs are absolute, as required by the `llms.txt` standard.
 - **Prefer `llmstxt` Exports**: While the `metadata` fallback is convenient, using an explicit `llmstxt` export gives you more control and makes your intent clear.
 - **Keep Descriptions Concise**: Write clear and concise descriptions for your pages and sections. Think about what an LLM would need to understand the content.
-- **Use Middleware**: The middleware approach provides the most flexibility for handling both `/llms.txt` and `.html.md` requests in a single location.
+- **Use Proxy**: The proxy approach provides the most flexibility for handling both `/llms.txt` and `.html.md` requests in a single location.
 
 ## Contributing
 
@@ -557,12 +557,12 @@ export const { GET } = createLLmsTxt({
 3. Automatically generates sections and links
 4. Provides warnings for missing configurations
 
-### Middleware Integration
+### Proxy Integration
 
-Use middleware for handling both `/llms.txt` and `.html.md` requests:
+Use proxy for handling both `/llms.txt` and `.html.md` requests:
 
 ```typescript
-// src/middleware.ts
+// src/proxy.ts
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt'
@@ -578,7 +578,7 @@ const { GET: handleLLmsTxt } = createLLmsTxt({
   },
 })
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   if (isLLMsTxtPath(pathname)) {
     return await handleLLmsTxt(request)
@@ -871,9 +871,10 @@ if (isLLMsTxtPath('/docs/intro.html.md')) {
 }
 ```
 
-#### Middleware matcher configuration
+#### Proxy matcher configuration
 
 ```typescript
+// src/proxy.ts
 export const config = {
   matcher: ['/llms.txt', '/:path*.html.md']
 }
@@ -1142,10 +1143,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Compatibility
 
-- **Next.js**: 12.0+ (tested with 13.x and 14.x)
-- **Node.js**: 16.0+ (LTS recommended)
-- **TypeScript**: 4.5+ (optional but recommended)
-- **React**: 17.0+ (for Next.js compatibility)
+- **Next.js**: 16.0+ (officially supported)
+  - *Next.js 15 may work if you configure the proxy manually, but it's not officially supported*
+- **Node.js**: 22.0+
+- **TypeScript**: 5.9+ (optional but recommended)
+- **React**: 19.2+
 
 ### Related Projects
 
