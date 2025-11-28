@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import type { NodePath } from '@babel/traverse'
 import type { LLMsTxtConfig, RequiredLLMsTxtHandlerConfig } from './types.ts'
 import fs from 'node:fs'
 import path from 'node:path'
