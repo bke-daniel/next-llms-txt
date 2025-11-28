@@ -1,12 +1,13 @@
+import { vi } from 'vitest'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
 import mergeConfig from '../../src/merge-with-default-config'
 import { LLMS_TXT_HANDLER_CONFIG } from '../constants'
 
 describe('llmsTxtAutoDiscovery warnings', () => {
-  let consoleWarnSpy: jest.SpyInstance
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation()
   })
 
   afterEach(() => {

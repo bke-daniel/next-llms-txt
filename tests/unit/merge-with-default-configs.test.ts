@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { DEFAULT_CONFIG } from '../../src/constants'
 import mergeWithDefaultConfig from '../../src/merge-with-default-config'
 
@@ -64,7 +65,7 @@ describe('test mergeWithDefaultConfig', () => {
   })
 
   it('preserves generator function', () => {
-    const generator = jest.fn()
+    const generator = vi.fn()
     const input = {
       generator,
     }

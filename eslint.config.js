@@ -3,7 +3,6 @@ import antfu from '@antfu/eslint-config'
 export default antfu({
   // Enable TypeScript support
   typescript: true,
-  // Enable Jest support
   test: {
     files: ['**/*.test.ts', '**/*.test.js', '**/tests/**/*', '**/__tests__/**/*'],
   },

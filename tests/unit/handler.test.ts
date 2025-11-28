@@ -1,23 +1,25 @@
 import type { NextRequest } from 'next/server'
+import type { MockedFunction } from 'vitest'
 import type { LLMsTxtHandlerConfig } from '../../src/types'
+import { vi } from 'vitest'
 import handlePageRequest from '../../src/handle-page-request'
 import handleSiteRequest from '../../src/handle-site-request'
 import { createLLmsTxt } from '../../src/handler'
 import mergeConfig from '../../src/merge-with-default-config'
 import validateConfig from '../../src/validate-config'
 
-jest.mock('../../src/handle-page-request')
-jest.mock('../../src/handle-site-request')
-jest.mock('../../src/merge-with-default-config')
-jest.mock('../../src/validate-config')
+vi.mock('../../src/handle-page-request')
+vi.mock('../../src/handle-site-request')
+vi.mock('../../src/merge-with-default-config')
+vi.mock('../../src/validate-config')
 
-const mockHandlePageRequest = handlePageRequest as jest.MockedFunction<typeof handlePageRequest>
-const mockHandleSiteRequest = handleSiteRequest as jest.MockedFunction<typeof handleSiteRequest>
-const mockMergeConfig = mergeConfig as jest.MockedFunction<typeof mergeConfig>
-const mockValidateConfig = validateConfig as jest.MockedFunction<typeof validateConfig>
+const mockHandlePageRequest = handlePageRequest as MockedFunction<typeof handlePageRequest>
+const mockHandleSiteRequest = handleSiteRequest as MockedFunction<typeof handleSiteRequest>
+const mockMergeConfig = mergeConfig as MockedFunction<typeof mergeConfig>
+const mockValidateConfig = validateConfig as MockedFunction<typeof validateConfig>
 
 beforeEach(() => {
-  jest.clearAllMocks()
+  vi.clearAllMocks()
 })
 
 describe('createLLmsTxt', () => {
@@ -89,7 +91,7 @@ describe('createLLmsTxt', () => {
         throw new Error('Test error')
       })
 
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation()
 
       const handler = createLLmsTxt(config)
       const response = await handler.GET(request)

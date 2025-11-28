@@ -1,21 +1,23 @@
 import type { NextRequest } from 'next/server'
+import type { MockedFunction } from 'vitest'
 import type { LLMsTxtHandlerConfig, PageInfo } from '../../src/types'
+import { vi } from 'vitest'
 import createMarkdownResponse from '../../src/create-markdown-response'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
 import { generateLLMsTxt } from '../../src/generator'
 import handlePageRequest from '../../src/handle-page-request'
 
-jest.mock('../../src/discovery')
-jest.mock('../../src/create-markdown-response')
-jest.mock('../../src/generator')
+vi.mock('../../src/discovery')
+vi.mock('../../src/create-markdown-response')
+vi.mock('../../src/generator')
 
-const mockDiscoverPages = jest.fn()
-const mockCreateMarkdownResponse = createMarkdownResponse as jest.MockedFunction<typeof createMarkdownResponse>
-const mockGenerateLLMsTxt = generateLLMsTxt as jest.MockedFunction<typeof generateLLMsTxt>
+const mockDiscoverPages = vi.fn()
+const mockCreateMarkdownResponse = createMarkdownResponse as MockedFunction<typeof createMarkdownResponse>
+const mockGenerateLLMsTxt = generateLLMsTxt as MockedFunction<typeof generateLLMsTxt>
 
 beforeEach(() => {
-  jest.clearAllMocks()
-  ; (LLMsTxtAutoDiscovery as jest.Mock).mockImplementation(() => ({
+  vi.clearAllMocks()
+  ; (LLMsTxtAutoDiscovery as any).mockImplementation(() => ({
     discoverPages: mockDiscoverPages,
   }))
 })
@@ -200,7 +202,7 @@ describe('handlePageRequest', () => {
 
   describe('custom generator', () => {
     it('should use custom generator when provided', async () => {
-      const customGenerator = jest.fn().mockReturnValue('Custom content')
+      const customGenerator = vi.fn().mockReturnValue('Custom content')
       const handlerConfig: LLMsTxtHandlerConfig = {
         baseUrl: 'http://example.com',
         autoDiscovery: true,
@@ -235,7 +237,7 @@ describe('handlePageRequest', () => {
     })
 
     it('should return 400 when custom generator returns empty string', async () => {
-      const customGenerator = jest.fn().mockReturnValue('')
+      const customGenerator = vi.fn().mockReturnValue('')
       const handlerConfig: LLMsTxtHandlerConfig = {
         baseUrl: 'http://example.com',
         autoDiscovery: true,
@@ -265,7 +267,7 @@ describe('handlePageRequest', () => {
     })
 
     it('should return 400 when custom generator returns undefined', async () => {
-      const customGenerator = jest.fn().mockReturnValue(undefined)
+      const customGenerator = vi.fn().mockReturnValue(undefined)
       const handlerConfig: LLMsTxtHandlerConfig = {
         baseUrl: 'http://example.com',
         autoDiscovery: true,

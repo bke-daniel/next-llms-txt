@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage
-        run: npm run test:coverage -- --json --outputFile=./coverage/report.json --testPathIgnorePatterns=e2e
+        run: npm run test:coverage
 
       - name: Upload coverage to Codecov
         if: matrix.node-version == 22
@@ -53,14 +53,7 @@ jobs:
 
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request' && matrix.node-version == 22
-        uses: ArtiomTr/jest-coverage-report-action@v2
+        uses: davelosert/vitest-coverage-report@v2
         with:
-          coverage-file: ./coverage/report.json
-          base-coverage-file: ./coverage/report.json
-          annotations: all
-          package-manager: npm
-          skip-step: all
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          test-script: npx jest
-          icons: emoji
-          output: comment
+          lcov-path: ./coverage/lcov.info
