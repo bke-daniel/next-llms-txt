@@ -53,7 +53,8 @@ jobs:
 
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request' && matrix.node-version == 22
-        uses: davelosert/vitest-coverage-report@v2
+        uses: davelosert/vitest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          lcov-path: ./coverage/lcov.info
+          json-summary-path: ./coverage/coverage-summary.json
+          json-final-path: ./coverage/coverage-final.json
