@@ -27,7 +27,19 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.node-version }}-
+
       - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Run tests with coverage
@@ -38,7 +50,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info,./coverage/coverage-final.json
+          files: ./coverage/lcov.info
           flags: unittests
           name: codecov-${{ matrix.node-version }}
           fail_ci_if_error: false

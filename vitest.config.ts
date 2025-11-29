@@ -9,10 +9,12 @@ export default defineConfig({
     environment: 'node',
     clearMocks: true,
     globals: true,
+    poolOptions: { threads: { useAtomics: true } },
     coverage: {
       provider: 'v8',
       reportsDirectory: 'coverage',
       reporter: ['text', 'lcov', 'html', 'json-summary', 'json'],
+      reportOnFailure: true,
       include: ['src/**/*.ts'],
       exclude: [
         'src/**/*.d.ts',

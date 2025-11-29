@@ -16,6 +16,10 @@ export default antfu({
   ],
   // Customize rules if needed
   rules: {
-    // Add any custom rules here
+    // Test naming conventions
+    'test/consistent-test-it': ['error', { fn: 'it', withinDescribe: 'it' }],
+    'test/no-focused-tests': 'error',
+    'test/no-disabled-tests': 'warn',
+    'test/prefer-lowercase-title': ['error', { ignore: ['describe'] }],
   },
 })
