@@ -171,6 +171,11 @@ Explore a live set of routes showcasing auto-discovery, per-page markdown, and d
   - `/full-test` — comprehensive configuration
   - `/with-proxy` — explains proxy setup for `.html.md`
 
+Hosted demo (auto-updated via Vercel):
+
+- Production: https://next-llms-txt-demo-server.vercel.app
+- Note: The demo-server is deployed automatically on every push to this repo. Use it to preview the latest library behavior without running locally.
+
 Key files in the demo:
 - `packages/demo-server/src/app/llms.txt/route.ts` — Node.js route using `createLLmsTxt`
 - `packages/demo-server/src/proxy.ts` — edge proxy rewriting `*.html.md` to a Node API
