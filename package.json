@@ -6,9 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w next-llms-txt",
+    "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev -w next-llms-txt",
-    "test": "npm run test -w next-llms-txt",
+    "test": "npm run test --workspaces --if-present",
     "test:unit": "npm run test:unit -w next-llms-txt",
     "test:watch": "npm run test:watch -w next-llms-txt",
     "test:coverage": "npm run test:coverage -w next-llms-txt",
@@ -16,8 +16,8 @@
     "test:e2e": "npm run test:e2e -w cypress-tests",
     "server:demo": "npm run dev -w @next-llms-txt/demo-server",
     "server:demo:build": "npm run build -w @next-llms-txt/demo-server",
-    "lint": "npm run lint -w next-llms-txt",
-    "lint:fix": "npm run lint:fix -w next-llms-txt",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
     "cypress:open": "npm run cypress:open -w cypress-tests",
     "cypress:run": "npm run cypress:run -w cypress-tests",
     "prepare": "husky"
