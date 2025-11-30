@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "rm -rf .next && next dev",
     "build": "rm -rf .next && next build",
+    "prebuild": "npm run build -w next-llms-txt",
     "start": "next start",
     "lint": "eslint"
   },

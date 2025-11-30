@@ -55,6 +55,8 @@ LLM-focused content discovery and delivery for **Next.js 16+**. Generates a spec
 
 LLMs struggle with hydrated React trees, client navigation, and layout noise. The `llms.txt` specification provides a markdown manifest of essential site content plus direct pointers to clean textual representations. `next-llms-txt` automates generation for Next.js 16+: it scans pages, synthesizes structured sections, serves canonical markdown, and exposes per-page raw content via deterministic `.html.md` routes. Result: higher quality ingestion for AI agents, less manual curation.
 
+See the Demo here: https://next-llms-txt-demo-server.vercel.app
+
 ## 2. Features
 
 - Auto-discovery across App Router and legacy Pages Router
@@ -174,7 +176,6 @@ Explore a live set of routes showcasing auto-discovery, per-page markdown, and d
 Hosted demo (auto-updated via Vercel):
 
 - Production: https://next-llms-txt-demo-server.vercel.app
-- Note: The demo-server is deployed automatically on every push to this repo. Use it to preview the latest library behavior without running locally.
 
 Key files in the demo:
 - `packages/demo-server/src/app/llms.txt/route.ts` — Node.js route using `createLLmsTxt`
