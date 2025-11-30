@@ -1,8 +1,7 @@
 {
+  "extends": "../../../../../tsconfig.base.json",
   "compilerOptions": {
     "incremental": true,
-    "target": "es2020",
-    "jsx": "react-jsx",
     "lib": [
       "dom",
       "dom.iterable",
@@ -26,13 +25,8 @@
         "../../../src/index.ts"
       ]
     },
-    "resolveJsonModule": true,
     "allowJs": true,
-    "strict": true,
     "noEmit": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "skipLibCheck": true,
     "plugins": [
       {
         "name": "next"

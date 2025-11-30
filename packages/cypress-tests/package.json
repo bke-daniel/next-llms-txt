@@ -1,5 +1,5 @@
 {
-  "name": "cypress-tests",
+  "name": "@next-llms-txt/cypress-tests",
   "version": "1.0.0",
   "private": true,
   "description": "Cypress E2E tests for next-llms-txt",

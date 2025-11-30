@@ -1,16 +1,7 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "jsx": "react-jsx",
-    "lib": [
-      "DOM",
-      "ESNext"
-    ],
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
     "baseUrl": ".",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
     "paths": {
       "@/test/constants": [
         "./tests/constants.ts"
@@ -19,23 +10,15 @@
         "./src/*"
       ]
     },
-    "resolveJsonModule": true,
     "types": [
       "cypress",
       "vitest"
     ],
-    "strict": true,
-    "strictNullChecks": true,
     "declaration": true,
     "declarationMap": true,
     "outDir": "./dist",
     "sourceMap": true,
-    "stripInternal": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "skipDefaultLibCheck": true,
-    "skipLibCheck": true
+    "stripInternal": true
   },
   "include": [
     "src/**/*"
