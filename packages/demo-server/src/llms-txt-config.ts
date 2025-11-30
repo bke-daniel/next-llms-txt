@@ -5,8 +5,6 @@ const llmsTxtConfig: LLMsTxtHandlerConfig = {
     title: 'next-llms-txt test-server',
     description: 'This is a test server for next-llms-txt\'s e2e tests',
   },
-  autoDiscovery: {
-    appDir: 'src/app',
-  },
+  autoDiscovery: true
 }
 export default llmsTxtConfig

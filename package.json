@@ -15,6 +15,7 @@
     "test:coverage:ci": "npm run test:coverage:ci -w next-llms-txt",
     "test:e2e": "npm run test:e2e -w cypress-tests",
     "server:demo": "npm run dev -w @next-llms-txt/demo-server",
+    "server:demo:open": "open http://localhost:3000 && npm run server:demo",
     "server:demo:build": "npm run build -w @next-llms-txt/demo-server",
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
