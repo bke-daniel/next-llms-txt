@@ -49,6 +49,7 @@ LLM-focused content discovery and delivery for **Next.js 16+**. Generates a spec
 - [FAQ](#12-faq)
 - [Contributing](#13-contributing)
 - [License](#license)
+ - [Demo Server](#demo-server)
 
 ## 1. Introduction
 
@@ -151,6 +152,30 @@ Get up and running in 30 seconds.
     ```bash
     npm install next-llms-txt
     ```
+
+## Demo Server
+
+Explore a live set of routes showcasing auto-discovery, per-page markdown, and different export combinations in the monorepo demo server.
+
+- Start from the repo root:
+
+    ```bash
+    npm run server:demo
+    ```
+
+- Open `http://localhost:3000` and try:
+  - `/llms.txt` — root manifest generated via auto-discovery
+  - `/*.html.md` — page-specific raw markdown endpoints
+  - `/all-exports`, `/metadata-only`, `/llms-txt-only`, `/no-exports`
+  - Nested variants under `/nested/*`
+  - `/full-test` — comprehensive configuration
+  - `/with-proxy` — explains proxy setup for `.html.md`
+
+Key files in the demo:
+- `packages/demo-server/src/app/llms.txt/route.ts` — Node.js route using `createLLmsTxt`
+- `packages/demo-server/src/proxy.ts` — edge proxy rewriting `*.html.md` to a Node API
+- `packages/demo-server/src/app/api/llms-md/route.ts` — Node API generating markdown
+- `packages/demo-server/src/llms-txt-config.ts` — demo config used by the handlers
 
 2. **Add proxy integration in `src/proxy.ts`:**
 
