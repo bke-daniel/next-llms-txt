@@ -3,7 +3,6 @@ import antfu from '@antfu/eslint-config'
 export default antfu({
   // Enable TypeScript support
   typescript: true,
-  // Enable Jest support
   test: {
     files: ['**/*.test.ts', '**/*.test.js', '**/tests/**/*', '**/__tests__/**/*'],
   },
@@ -17,6 +16,10 @@ export default antfu({
   ],
   // Customize rules if needed
   rules: {
-    // Add any custom rules here
+    // Test naming conventions
+    'test/consistent-test-it': ['error', { fn: 'it', withinDescribe: 'it' }],
+    'test/no-focused-tests': 'error',
+    'test/no-disabled-tests': 'warn',
+    'test/prefer-lowercase-title': ['error', { ignore: ['describe'] }],
   },
 })

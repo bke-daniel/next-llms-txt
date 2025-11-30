@@ -21,7 +21,8 @@
     },
     "resolveJsonModule": true,
     "types": [
-      "cypress"
+      "cypress",
+      "vitest"
     ],
     "strict": true,
     "strictNullChecks": true,

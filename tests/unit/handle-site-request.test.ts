@@ -1,5 +1,6 @@
 import type { LLMsTxtHandlerConfig } from '../../src/types'
 import { NextRequest } from 'next/server'
+import { vi } from 'vitest'
 import handleSiteRequest from '../../src/handle-site-request'
 import { AUTO_DISCOVERY, BASE_URL, DEFAULT_CONFIG } from '../constants'
 import createMockRequest from '../create-mock-request'
@@ -86,7 +87,7 @@ describe('handleSiteRequest', () => {
 
   describe('with custom generator', () => {
     it('should use custom generator when provided', async () => {
-      const customGenerator = jest.fn(() => '# Custom Generated Content')
+      const customGenerator = vi.fn(() => '# Custom Generated Content')
 
       const config: LLMsTxtHandlerConfig = {
         baseUrl: BASE_URL,
@@ -104,7 +105,7 @@ describe('handleSiteRequest', () => {
     })
 
     it('should pass config and pages to custom generator', async () => {
-      const customGenerator = jest.fn((config, pages) => {
+      const customGenerator = vi.fn((config, pages) => {
         return `# ${config.title}\nPages: ${pages.length}`
       })
 
@@ -126,7 +127,7 @@ describe('handleSiteRequest', () => {
     })
 
     it('should throw error when custom generator returns falsy value', async () => {
-      const customGenerator = jest.fn(() => null)
+      const customGenerator = vi.fn(() => null)
 
       const config: LLMsTxtHandlerConfig = {
         baseUrl: BASE_URL,
@@ -142,7 +143,7 @@ describe('handleSiteRequest', () => {
     })
 
     it('should throw error when custom generator returns undefined', async () => {
-      const customGenerator = jest.fn(() => undefined)
+      const customGenerator = vi.fn(() => undefined)
 
       const config: LLMsTxtHandlerConfig = {
         baseUrl: BASE_URL,
@@ -158,7 +159,7 @@ describe('handleSiteRequest', () => {
     })
 
     it('should throw error when custom generator returns empty string', async () => {
-      const customGenerator = jest.fn(() => '')
+      const customGenerator = vi.fn(() => '')
 
       const config: LLMsTxtHandlerConfig = {
         baseUrl: BASE_URL,

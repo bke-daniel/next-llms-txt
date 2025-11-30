@@ -28,7 +28,6 @@ LLM-focused content discovery and delivery for **Next.js 16+**. Generates a spec
 - ✨ Automated discovery: scan App + Pages routes, emit structured `llms.txt`
 - 🚀 Zero setup: a single `createLLmsTxt` call yields `{ GET }`
 - 🧠 AI-ready: direct clean markdown endpoints (`/*.html.md`)—no DOM scraping
-- 🔄 Unified API: replaces multiple deprecated handler factories with one
 - 📝 Dual source: prefer `llmstxt` export; fallback to Next.js `metadata`
 - 🌐 Absolute URL discipline: predictable ingestion for external agents
 - 🎯 Focused spec compliance: tight, minimal, deterministic output
