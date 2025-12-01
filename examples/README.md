@@ -24,6 +24,14 @@ Complete setup with proxy handling for both `/llms.txt` and `.html.md` endpoints
 
 ## Quick Start
 
+You can browse a live set of examples locally via the demo server:
+
+```bash
+npm run server:demo
+```
+
+Then open http://localhost:3000 to explore routes like auto-discovery, metadata-only, llms.txt-only, nested exports, full test, and a proxy-enabled setup.
+
 Each example includes:
 
 - Complete setup instructions

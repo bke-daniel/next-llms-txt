@@ -1,0 +1,94 @@
+{
+  "name": "next-llms-txt",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "version": "1.0.0",
+  "workspaces": [
+    "tests/fixtures/nextjs"
+  ],
+  "description": "A Next.js 16+ proxy plugin to generate llms.txt files for AI documentation",
+  "author": {
+    "name": "Daniel Birke",
+    "url": "https://birke.io"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/bke-daniel/next-llms-txt#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bke-daniel/next-llms-txt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bke-daniel/next-llms-txt/issues"
+  },
+  "keywords": [
+    "Next.JS",
+    "llms",
+    "llms.txt",
+    "ai",
+    "documentation",
+    "plugin"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "*.d.ts*",
+    "*.js",
+    "dist"
+  ],
+  "engines": {
+    "node": "^22.0.0"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts",
+    "dev": "rm -rf dist && tsup src/index.ts --watch",
+    "prepublishOnly": "npm run build",
+    "test": "npm run lint && npm run test:unit",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:ci": "vitest run --coverage --reporter=dot",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@babel/generator": "^7.28.5",
+    "@babel/parser": "^7.28.5",
+    "@babel/traverse": "^7.28.5",
+    "@babel/types": "^7.28.5",
+    "debug": "^4.4.3"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^6.2.0",
+    "@swc/core": "^1.15.1",
+    "@types/babel__traverse": "^7.20.5",
+    "@types/node": "^22",
+    "@types/supertest": "^6.0.2",
+    "@vitest/coverage-v8": "^2.1.4",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "16.0.1",
+    "lodash": "^4.17.21",
+    "next": "^16.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "supertest": "^7.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.4"
+  }
+}

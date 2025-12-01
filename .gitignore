@@ -9,3 +9,5 @@ out
 build
 *.tsbuildinfo
 tmp
+.vscode/**
+.idea
