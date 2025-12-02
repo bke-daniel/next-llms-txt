@@ -27,6 +27,12 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
+      - name: Socket Security Firewall
+        uses: SocketDev/action@v1
+        with:
+          mode: firewall-free
+          job-summary: all
+
       - name: Cache node_modules
         uses: actions/cache@v4
         id: cache-node-modules
@@ -41,12 +47,6 @@ jobs:
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: sfw npm ci
-
-      - name: Socket Security Firewall
-        uses: SocketDev/action@v1
-        with:
-          mode: firewall-free
-          job-summary: all
 
       - name: Run tests with coverage
         run: npm run test:coverage
@@ -93,6 +93,12 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
+      - name: Socket Security Firewall
+        uses: SocketDev/action@v1
+        with:
+          mode: firewall-free
+          job-summary: all
+
       - name: Cache node_modules
         uses: actions/cache@v4
         id: cache-node-modules
@@ -106,7 +112,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm ci
+        run: sfw npm ci
 
       - name: Run Cypress E2E tests
         run: npm run test:e2e -w @next-llms-txt/cypress-tests
