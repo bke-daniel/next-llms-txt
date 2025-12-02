@@ -11,3 +11,5 @@ build
 tmp
 .vscode/**
 .idea
+.vercel
+.env*.local
