@@ -24,7 +24,7 @@ describe('createMarkdownResponse', () => {
     const content = 'Hello world'
     const response = createMarkdownResponse(content)
     expect(response.status).toBe(200)
-    expect(response.headers.get('Content-Type')).toMatch(/text\/plain/)
+    expect(response.headers.get('Content-Type')).toMatch(/text\/markdown/)
     expect(response.headers.get('Cache-Control')).toMatch(/max-age=3600/)
     const text = await response.text()
     expect(text).toBe(content)

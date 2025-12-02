@@ -14,7 +14,7 @@ describe('middleware integration', () => {
 
       expect(response).toBeInstanceOf(NextResponse)
       expect(response.status).toBe(200)
-      expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
+      expect(response.headers.get('Content-Type')).toBe('text/markdown; charset=utf-8')
     })
 
     it('should intercept .html.md requests', async () => {
@@ -70,7 +70,7 @@ describe('middleware integration', () => {
       const request = createMockRequest('/llms.txt')
       const response = await handleLLmsTxt(request)
 
-      expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
+      expect(response.headers.get('Content-Type')).toBe('text/markdown; charset=utf-8')
     })
 
     it('should set cache-control headers', async () => {
