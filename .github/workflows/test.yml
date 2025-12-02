@@ -126,6 +126,9 @@ jobs:
         if: steps.cache-cypress.outputs.cache-hit != 'true'
         run: npx cypress install
 
+      - name: Build next-llms-txt package
+        run: npm run build -w next-llms-txt
+
       - name: Run Cypress E2E tests
         run: npm run test:e2e -w @next-llms-txt/cypress-tests
 
