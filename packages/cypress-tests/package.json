@@ -7,6 +7,7 @@
   "scripts": {
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
+    "test": "npm run test:e2e",
     "test:e2e": "concurrently -k -s first -n server,cypress -c blue,green \"npm --prefix ../.. run server:test\" \"npm run cypress:run\"",
     "test:dev": "concurrently -k -n server,cypress -c blue,green \"npm --prefix ../.. run server:test\" \"npm run cypress:open\""
   },
