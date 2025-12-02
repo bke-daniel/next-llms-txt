@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build -w @next-llms-txt/demo-server",
+  "buildCommand": "cd packages/demo-server && npm run build",
   "installCommand": "npm install --ignore-scripts --workspaces",
-  "framework": "nextjs",
-  "outputDirectory": "packages/demo-server/.next"
+  "devCommand": "cd packages/demo-server && npm run dev",
+  "framework": null
 }
