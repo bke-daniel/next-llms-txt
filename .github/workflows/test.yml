@@ -56,7 +56,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
+          files: ./packages/next-llms-txt/coverage/lcov.info
           flags: unittests
           name: codecov-${{ matrix.node-version }}
           fail_ci_if_error: false
@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage/
+          path: packages/next-llms-txt/coverage/
           retention-days: 30
 
       - name: Comment coverage on PR
@@ -74,8 +74,9 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          json-summary-path: ./coverage/coverage-summary.json
-          json-final-path: ./coverage/coverage-final.json
+          json-summary-path: ./packages/next-llms-txt/coverage/coverage-summary.json
+          json-final-path: ./packages/next-llms-txt/coverage/coverage-final.json
+          vite-config-path: ./packages/next-llms-txt/vitest.config.ts
 
   e2e:
     runs-on: ubuntu-latest
@@ -108,7 +109,7 @@ jobs:
         run: npm ci
 
       - name: Run Cypress E2E tests
-        run: npm run test:e2e -w cypress-tests
+        run: npm run test:e2e -w @next-llms-txt/cypress-tests
 
       - name: Upload Cypress screenshots on failure
         if: failure()
