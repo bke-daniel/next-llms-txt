@@ -27,7 +27,7 @@
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "cypress:open": "npm run cypress:open -w cypress-tests",
     "cypress:run": "npm run cypress:run -w cypress-tests",
-    "prepare": "node -e \"if (process.env.CI !== 'true') { process.exit(1) }\" || husky"
+    "prepare": "node -e \"try{require('husky')}catch{process.exit(0)}\" && husky"
   },
   "devDependencies": {
     "husky": "^9.1.7"
