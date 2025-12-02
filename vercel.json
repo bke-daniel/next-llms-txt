@@ -1,6 +1,5 @@
 {
-  "buildCommand": "cd packages/demo-server && npm run build",
+  "buildCommand": "npm run build --workspace=@next-llms-txt/demo-server",
   "installCommand": "npm install --ignore-scripts --workspaces",
-  "devCommand": "cd packages/demo-server && npm run dev",
   "framework": null
 }
