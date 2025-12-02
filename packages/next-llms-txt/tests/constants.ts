@@ -12,7 +12,7 @@ export const METADATA = Object.freeze({
   description: 'This shouldn\'t be used for generation when llmstxt export exist!',
 })
 
-export const BASE_URL = 'http://localhost:3000'
+export const BASE_URL = 'http://localhost:3001'
 /**
  * Routes for testing which reflect next js urls like '/all-exports'
  */

@@ -8,7 +8,7 @@ describe('Next.js App Router - llms.txt', () => {
     cy.request('/llms.txt').then((response) => {
       expect(response.status).to.eq(200);
       expect(response.headers['content-type']).to.include('text/markdown');
-      expect(response.body).to.include('# llms.txt');
+      expect(response.body).to.include('## Pages');
     });
   });
 });

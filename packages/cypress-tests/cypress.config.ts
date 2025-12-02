@@ -1,5 +1,5 @@
 import { defineConfig } from 'cypress'
-import { BASE_URL } from './tests/constants.js'
+import { BASE_URL } from '../next-llms-txt/tests/constants'
 
 export default defineConfig({
   e2e: {

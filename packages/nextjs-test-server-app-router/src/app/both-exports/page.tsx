@@ -2,11 +2,11 @@ import type { LLMsTxtConfig } from 'next-llms-txt'
 
 export const llmstxt: LLMsTxtConfig = {
   title: 'next-llms-txt app-router-test-server: /both-exports',
-  description: 'LLMSTXT: This is the llmstxt export for next-llms-txt\'s app router tests',
+  description: "LLMSTXT: This is the llmstxt export for next-llms-txt's app router tests",
 }
 
 export const metadata = {
-  title: 'next-llms-txt app-router-test-server',
+  title: 'next-llms-txt app-router-test-server: /both-exports',
   description: 'METADATA: This is the metadata export for next-llms-txt\'s app router tests',
 }
 
