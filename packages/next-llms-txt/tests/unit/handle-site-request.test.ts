@@ -21,7 +21,7 @@ describe('handleSiteRequest', () => {
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
 
-      expect(response.headers.get('content-type')).toContain('text/plain')
+      expect(response.headers.get('content-type')).toContain('text/markdown')
       expect(text).toContain('# Test Site')
       expect(text).toContain('> Test description')
     })
@@ -491,7 +491,7 @@ describe('handleSiteRequest', () => {
 
       const response = await handleSiteRequest(mockRequest, config)
 
-      expect(response.headers.get('content-type')).toMatch(/text\/plain/)
+      expect(response.headers.get('content-type')).toMatch(/text\/markdown/)
       expect(response.headers.get('content-type')).toMatch(/charset=utf-8/i)
     })
 

@@ -126,7 +126,7 @@ describe('handlePageRequest', () => {
       mockGenerateLLMsTxt.mockReturnValue('# About Page\n\n> About us')
       mockCreateMarkdownResponse.mockReturnValue({
         status: 200,
-        headers: new Headers({ 'Content-Type': 'text/plain' }),
+        headers: new Headers({ 'Content-Type': 'text/markdown' }),
       } as any)
 
       const response = await handlePageRequest(request, handlerConfig)
