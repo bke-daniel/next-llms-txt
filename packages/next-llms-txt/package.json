@@ -10,8 +10,8 @@
   ],
   "description": "A Next.js 16+ proxy plugin to generate llms.txt files for AI documentation",
   "author": {
-    "name": "Daniel Birke",
-    "url": "https://birke.io"
+    "name": "Daniel BKE",
+    "url": "https://next-llms-txt-website.vercel.app"
   },
   "license": "MIT",
   "homepage": "https://github.com/bke-daniel/next-llms-txt#readme",
