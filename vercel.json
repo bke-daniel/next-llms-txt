@@ -1,5 +1,3 @@
 {
-  "buildCommand": "npm run build -w @next-llms-txt/demo-server",
-  "installCommand": "npm install --ignore-scripts --workspaces",
-  "outputDirectory": "packages/demo-server/.next"
+  "buildCommand": "npm run build -w @next-llms-txt/demo-server"
 }
