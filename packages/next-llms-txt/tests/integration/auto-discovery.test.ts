@@ -11,7 +11,7 @@ describe('auto-discovery integration', () => {
     const text = await res.text()
     expect(text).toContain('# Test Site')
     expect(text).toContain('next-llms-txt test-server')
-    expect(res.headers.get('content-type')).toMatch(/text\/plain;?\s*charset=(utf-8|UTF-8)/)
+    expect(res.headers.get('content-type')).toMatch(/text\/markdown;?\s*charset=(utf-8|UTF-8)/)
   })
 
   it('generates per-page .html.md from discovered config', async () => {

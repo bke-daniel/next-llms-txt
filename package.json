@@ -3,7 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/cypress-tests",
+    "packages/demo-server",
+    "packages/next-llms-txt",
+    "packages/nextjs-test-server-app-router",
+    "packages/nextjs-test-server-pages-router"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
@@ -13,7 +17,9 @@
     "test:watch": "npm run test:watch -w next-llms-txt",
     "test:coverage": "npm run test:coverage -w next-llms-txt",
     "test:coverage:ci": "npm run test:coverage:ci -w next-llms-txt",
-    "test:e2e": "npm run test:e2e -w cypress-tests",
+    "test:e2e": "npm run test:e2e -w @next-llms-txt/cypress-tests",
+    "test:e2e:dev": "npm run test:dev -w @next-llms-txt/cypress-tests",
+    "server:test": "npm run dev -w nextjs-test-server-app-router -- -p 3001",
     "server:demo": "npm run dev -w @next-llms-txt/demo-server",
     "server:demo:open": "open http://localhost:3000 && npm run server:demo",
     "server:demo:build": "npm run build -w @next-llms-txt/demo-server",
@@ -21,7 +27,7 @@
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "cypress:open": "npm run cypress:open -w cypress-tests",
     "cypress:run": "npm run cypress:run -w cypress-tests",
-    "prepare": "husky"
+    "prepare": "sh -c 'if [ \"$CI\" = \"true\" ] || [ \"$HUSKY\" = \"0\" ]; then exit 0; else command -v husky >/dev/null 2>&1 && husky || exit 0; fi'"
   },
   "devDependencies": {
     "husky": "^9.1.7"

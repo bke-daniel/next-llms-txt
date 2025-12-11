@@ -53,7 +53,7 @@ describe('test page accessibility', () => {
     it('should be able to visit "/llms.txt"', () => {
       cy.request('/llms.txt').should((response) => {
         expect(response.status).to.eq(200)
-        expect(response.headers['content-type']).to.eq('text/plain; charset=utf-8')
+        expect(response.headers['content-type']).to.eq('text/markdown; charset=utf-8')
         expect(response.body)
           .to
           .include('# next-llms-txt test-server')

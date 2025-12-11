@@ -27,6 +27,12 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
+      - name: Socket Security Firewall
+        uses: SocketDev/action@v1
+        with:
+          mode: firewall-free
+          job-summary: all
+
       - name: Cache node_modules
         uses: actions/cache@v4
         id: cache-node-modules
@@ -42,12 +48,6 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: sfw npm ci
 
-      - name: Socket Security Firewall
-        uses: SocketDev/action@v1
-        with:
-          mode: firewall-free
-          job-summary: all
-
       - name: Run tests with coverage
         run: npm run test:coverage
 
@@ -56,7 +56,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
+          files: ./packages/next-llms-txt/coverage/lcov.info
           flags: unittests
           name: codecov-${{ matrix.node-version }}
           fail_ci_if_error: false
@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage/
+          path: packages/next-llms-txt/coverage/
           retention-days: 30
 
       - name: Comment coverage on PR
@@ -74,5 +74,69 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          json-summary-path: ./coverage/coverage-summary.json
-          json-final-path: ./coverage/coverage-final.json
+          json-summary-path: ./packages/next-llms-txt/coverage/coverage-summary.json
+          json-final-path: ./packages/next-llms-txt/coverage/coverage-final.json
+          vite-config-path: ./packages/next-llms-txt/vitest.config.ts
+
+  e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Socket Security Firewall
+        uses: SocketDev/action@v1
+        with:
+          mode: firewall-free
+          job-summary: all
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.node-version }}-
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        id: cache-cypress
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-cypress-
+
+      - name: Install dependencies
+        run: sfw npm ci
+
+      - name: Install Cypress binary
+        if: steps.cache-cypress.outputs.cache-hit != 'true'
+        run: npx cypress install
+
+      - name: Build next-llms-txt package
+        run: npm run build -w next-llms-txt
+
+      - name: Run Cypress E2E tests
+        run: npm run test:e2e -w @next-llms-txt/cypress-tests
+
+      - name: Upload Cypress screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: packages/cypress-tests/cypress/screenshots
+          retention-days: 7
+          if-no-files-found: ignore

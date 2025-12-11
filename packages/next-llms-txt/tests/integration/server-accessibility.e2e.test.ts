@@ -44,7 +44,7 @@ describe('e2E: Static Generation and Server Access', () => {
     const response = await fetch(`${serverUrl}/llms.txt`)
 
     expect(response.status).toBe(200)
-    expect(response.headers.get('content-type')).toContain('text/plain')
+    expect(response.headers.get('content-type')).toContain('text/markdown')
 
     const content = await response.text()
     expect(content).toContain('# E2E Test Project')
