@@ -62,14 +62,14 @@
   },
   "peerDependencies": {
     "next": "^16.0.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@babel/generator": "^7.28.5",
+    "@babel/generator": "^7.29.1",
     "@babel/parser": "^7.28.5",
-    "@babel/traverse": "^7.28.5",
+    "@babel/traverse": "^7.29.0",
     "@babel/types": "^7.28.5",
     "debug": "^4.4.3"
   },
@@ -83,9 +83,9 @@
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.1",
     "lodash": "^4.17.21",
-    "next": "16.0.10",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "next": "16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "supertest": "^7.0.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
