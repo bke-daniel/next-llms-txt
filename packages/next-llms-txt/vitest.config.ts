@@ -9,7 +9,7 @@ export default defineConfig({
     environment: 'node',
     clearMocks: true,
     globals: true,
-    poolOptions: { threads: { useAtomics: true } },
+    useAtomics: true,
     coverage: {
       provider: 'v8',
       reportsDirectory: 'coverage',

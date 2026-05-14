@@ -17,9 +17,9 @@ const mockGenerateLLMsTxt = generateLLMsTxt as MockedFunction<typeof generateLLM
 
 beforeEach(() => {
   vi.clearAllMocks()
-  ; (LLMsTxtAutoDiscovery as any).mockImplementation(() => ({
-    discoverPages: mockDiscoverPages,
-  }))
+  ; (LLMsTxtAutoDiscovery as any).mockImplementation(class {
+    discoverPages = mockDiscoverPages
+  })
 })
 
 describe('handlePageRequest', () => {
