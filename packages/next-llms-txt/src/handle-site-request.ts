@@ -1,5 +1,5 @@
 import type { NextRequest, NextResponse } from 'next/server'
-import type { LLMsTxtHandlerConfig, RequiredLLMsTxtHandlerConfig } from './types.js'
+import type { LLMsTxtHandlerConfig, PageInfo, RequiredLLMsTxtHandlerConfig } from './types.js'
 import createMarkdownResponse from './create-markdown-response.js'
 import { LLMsTxtAutoDiscovery } from './discovery.js'
 import { generateLLMsTxt } from './generator.js'
@@ -12,8 +12,9 @@ export default async function handleSiteRequest(
   _request: NextRequest,
   handlerConfig: LLMsTxtHandlerConfig,
 ): Promise<NextResponse> {
+  const userPages: PageInfo[] = handlerConfig.pages ?? []
+  let pages: PageInfo[] = [...userPages]
   let finalConfig = handlerConfig.defaultConfig
-  let pages: any[] = (handlerConfig as any).pages || []
 
   if (handlerConfig.autoDiscovery) {
     const mergedConfig: RequiredLLMsTxtHandlerConfig = mergeConfig(handlerConfig)
@@ -22,10 +23,12 @@ export default async function handleSiteRequest(
     pages = [...pages, ...discoveredPages]
 
     const siteConfigFromDiscovery = await discovery.generateSiteConfig()
+    const userSections = finalConfig?.sections ?? []
+    const discoveredSections = siteConfigFromDiscovery.sections ?? []
     finalConfig = {
       ...siteConfigFromDiscovery,
       ...finalConfig,
-      sections: siteConfigFromDiscovery.sections || [],
+      sections: [...userSections, ...discoveredSections],
     }
   }
 
@@ -33,7 +36,6 @@ export default async function handleSiteRequest(
     throw new Error('LLMs.txt configuration must have a title.')
   }
 
-  // handles custom generator if provided
   const content = handlerConfig.generator
     ? handlerConfig.generator(finalConfig, pages)
     : generateLLMsTxt(finalConfig, pages)

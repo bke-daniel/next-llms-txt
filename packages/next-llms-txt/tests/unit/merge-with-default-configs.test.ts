@@ -46,12 +46,12 @@ describe('test mergeWithDefaultConfig', () => {
     expect(result.autoDiscovery).toEqual(DEFAULT_CONFIG.autoDiscovery)
   })
 
-  it('uses default autoDiscovery if input is boolean false', () => {
+  it('preserves autoDiscovery:false to actually disable discovery', () => {
     const input = {
-      autoDiscovery: false,
+      autoDiscovery: false as const,
     }
     const result = mergeWithDefaultConfig(input)
-    expect(result.autoDiscovery).toEqual(DEFAULT_CONFIG.autoDiscovery)
+    expect(result.autoDiscovery).toBe(false)
   })
 
   it('merges trailingSlash and showWarnings', () => {

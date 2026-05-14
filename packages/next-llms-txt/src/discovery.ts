@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import type { LLMsTxtConfig, RequiredLLMsTxtHandlerConfig } from './types.ts'
+import type { LLMsTxtConfig, LLMsTxtItem, RequiredLLMsTxtHandlerConfig } from './types.ts'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
@@ -10,15 +10,17 @@ import { DEFAULT_CONFIG } from './constants.js'
 import stripJsonComments from './strip-json-comments.js'
 
 /**
- * Information about a discovered page
+ * Information about a discovered page. Only `route` is required for
+ * user-supplied entries via `LLMsTxtHandlerConfig.pages`; auto-discovery
+ * fills in the rest.
  */
 export interface PageInfo {
   route: string
-  filePath: string
-  hasLLMsTxtExport: boolean
-  hasMetadataFallback: boolean
+  filePath?: string
+  hasLLMsTxtExport?: boolean
+  hasMetadataFallback?: boolean
   config?: LLMsTxtConfig
-  warnings: string[]
+  warnings?: string[]
 }
 
 /**
@@ -52,7 +54,9 @@ export class LLMsTxtAutoDiscovery {
    */
   private loadTsConfigPaths(): void {
     try {
-      const tsconfigPath = path.join(this.config.autoDiscovery?.rootDir || process.env.PWD || '.', 'tsconfig.json')
+      const autoDiscovery = this.config.autoDiscovery
+      const configuredRoot = autoDiscovery ? autoDiscovery.rootDir : undefined
+      const tsconfigPath = path.join(configuredRoot || process.cwd(), 'tsconfig.json')
       if (fs.existsSync(tsconfigPath)) {
         const tsconfigContent = fs.readFileSync(tsconfigPath, 'utf-8')
 
@@ -74,7 +78,7 @@ export class LLMsTxtAutoDiscovery {
             this.pathAliases.push({
               prefix: cleanAlias,
               replacement: path.resolve(
-                this.config.autoDiscovery?.rootDir || process.cwd(),
+                configuredRoot || process.cwd(),
                 baseUrl,
                 target,
               ),
@@ -96,31 +100,59 @@ export class LLMsTxtAutoDiscovery {
   }
 
   /**
-   * Discovers all pages and their llms.txt configurations
+   * Discovers all pages and their llms.txt configurations across both the
+   * App Router and the Pages Router.
    */
   async discoverPages(): Promise<PageInfo[]> {
     const pages: PageInfo[] = []
+    const autoDiscovery = this.config.autoDiscovery
+    if (!autoDiscovery)
+      return pages
+
+    const rootDir = autoDiscovery.rootDir || ''
+    const seen = new Set<string>()
+
     // Discover App Router pages
-    const appDir = path.join(this.config.autoDiscovery!.rootDir || '', this.config.autoDiscovery!.appDir || '')
-    if (this.directoryExists(appDir)) {
-      const appPages = await this.discoverAppPages(appDir)
-      pages.push(...appPages)
+    if (autoDiscovery.appDir) {
+      const appDir = path.join(rootDir, autoDiscovery.appDir)
+      if (this.directoryExists(appDir)) {
+        const appPages = await this.discoverAppPages(appDir)
+        for (const p of appPages) {
+          if (seen.has(p.route))
+            continue
+          seen.add(p.route)
+          pages.push(p)
+        }
+      }
+    }
+
+    // Discover Pages Router pages (skipped for routes already handled by the
+    // App Router; App Router wins per Next.js precedence).
+    if (autoDiscovery.pagesDir) {
+      const pagesDir = path.join(rootDir, autoDiscovery.pagesDir)
+      if (this.directoryExists(pagesDir)) {
+        const pagesRouterPages = await this.discoverPagesRouterPages(pagesDir)
+        for (const p of pagesRouterPages) {
+          if (seen.has(p.route))
+            continue
+          seen.add(p.route)
+          pages.push(p)
+        }
+      }
     }
 
     return pages
   }
 
   /**
-   * Generates site-wide llms.txt configuration from all discoverable pages
-   * FIXME
+   * Generates site-wide llms.txt configuration from all discoverable pages.
+   * Pages are bucketed into sections by their first path segment; root-level
+   * pages (e.g. `/`, `/about`) are grouped under "Main Pages".
    */
   async generateSiteConfig(): Promise<LLMsTxtConfig> {
     const pages = await this.discoverPages()
 
-    // Group pages by their URL structure
-    const sections: Record<string, any[]> = {
-      'Main Pages': [],
-    }
+    const sections = new Map<string, LLMsTxtItem[]>()
 
     for (const page of pages) {
       if (!page.config) {
@@ -131,29 +163,52 @@ export class LLMsTxtAutoDiscovery {
         continue
       }
 
-      const item = {
+      const item: LLMsTxtItem = {
         title: page.config.title,
         url: `${this.config.baseUrl}${page.route}`,
-        description: page.config.description,
       }
+      if (page.config.description !== undefined)
+        item.description = page.config.description
 
-      sections['Main Pages'].push(item)
+      const sectionTitle = this.inferSectionTitle(page.route)
+      if (!sections.has(sectionTitle))
+        sections.set(sectionTitle, [])
+      sections.get(sectionTitle)!.push(item)
     }
 
     return {
-      title: this.config.defaultConfig?.title || DEFAULT_CONFIG.defaultConfig.title,
-      description: this.config.defaultConfig?.description || DEFAULT_CONFIG.defaultConfig.description,
-      sections: Object.entries(sections)
-        .filter(([, items]) => items.length > 0)
-        .map(([title, items]) => ({ title, items })),
+      title: this.config.defaultConfig?.title || DEFAULT_CONFIG.defaultConfig!.title,
+      description: this.config.defaultConfig?.description || DEFAULT_CONFIG.defaultConfig!.description,
+      sections: Array.from(sections.entries()).map(([title, items]) => ({ title, items })),
     }
   }
 
   /**
-   * Discovers App Router pages (app directory)
+   * Derive a section title from a route. Root-level routes (no path segments
+   * or a single segment) go under "Main Pages"; deeper routes use the first
+   * path segment, title-cased (e.g. `/docs/foo` → `Docs`).
+   */
+  private inferSectionTitle(route: string): string {
+    const segments = route.split('/').filter(Boolean)
+    if (segments.length <= 1)
+      return 'Main Pages'
+
+    const first = segments[0]
+    return first.charAt(0).toUpperCase() + first.slice(1)
+  }
+
+  /**
+   * Discovers App Router pages (app directory). Recognises `page.tsx`,
+   * `page.ts`, `page.jsx`, and `page.js` as valid page entry points.
    */
   private async discoverAppPages(appDir: string): Promise<PageInfo[]> {
     const pages: PageInfo[] = []
+    const pageEntryNames = new Set([
+      'page.tsx',
+      'page.ts',
+      'page.jsx',
+      'page.js',
+    ])
 
     const walkDir = (dir: string, routePrefix = ''): void => {
       const entries = fs.readdirSync(dir, { withFileTypes: true })
@@ -170,7 +225,7 @@ export class LLMsTxtAutoDiscovery {
           const newRoute = path.posix.join(routePrefix, entry.name)
           walkDir(fullPath, newRoute)
         }
-        else if (entry.name === 'page.tsx' || entry.name === 'page.ts') {
+        else if (pageEntryNames.has(entry.name)) {
           const route = routePrefix || '/'
           const normalizedRoute = this.normalizeRoute(route)
           const pageInfo = this.analyzePage(fullPath, normalizedRoute)
@@ -180,6 +235,54 @@ export class LLMsTxtAutoDiscovery {
     }
 
     walkDir(appDir)
+    return pages
+  }
+
+  /**
+   * Discovers Pages Router pages (pages directory). Each `.ts(x)`/`.js(x)`
+   * file (other than `_app`, `_document`, `_error`, `404`, `500`, and
+   * anything under `api/`) maps to a route. `index.tsx` maps to its parent
+   * directory.
+   */
+  private async discoverPagesRouterPages(pagesDir: string): Promise<PageInfo[]> {
+    const pages: PageInfo[] = []
+    const pageExtensions = new Set(['.tsx', '.ts', '.jsx', '.js'])
+    const reservedBasenames = new Set(['_app', '_document', '_error', '404', '500'])
+
+    const walkDir = (dir: string, routePrefix = ''): void => {
+      const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name)
+
+        if (entry.isDirectory()) {
+          // Skip API routes and private folders
+          if (entry.name === 'api' || entry.name.startsWith('_')) {
+            continue
+          }
+          const newRoute = path.posix.join(routePrefix, entry.name)
+          walkDir(fullPath, newRoute)
+          continue
+        }
+
+        const ext = path.extname(entry.name)
+        if (!pageExtensions.has(ext))
+          continue
+
+        const basename = entry.name.slice(0, -ext.length)
+        if (reservedBasenames.has(basename))
+          continue
+
+        const route = basename === 'index'
+          ? (routePrefix || '/')
+          : path.posix.join(routePrefix, basename)
+        const normalizedRoute = this.normalizeRoute(route)
+        const pageInfo = this.analyzePage(fullPath, normalizedRoute)
+        pages.push(pageInfo)
+      }
+    }
+
+    walkDir(pagesDir)
     return pages
   }
 
@@ -203,8 +306,9 @@ export class LLMsTxtAutoDiscovery {
       })
 
       let llmsTxtConfig: LLMsTxtConfig | undefined
-      // FIXME - generation of this if failing!
-      let metadataConfig: { title?: string, description?: string } | undefined
+      // Next.js `metadata.title` can be a plain string or an object such as
+      // `{ default, template, absolute }`; we normalise it later before use.
+      let metadataConfig: { title?: unknown, description?: unknown } | undefined
 
       traverse(ast, {
         ExportNamedDeclaration: (path) => {
@@ -285,10 +389,12 @@ export class LLMsTxtAutoDiscovery {
       }
       else if (metadataConfig) {
         pageInfo.hasMetadataFallback = true
+        const normalisedTitle = this.coerceMetadataTitle(metadataConfig.title)
         pageInfo.config = {
-          // TODO Should we support template strings?
-          title: metadataConfig.title || this.generatePageTitle(route),
-          description: metadataConfig.description || `Page: ${route}`,
+          title: normalisedTitle || this.generatePageTitle(route),
+          description: typeof metadataConfig.description === 'string'
+            ? metadataConfig.description
+            : `Page: ${route}`,
         }
         this.addWarning(
           'Using metadata fallback for llms.txt generation - consider adding explicit llmstxt export',
@@ -635,6 +741,24 @@ export class LLMsTxtAutoDiscovery {
     return route
   }
 
+  /**
+   * Normalise Next.js's `metadata.title`, which may be a plain string or an
+   * object such as `{ default, template, absolute }`, into a single string.
+   * Returns an empty string when no usable value can be extracted.
+   */
+  private coerceMetadataTitle(raw: unknown): string {
+    if (typeof raw === 'string')
+      return raw
+    if (raw && typeof raw === 'object') {
+      const obj = raw as Record<string, unknown>
+      if (typeof obj.absolute === 'string')
+        return obj.absolute
+      if (typeof obj.default === 'string')
+        return obj.default
+    }
+    return ''
+  }
+
   private generatePageTitle(route: string): string {
     if (route === '/')
       return 'Home'
@@ -648,6 +772,8 @@ export class LLMsTxtAutoDiscovery {
 
   private addWarning(message: string, pageInfo: PageInfo): void {
     const warning = `[next-llms-txt] ${message} (${pageInfo.route})`
+    if (!pageInfo.warnings)
+      pageInfo.warnings = []
     pageInfo.warnings.push(warning)
     this.warnings.push(warning)
 

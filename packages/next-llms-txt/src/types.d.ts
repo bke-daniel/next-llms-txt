@@ -94,10 +94,16 @@ export interface LLMsTxtHandlerConfig {
   generator?: (config: LLMsTxtConfig, pages?: PageInfo[]) => string | undefined
 
   /**
-   * Enable automatic page discovery
+   * Enable automatic page discovery. Pass `false` to disable, `true` to
+   * enable with defaults, or an `AutoDiscoveryConfig` object to customise.
    */
-  // TODO make this boolean as well
   autoDiscovery?: AutoDiscoveryConfig | boolean
+
+  /**
+   * Pages to include in the site-wide llms.txt in addition to (or in place of)
+   * any pages found by auto-discovery.
+   */
+  pages?: PageInfo[]
 
   /**
    * Support trailing slash variations
@@ -115,23 +121,14 @@ export interface LLMsTxtHandlerConfig {
  */
 export interface AutoDiscoveryConfig {
   /**
-   * Will be used for the llms.txt
-   */
-  // pageTitle: string
-  /**
-   * Will be used for the llms.txt
-   */
-  // pageDescription: string
-
-  /**
-   * App directory path (for App Router)
+   * App directory path (for App Router), relative to `rootDir`.
    */
   appDir?: string
 
   /**
-   * Pages directory path (for Pages Router)
+   * Pages directory path (for Pages Router), relative to `rootDir`.
    */
-  // pagesDir?: string
+  pagesDir?: string
 
   /**
    * Project root directory
@@ -141,10 +138,12 @@ export interface AutoDiscoveryConfig {
 
 /**
  * LLMs.txt handler configuration with all keys required except 'generator'
+ * and 'pages'. `autoDiscovery` may be `false` to explicitly disable
+ * discovery; otherwise its nested fields are required.
  * @internal
  */
 export type RequiredLLMsTxtHandlerConfig = Required<
-  Omit<LLMsTxtHandlerConfig, 'generator' | 'autoDiscovery'>
-> & Pick<LLMsTxtHandlerConfig, 'generator'> & {
-  autoDiscovery: Required<AutoDiscoveryConfig>
+  Omit<LLMsTxtHandlerConfig, 'generator' | 'autoDiscovery' | 'pages'>
+> & Pick<LLMsTxtHandlerConfig, 'generator' | 'pages'> & {
+  autoDiscovery: Required<AutoDiscoveryConfig> | false
 }

@@ -182,18 +182,16 @@ describe('handleSiteRequest', () => {
         defaultConfig: {
           title: 'Test Site',
         },
-      }
-
-        // Add pages to config (as done internally)
-        ; (config as any).pages = [
-        {
-          route: '/manual-page',
-          config: {
-            title: 'Manual Page',
-            description: 'Manually added',
+        pages: [
+          {
+            route: '/manual-page',
+            config: {
+              title: 'Manual Page',
+              description: 'Manually added',
+            },
           },
-        },
-      ]
+        ],
+      }
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
@@ -209,16 +207,15 @@ describe('handleSiteRequest', () => {
           title: 'Test Site',
         },
         autoDiscovery: AUTO_DISCOVERY,
-      }
-
-        ; (config as any).pages = [
-        {
-          route: '/manual',
-          config: {
-            title: 'Manual',
+        pages: [
+          {
+            route: '/manual',
+            config: {
+              title: 'Manual',
+            },
           },
-        },
-      ]
+        ],
+      }
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
@@ -275,7 +272,7 @@ describe('handleSiteRequest', () => {
       expect(response.status).toBe(200)
     })
 
-    it('should merge discovered sections with default config', async () => {
+    it('should merge discovered sections with default config (preserving user sections)', async () => {
       const config: LLMsTxtHandlerConfig = {
         baseUrl: BASE_URL,
         defaultConfig: {
@@ -297,7 +294,9 @@ describe('handleSiteRequest', () => {
       const text = await response.text()
 
       expect(text).toContain('# My Site')
-      // Discovered sections override default sections, but title and description are preserved
+      expect(text).toContain('> Custom description')
+      expect(text).toContain('## Custom Section')
+      expect(text).toContain('- [Custom Item](/custom)')
       expect(text).toContain('## Pages')
       expect(response.status).toBe(200)
     })
@@ -556,14 +555,13 @@ describe('handleSiteRequest', () => {
           ],
         },
         autoDiscovery: AUTO_DISCOVERY,
+        pages: [
+          {
+            route: '/custom',
+            config: { title: 'Custom Page' },
+          },
+        ],
       }
-
-        ; (config as any).pages = [
-        {
-          route: '/custom',
-          config: { title: 'Custom Page' },
-        },
-      ]
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()

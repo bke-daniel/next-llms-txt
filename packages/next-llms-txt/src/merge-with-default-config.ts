@@ -3,9 +3,9 @@ import { DEFAULT_CONFIG } from './constants'
 
 function mergeAutoDiscovery(
   inputAutoDiscovery: AutoDiscoveryConfig,
-): RequiredLLMsTxtHandlerConfig['autoDiscovery'] {
+): Required<AutoDiscoveryConfig> {
   return {
-    ...DEFAULT_CONFIG.autoDiscovery,
+    ...(DEFAULT_CONFIG.autoDiscovery as Required<AutoDiscoveryConfig>),
     ...inputAutoDiscovery,
   }
 }
@@ -16,12 +16,20 @@ export default function mergeWithDefaultConfig(
   if (!inputConfig)
     return DEFAULT_CONFIG
 
+  let autoDiscovery: RequiredLLMsTxtHandlerConfig['autoDiscovery']
+  if (inputConfig.autoDiscovery === false) {
+    autoDiscovery = false
+  }
+  else if (inputConfig.autoDiscovery === undefined || inputConfig.autoDiscovery === true) {
+    autoDiscovery = DEFAULT_CONFIG.autoDiscovery
+  }
+  else {
+    autoDiscovery = mergeAutoDiscovery(inputConfig.autoDiscovery)
+  }
+
   return {
     ...DEFAULT_CONFIG,
     ...inputConfig,
-    // deep merge for autoDiscovery
-    autoDiscovery: !inputConfig.autoDiscovery || typeof inputConfig.autoDiscovery === 'boolean'
-      ? DEFAULT_CONFIG.autoDiscovery
-      : mergeAutoDiscovery(inputConfig.autoDiscovery),
+    autoDiscovery,
   }
 }
