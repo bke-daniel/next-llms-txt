@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import type { LLMsTxtConfig, LLMsTxtItem, RequiredLLMsTxtHandlerConfig } from './types.ts'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -6,8 +5,13 @@ import process from 'node:process'
 import { parse } from '@babel/parser'
 import traverse from '@babel/traverse'
 import * as t from '@babel/types'
+import debug from 'debug'
 import { DEFAULT_CONFIG } from './constants.js'
 import stripJsonComments from './strip-json-comments.js'
+
+// Trace-level diagnostics — opt in via `DEBUG=next-llms-txt:discovery` or
+// `DEBUG=next-llms-txt:*` in the environment.
+const log = debug('next-llms-txt:discovery')
 
 /**
  * Information about a discovered page. Only `route` is required for
@@ -86,16 +90,14 @@ export class LLMsTxtAutoDiscovery {
           }
         }
 
-        if (this.pathAliases.length > 0 && this.config.showWarnings) {
-          console.log('Loaded TypeScript path aliases:', this.pathAliases)
+        if (this.pathAliases.length > 0) {
+          log('Loaded TypeScript path aliases: %O', this.pathAliases)
         }
       }
     }
     catch (error) {
       // Silently fail if we can't load tsconfig - not critical
-      if (this.config.showWarnings) {
-        console.warn('Failed to load tsconfig.json paths:', error)
-      }
+      log('Failed to load tsconfig.json paths: %O', error)
     }
   }
 
@@ -496,9 +498,7 @@ export class LLMsTxtAutoDiscovery {
 
     // Case 2: Identifier reference
     if (t.isIdentifier(node)) {
-      if (this.config.showWarnings) {
-        console.log('Node is an identifier:', node.name)
-      }
+      log('Node is an identifier: %s', node.name)
 
       let resolvedValue: any
       // Important, use arrow funcs because of 'this'
@@ -527,9 +527,7 @@ export class LLMsTxtAutoDiscovery {
                   resolvedValue = this.findExportedValue(importedAst, importedName, resolvedPath)
                 }
                 catch (err) {
-                  if (this.config.showWarnings) {
-                    console.warn('Failed to read imported file:', resolvedPath, err)
-                  }
+                  log('Failed to read imported file %s: %O', resolvedPath, err)
                 }
               }
             }
@@ -551,9 +549,7 @@ export class LLMsTxtAutoDiscovery {
                   resolvedValue = this.findDefaultExport(importedAst, resolvedPath)
                 }
                 catch (err) {
-                  if (this.config.showWarnings) {
-                    console.warn('Failed to read imported file:', resolvedPath, err)
-                  }
+                  log('Failed to read imported file %s: %O', resolvedPath, err)
                 }
               }
             }
@@ -581,9 +577,7 @@ export class LLMsTxtAutoDiscovery {
    * Helper function to resolve import paths (including TypeScript aliases)
    */
   private resolveImportPath(currentFilePath: string, importSource: string): string | null {
-    if (this.config.showWarnings) {
-      console.log(`Resolving import: ${importSource} from ${currentFilePath}`)
-    }
+    log('Resolving import: %s from %s', importSource, currentFilePath)
 
     // Check if this is a TypeScript path alias
     for (const alias of this.pathAliases) {
@@ -592,9 +586,7 @@ export class LLMsTxtAutoDiscovery {
         const relativePath = importSource.substring(alias.prefix.length)
         const resolvedPath = path.join(alias.replacement, relativePath)
 
-        if (this.config.showWarnings) {
-          console.log(`Resolved alias ${alias.prefix} to: ${resolvedPath}`)
-        }
+        log('Resolved alias %s to: %s', alias.prefix, resolvedPath)
 
         // Try different extensions
         const result = this.tryResolveWithExtensions(resolvedPath)
@@ -630,9 +622,7 @@ export class LLMsTxtAutoDiscovery {
     for (const ext of extensions) {
       const pathWithExt = resolvedPath + ext
       if (fs.existsSync(pathWithExt)) {
-        if (this.config.showWarnings) {
-          console.log(`Resolved to: ${pathWithExt}`)
-        }
+        log('Resolved to: %s', pathWithExt)
         return pathWithExt
       }
     }
@@ -641,9 +631,7 @@ export class LLMsTxtAutoDiscovery {
     for (const ext of extensions) {
       const indexPath = path.join(resolvedPath, `index${ext}`)
       if (fs.existsSync(indexPath)) {
-        if (this.config.showWarnings) {
-          console.log(`Resolved to index: ${indexPath}`)
-        }
+        log('Resolved to index: %s', indexPath)
         return indexPath
       }
     }

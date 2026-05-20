@@ -2,6 +2,7 @@ import type { NextRequest, NextResponse } from 'next/server'
 import type { LLMsTxtHandlerConfig, LLMsTxtSection, PageInfo, RequiredLLMsTxtHandlerConfig } from './types.js'
 import createMarkdownResponse from './create-markdown-response.js'
 import { LLMsTxtAutoDiscovery } from './discovery.js'
+import { LLMsTxtConfigError, LLMsTxtGenerationError } from './errors.js'
 import { generateLLMsTxt } from './generator.js'
 import mergeConfig from './merge-with-default-config.js'
 
@@ -87,7 +88,7 @@ export default async function handleSiteRequest(
   }
 
   if (!finalConfig?.title) {
-    throw new Error('LLMs.txt configuration must have a title.')
+    throw new LLMsTxtConfigError('LLMs.txt configuration must have a title.')
   }
 
   const content = handlerConfig.generator
@@ -95,7 +96,7 @@ export default async function handleSiteRequest(
     : generateLLMsTxt(finalConfig, pages)
 
   if (!content)
-    throw new Error('Couldn\'t generate Config')
+    throw new LLMsTxtGenerationError('Couldn\'t generate Config')
 
-  return createMarkdownResponse(content)
+  return createMarkdownResponse(content, handlerConfig.cacheControl)
 }

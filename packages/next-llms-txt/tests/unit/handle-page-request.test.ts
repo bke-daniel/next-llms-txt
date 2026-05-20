@@ -135,7 +135,7 @@ describe('handlePageRequest', () => {
         title: 'About Page',
         description: 'About us',
       })
-      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('# About Page\n\n> About us')
+      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('# About Page\n\n> About us', undefined)
       expect(response.status).toBe(200)
     })
 
@@ -233,7 +233,7 @@ describe('handlePageRequest', () => {
 
       expect(customGenerator).toHaveBeenCalledWith(pageConfig)
       expect(mockGenerateLLMsTxt).not.toHaveBeenCalled()
-      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('Custom content')
+      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('Custom content', undefined)
     })
 
     it('should return 400 when custom generator returns empty string', async () => {

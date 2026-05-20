@@ -8,20 +8,22 @@ import { generateLLMsTxt } from './generator.js'
 import mergeConfig from './merge-with-default-config.js'
 import normalizePath from './normalize-path.js'
 
-const errorResponse = new NextResponse(
-  'Auto-discovery must be enabled for page-specific llms.txt files.',
-  { status: 400 },
-)
+const AUTODISCOVERY_OFF_BODY = 'Auto-discovery must be enabled for page-specific llms.txt files.'
 
 /**
  * Handles requests for per-page *.html.md files.
+ *
+ * NOTE on response construction: every error response is built fresh per
+ * request. Web `Response` bodies are single-use streams, so returning a
+ * shared module-level `NextResponse` instance from concurrent requests
+ * leads to platform-dependent body-already-consumed errors.
  */
 export default async function handlePageRequest(
   request: NextRequest,
   handlerConfig: LLMsTxtHandlerConfig,
 ): Promise<NextResponse> {
   if (!handlerConfig.autoDiscovery) {
-    return errorResponse
+    return new NextResponse(AUTODISCOVERY_OFF_BODY, { status: 400 })
   }
 
   const { pathname } = new URL(request.url)
@@ -38,14 +40,13 @@ export default async function handlePageRequest(
     return new NextResponse(PAGE_ERROR_NOTIFICATION, { status: 404 })
   }
 
-  // handles custom generator if provided
   const content = handlerConfig.generator
     ? handlerConfig.generator(matchingPage.config)
-    // why not pass pages? because this is a single page request
+    // single-page request → no `pages` list to pass to the generator
     : generateLLMsTxt(matchingPage.config)
 
   if (!content)
-    return errorResponse
+    return new NextResponse(AUTODISCOVERY_OFF_BODY, { status: 400 })
 
-  return createMarkdownResponse(content)
+  return createMarkdownResponse(content, handlerConfig.cacheControl)
 }

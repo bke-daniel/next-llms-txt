@@ -111,9 +111,26 @@ export interface LLMsTxtHandlerConfig {
   trailingSlash?: boolean
 
   /**
-   * Whether to show warnings during development
+   * Whether to surface discovery warnings via `console.warn`. Detailed
+   * trace-level logs are also available via the `debug` library — set
+   * `DEBUG=next-llms-txt:*` in your environment regardless of this flag.
    */
   showWarnings?: boolean
+
+  /**
+   * `Cache-Control` header value for the generated llms.txt / *.html.md
+   * responses. Defaults to `public, max-age=3600, s-maxage=3600`. Pass
+   * `false` to omit the header entirely.
+   */
+  cacheControl?: string | false
+
+  /**
+   * Called when handler execution throws. Receives the original error
+   * with its stack intact. Useful for piping into a structured logger
+   * (Pino, Winston, Sentry). The handler still returns a 500 response
+   * after invoking this hook.
+   */
+  onError?: (error: unknown) => void
 }
 
 /**

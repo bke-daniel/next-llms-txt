@@ -1,4 +1,5 @@
 import type { LLMsTxtHandlerConfig } from './types.js'
+import { LLMsTxtConfigError } from './errors.js'
 
 /**
  * Validates the provided configuration for llms.txt generation.
@@ -6,10 +7,12 @@ import type { LLMsTxtHandlerConfig } from './types.js'
  * Ensures a configuration object is provided and that at least one source of
  * llms.txt content is configured — either a `defaultConfig` with a `title`,
  * a non-empty `pages` array, or an enabled `autoDiscovery`.
+ *
+ * @throws {LLMsTxtConfigError} when the configuration is missing or empty.
  */
 export default function validateConfig(config: LLMsTxtHandlerConfig): LLMsTxtHandlerConfig {
   if (!config) {
-    throw new Error('No configuration provided for llms.txt generation.')
+    throw new LLMsTxtConfigError('No configuration provided for llms.txt generation.')
   }
 
   const hasTitle = Boolean(config.defaultConfig?.title)
@@ -17,7 +20,7 @@ export default function validateConfig(config: LLMsTxtHandlerConfig): LLMsTxtHan
   const hasManualPages = Array.isArray(config.pages) && config.pages.length > 0
 
   if (!hasTitle && !hasAutoDiscovery && !hasManualPages) {
-    throw new Error(
+    throw new LLMsTxtConfigError(
       'A `defaultConfig` with a `title`, a non-empty `pages` array, or an enabled `autoDiscovery` must be provided.',
     )
   }
