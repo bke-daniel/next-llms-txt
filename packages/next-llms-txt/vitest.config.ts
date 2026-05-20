@@ -17,16 +17,21 @@ export default defineConfig({
       reportOnFailure: true,
       include: ['src/**/*.ts'],
       exclude: [
+        // Type declarations only — nothing executable.
         'src/**/*.d.ts',
+        // Public re-exports — pure pass-through with no logic worth covering.
         'src/index.ts',
-        'src/discovery.ts',
-        'src/constants.ts',
       ],
       thresholds: {
-        lines: 90,
-        functions: 90,
-        branches: 90,
-        statements: 90,
+        // discovery.ts was previously excluded from the coverage report
+        // (audit P3 #45). It's now included; the floors below sit a few
+        // points beneath the current measured numbers so regressions
+        // trip CI but routine churn doesn't. Raise them as coverage of
+        // the AST/path-resolution branches improves.
+        lines: 85,
+        functions: 95,
+        branches: 75,
+        statements: 85,
       },
     },
   },

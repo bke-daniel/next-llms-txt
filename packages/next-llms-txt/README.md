@@ -139,9 +139,9 @@ export const metadata = {
 
 LLMs prefer raw text over parsing complex HTML. `next-llms-txt` facilitates this with a special convention:
 
-- A page at the URL `/services/consulting` can have its raw content defined in a file at `/services/consulting.html.md`.
-- The library's `createPageLLMsTxtHandlers` creates a special API route that can serve the content of these `.html.md` files.
-- The auto-discovery system automatically finds these `.html.md` files and maps them to the correct web URL. This means a request to `/services/consulting` can be resolved to the content in `/services/consulting.html.md`.
+- A page at the URL `/services/consulting` can be requested as `/services/consulting.html.md` to get its raw llms.txt-style content.
+- The unified `createLLmsTxt` handler intercepts both `/llms.txt` and `/*.html.md` paths in your Next 16 `proxy.ts` middleware and renders the markdown response for each.
+- The auto-discovery system finds each page's `llmstxt` (or `metadata`) export and uses it to render the corresponding `.html.md`.
 
 This allows you to provide clean, structured text to LLMs without affecting your user-facing pages.
 
@@ -418,18 +418,6 @@ if (isLLMsTxtPath(request.nextUrl.pathname)) {
 }
 ```
 
-#### `createPageLLMsTxtHandlers(baseUrl, config?)`
-
-Creates a handler for serving per-page content from `.html.md` files. Typically used in a dynamic API route.
-
-```typescript
-import { createPageLLMsTxtHandlers } from 'next-llms-txt';
-
-const { GET } = createPageLLMsTxtHandlers('https://example.com', {
-  autoDiscovery: { baseUrl: 'https://example.com' }
-});
-```
-
 ### Type Definitions
 
 The library is written in TypeScript and exports all types for a fully typed experience.
@@ -437,8 +425,10 @@ The library is written in TypeScript and exports all types for a fully typed exp
 - `LLMsTxtConfig`: The main configuration object for `llms.txt` content.
 - `LLMsTxtSection`: A section within the `llms.txt` file, containing a title and items.
 - `LLMsTxtItem`: An individual link, with a title, URL, and optional description.
-- `AutoDiscoveryConfig`: Configuration for the auto-discovery system.
-- `LLMsTxtHandlerConfig`: Main configuration object for the `createLLmsTxt` function.
+- `LLMsTxtPage`: The user-supplied page shape for `LLMsTxtHandlerConfig.pages` (just `route` + optional `config`).
+- `AutoDiscoveryConfig`: Configuration for the auto-discovery system (`appDir`, `pagesDir`, `rootDir`, `llmstxtExportName`, `extensions`).
+- `LLMsTxtHandlerConfig`: Main configuration object for `createLLmsTxt`.
+- `LLMsTxtError` / `LLMsTxtConfigError` / `LLMsTxtGenerationError`: typed error classes consumers can `instanceof`-check.
 
 ## Best Practices
 

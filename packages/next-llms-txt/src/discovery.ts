@@ -537,18 +537,24 @@ export class LLMsTxtAutoDiscovery {
               directExports.set(decl.id.name, decl.init)
           }
         }
-        // export { foo } / export { foo as bar }
+        // `export { foo } from '…'` — single-source re-exports. Treat the
+        // local name as a synthetic import so the cross-file resolver can
+        // follow it just like an explicit `import {…} from`.
+        const reexportSource = p.node.source ? p.node.source.value : null
         for (const specifier of p.node.specifiers) {
           if (t.isExportSpecifier(specifier)) {
             const exportedName = t.isIdentifier(specifier.exported)
               ? specifier.exported.name
               : specifier.exported.value
-            // Babel: `ExportSpecifier.local` is always `Identifier` (only
-            // `.exported` widens to `Identifier | StringLiteral`). The
-            // earlier `@ts-expect-error` workaround for a phantom
-            // string-literal branch was unnecessary.
             const localName = specifier.local.name
             namedExports.set(exportedName, { localName })
+            if (reexportSource && !imports.has(localName)) {
+              imports.set(localName, {
+                source: reexportSource,
+                importedName: localName,
+                isDefault: false,
+              })
+            }
           }
         }
       },
@@ -578,6 +584,9 @@ export class LLMsTxtAutoDiscovery {
     // Form 1: `export const exportName = { ... }` — direct AST node lookup.
     if (index.directExports.has(exportName)) {
       const init = index.directExports.get(exportName)
+      // `export const llmstxt = someImportedBinding` — chase the import.
+      if (init && t.isIdentifier(init) && index.imports.has(init.name))
+        return this.resolveImportedBinding(init.name, index, currentFilePath)
       return this.extractObjectExpression(init, ast, currentFilePath)
     }
 
