@@ -1,5 +1,5 @@
 import type { LLMsTxtConfig, LLMsTxtItem, RequiredLLMsTxtHandlerConfig } from './types.ts'
-import fs from 'node:fs'
+import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { parse } from '@babel/parser'
@@ -36,91 +36,94 @@ interface PathAlias {
 }
 
 /**
- * Auto-discovery system for Next.js pages and their llms.txt configurations
+ * Per-file index of named variable declarations and imports — built once
+ * per AST so identifier resolution is O(1) lookup instead of repeated
+ * full-AST traversals (which was the O(n²) cost the audit flagged).
+ */
+interface FileIndex {
+  /** Variable declarations indexed by binding name */
+  declarations: Map<string, t.Expression | null | undefined>
+  /** Named imports indexed by local-binding name */
+  imports: Map<string, { source: string, importedName: string, isDefault: boolean }>
+  /** Exports indexed by exported name (specifier `exported`) */
+  namedExports: Map<string, { localName: string }>
+  /** Direct `export const foo = { ... }` indexed by name */
+  directExports: Map<string, t.Expression | null | undefined>
+  /** `export default <expr>` */
+  defaultExport?: t.Expression | t.Identifier | null
+}
+
+const PAGE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx'] as const
+
+/**
+ * Throws an `AbortError`-style DOMException if the signal has fired, so
+ * deeply-nested async walks bail out promptly when a request is cancelled.
+ */
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) {
+    const err = signal.reason instanceof Error
+      ? signal.reason
+      : new DOMException('Discovery aborted', 'AbortError')
+    throw err
+  }
+}
+
+/**
+ * Auto-discovery system for Next.js pages and their llms.txt configurations.
+ *
+ * Designed so that consumer code can construct one instance per handler
+ * factory and reuse it across requests — the tsconfig path-alias load and
+ * the per-file parsed-AST cache are populated lazily and persist for the
+ * instance's lifetime.
  */
 export class LLMsTxtAutoDiscovery {
-  /**
-   * Handler configuration with all keys required
-   */
   private config: RequiredLLMsTxtHandlerConfig
   private warnings: string[] = []
   private pathAliases: PathAlias[] = []
+  /** Lazy initialiser promise for `loadTsConfigPaths`; resolves once. */
+  private tsconfigLoadOnce: Promise<void> | null = null
+  /** Cache of parsed ASTs keyed by canonical (realpath-resolved) file path. */
+  private astCache: Map<string, t.File> = new Map()
+  /** Index cache parallel to astCache. */
+  private indexCache: Map<string, FileIndex> = new Map()
 
   constructor(config: RequiredLLMsTxtHandlerConfig) {
     this.config = config
-
-    // Load TypeScript path aliases from tsconfig.json
-    this.loadTsConfigPaths()
-  }
-
-  /**
-   * Load TypeScript path aliases from tsconfig.json
-   */
-  private loadTsConfigPaths(): void {
-    try {
-      const autoDiscovery = this.config.autoDiscovery
-      const configuredRoot = autoDiscovery ? autoDiscovery.rootDir : undefined
-      const tsconfigPath = path.join(configuredRoot || process.cwd(), 'tsconfig.json')
-      if (fs.existsSync(tsconfigPath)) {
-        const tsconfigContent = fs.readFileSync(tsconfigPath, 'utf-8')
-
-        // Strip comments from JSONC
-        const cleanedContent = stripJsonComments(tsconfigContent)
-
-        const tsconfig = JSON.parse(cleanedContent)
-        const compilerOptions = tsconfig.compilerOptions || {}
-        const baseUrl = compilerOptions.baseUrl || '.'
-        const paths = compilerOptions.paths || {}
-
-        // Convert TypeScript paths to our internal format
-        for (const [alias, targets] of Object.entries(paths)) {
-          if (Array.isArray(targets) && targets.length > 0) {
-            // Handle wildcards: "@/*" -> ["./src/*"]
-            const cleanAlias = alias.replace(/\/\*$/, '')
-            const target = targets[0].replace(/\/\*$/, '')
-
-            this.pathAliases.push({
-              prefix: cleanAlias,
-              replacement: path.resolve(
-                configuredRoot || process.cwd(),
-                baseUrl,
-                target,
-              ),
-            })
-          }
-        }
-
-        if (this.pathAliases.length > 0) {
-          log('Loaded TypeScript path aliases: %O', this.pathAliases)
-        }
-      }
-    }
-    catch (error) {
-      // Silently fail if we can't load tsconfig - not critical
-      log('Failed to load tsconfig.json paths: %O', error)
-    }
+    // NB: do NOT do sync fs in the constructor. tsconfig is loaded lazily
+    // on first discoverPages() so module imports stay cheap and so factory
+    // construction never blocks on disk I/O.
   }
 
   /**
    * Discovers all pages and their llms.txt configurations across both the
    * App Router and the Pages Router.
+   *
+   * Accepts an optional `AbortSignal` (typically the request's `signal`).
+   * When fired, the walk bails out as soon as the current async hop
+   * completes.
    */
-  async discoverPages(): Promise<PageInfo[]> {
+  async discoverPages(signal?: AbortSignal): Promise<PageInfo[]> {
+    throwIfAborted(signal)
+
     const pages: PageInfo[] = []
     const autoDiscovery = this.config.autoDiscovery
     if (!autoDiscovery)
       return pages
 
+    await this.ensureTsConfigLoaded()
+    throwIfAborted(signal)
+
     // Resolve the root lazily: an unset rootDir falls back to the live
     // process.cwd() at request time rather than a value frozen at import.
     const rootDir = autoDiscovery.rootDir || process.cwd()
     const seen = new Set<string>()
+    // Track visited real paths so symlink cycles can't deadlock the walk.
+    const visitedRealDirs = new Set<string>()
 
-    // Discover App Router pages
     if (autoDiscovery.appDir) {
       const appDir = path.join(rootDir, autoDiscovery.appDir)
-      if (this.directoryExists(appDir)) {
-        const appPages = await this.discoverAppPages(appDir)
+      if (await this.directoryExists(appDir)) {
+        const appPages = await this.discoverAppPages(appDir, visitedRealDirs, signal)
         for (const p of appPages) {
           if (seen.has(p.route))
             continue
@@ -130,12 +133,10 @@ export class LLMsTxtAutoDiscovery {
       }
     }
 
-    // Discover Pages Router pages (skipped for routes already handled by the
-    // App Router; App Router wins per Next.js precedence).
     if (autoDiscovery.pagesDir) {
       const pagesDir = path.join(rootDir, autoDiscovery.pagesDir)
-      if (this.directoryExists(pagesDir)) {
-        const pagesRouterPages = await this.discoverPagesRouterPages(pagesDir)
+      if (await this.directoryExists(pagesDir)) {
+        const pagesRouterPages = await this.discoverPagesRouterPages(pagesDir, visitedRealDirs, signal)
         for (const p of pagesRouterPages) {
           if (seen.has(p.route))
             continue
@@ -153,8 +154,8 @@ export class LLMsTxtAutoDiscovery {
    * Pages are bucketed into sections by their first path segment; root-level
    * pages (e.g. `/`, `/about`) are grouped under "Main Pages".
    */
-  async generateSiteConfig(): Promise<LLMsTxtConfig> {
-    const pages = await this.discoverPages()
+  async generateSiteConfig(signal?: AbortSignal): Promise<LLMsTxtConfig> {
+    const pages = await this.discoverPages(signal)
 
     const sections = new Map<string, LLMsTxtItem[]>()
 
@@ -201,57 +202,137 @@ export class LLMsTxtAutoDiscovery {
     return first.charAt(0).toUpperCase() + first.slice(1)
   }
 
-  /**
-   * Discovers App Router pages (app directory). Recognises `page.tsx`,
-   * `page.ts`, `page.jsx`, and `page.js` as valid page entry points.
-   */
-  private async discoverAppPages(appDir: string): Promise<PageInfo[]> {
-    const pages: PageInfo[] = []
-    const pageEntryNames = new Set([
-      'page.tsx',
-      'page.ts',
-      'page.jsx',
-      'page.js',
-    ])
+  // ───────────────────────────────────────────────────────────────────────
+  // tsconfig path-alias load (lazy, run-once-per-instance)
+  // ───────────────────────────────────────────────────────────────────────
 
-    const walkDir = (dir: string, routePrefix = ''): void => {
-      const entries = fs.readdirSync(dir, { withFileTypes: true })
+  /**
+   * Memoised entry point: the underlying load runs exactly once per
+   * instance, no matter how many concurrent `discoverPages` calls land.
+   */
+  private ensureTsConfigLoaded(): Promise<void> {
+    if (!this.tsconfigLoadOnce)
+      this.tsconfigLoadOnce = this.loadTsConfigPaths()
+    return this.tsconfigLoadOnce
+  }
+
+  private async loadTsConfigPaths(): Promise<void> {
+    try {
+      const autoDiscovery = this.config.autoDiscovery
+      const configuredRoot = autoDiscovery ? autoDiscovery.rootDir : undefined
+      const tsconfigPath = path.join(configuredRoot || process.cwd(), 'tsconfig.json')
+
+      let tsconfigContent: string
+      try {
+        tsconfigContent = await fsp.readFile(tsconfigPath, 'utf-8')
+      }
+      catch {
+        return // No tsconfig — that's fine, just skip aliases.
+      }
+
+      const cleanedContent = stripJsonComments(tsconfigContent)
+      const tsconfig = JSON.parse(cleanedContent)
+      const compilerOptions = tsconfig.compilerOptions || {}
+      const baseUrl = compilerOptions.baseUrl || '.'
+      const paths = compilerOptions.paths || {}
+
+      for (const [alias, targets] of Object.entries(paths)) {
+        if (Array.isArray(targets) && targets.length > 0) {
+          const cleanAlias = alias.replace(/\/\*$/, '')
+          const target = targets[0].replace(/\/\*$/, '')
+          this.pathAliases.push({
+            prefix: cleanAlias,
+            replacement: path.resolve(
+              configuredRoot || process.cwd(),
+              baseUrl,
+              target,
+            ),
+          })
+        }
+      }
+
+      if (this.pathAliases.length > 0)
+        log('Loaded TypeScript path aliases: %O', this.pathAliases)
+    }
+    catch (error) {
+      // tsconfig parse failure is non-fatal — discovery just can't follow
+      // aliased imports for this run.
+      log('Failed to load tsconfig.json paths: %O', error)
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Directory walking — async fs, symlink-cycle aware
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * App Router walker. Recognises `page.{tsx,ts,jsx,js}` as page entries.
+   * Skips route groups (`(marketing)`), private folders (`_private`), and
+   * already-visited real paths to avoid symlink loops.
+   */
+  private async discoverAppPages(
+    appDir: string,
+    visitedRealDirs: Set<string> = new Set(),
+    signal?: AbortSignal,
+  ): Promise<PageInfo[]> {
+    const pages: PageInfo[] = []
+    const pageEntryNames = new Set(['page.tsx', 'page.ts', 'page.jsx', 'page.js'])
+
+    const walkDir = async (dir: string, routePrefix: string): Promise<void> => {
+      throwIfAborted(signal)
+
+      // Symlink-cycle detection: resolve real path and short-circuit if
+      // already walked. Falls back to `dir` if realpath fails.
+      let real: string
+      try {
+        real = await fsp.realpath(dir)
+      }
+      catch {
+        real = dir
+      }
+      if (visitedRealDirs.has(real))
+        return
+      visitedRealDirs.add(real)
+
+      const entries = await fsp.readdir(dir, { withFileTypes: true })
 
       for (const entry of entries) {
+        throwIfAborted(signal)
         const fullPath = path.join(dir, entry.name)
 
         if (entry.isDirectory()) {
-          // Skip route groups and private folders
-          if (entry.name.startsWith('(') || entry.name.startsWith('_')) {
+          if (entry.name.startsWith('(') || entry.name.startsWith('_'))
             continue
-          }
-
           const newRoute = path.posix.join(routePrefix, entry.name)
-          walkDir(fullPath, newRoute)
+          await walkDir(fullPath, newRoute)
         }
         else if (pageEntryNames.has(entry.name)) {
           const route = routePrefix || '/'
           const normalizedRoute = this.normalizeRoute(route)
-          const pageInfo = this.analyzePage(fullPath, normalizedRoute)
+          const pageInfo = await this.analyzePage(fullPath, normalizedRoute)
           pages.push(pageInfo)
         }
       }
     }
 
-    walkDir(appDir)
+    await walkDir(appDir, '')
     return pages
   }
 
   /**
-   * Discovers Pages Router pages (pages directory). Each `.ts(x)`/`.js(x)`
-   * file (other than `_app`, `_document`, `_error`, `_middleware`, `_offline`,
-   * `404`, `500`, anything else with a leading underscore, test/spec/stories
-   * files, type-declaration files, and anything under `api/`) maps to a
-   * route. `index.tsx` maps to its parent directory.
+   * Pages Router walker. Maps each non-reserved `.ts(x)`/`.js(x)` file to a
+   * route. Skips `_app`/`_document`/`_error`/`_middleware`/`_offline`/
+   * `404`/`500`, any underscore-prefixed file, the `api/` directory, and
+   * `*.test.*` / `*.spec.*` / `*.stories.*` / `*.d.ts` companions.
+   * `index.tsx` collapses to its parent directory.
    */
-  private async discoverPagesRouterPages(pagesDir: string): Promise<PageInfo[]> {
+  private async discoverPagesRouterPages(
+    pagesDir: string,
+    visitedRealDirs: Set<string> = new Set(),
+    signal?: AbortSignal,
+  ): Promise<PageInfo[]> {
     const pages: PageInfo[] = []
-    const pageExtensions = new Set(['.tsx', '.ts', '.jsx', '.js'])
+    const pageExtensions = new Set(PAGE_EXTENSIONS)
     const reservedBasenames = new Set([
       '_app',
       '_document',
@@ -261,35 +342,42 @@ export class LLMsTxtAutoDiscovery {
       '404',
       '500',
     ])
-    // Matches `*.test.*`, `*.spec.*`, `*.stories.*`, `*.d.ts`, `*.d.tsx`
     const nonPageFileRegex = /\.(?:test|spec|stories)\.[a-z]+$|\.d\.tsx?$/i
 
-    const walkDir = (dir: string, routePrefix = ''): void => {
-      const entries = fs.readdirSync(dir, { withFileTypes: true })
+    const walkDir = async (dir: string, routePrefix: string): Promise<void> => {
+      throwIfAborted(signal)
+      let real: string
+      try {
+        real = await fsp.realpath(dir)
+      }
+      catch {
+        real = dir
+      }
+      if (visitedRealDirs.has(real))
+        return
+      visitedRealDirs.add(real)
+
+      const entries = await fsp.readdir(dir, { withFileTypes: true })
 
       for (const entry of entries) {
+        throwIfAborted(signal)
         const fullPath = path.join(dir, entry.name)
 
         if (entry.isDirectory()) {
-          // Skip API routes and private folders
-          if (entry.name === 'api' || entry.name.startsWith('_')) {
+          if (entry.name === 'api' || entry.name.startsWith('_'))
             continue
-          }
           const newRoute = path.posix.join(routePrefix, entry.name)
-          walkDir(fullPath, newRoute)
+          await walkDir(fullPath, newRoute)
           continue
         }
 
         const ext = path.extname(entry.name)
-        if (!pageExtensions.has(ext))
+        if (!pageExtensions.has(ext as typeof PAGE_EXTENSIONS[number]))
           continue
-
-        // Skip test, spec, story, and type-declaration files
         if (nonPageFileRegex.test(entry.name))
           continue
 
         const basename = entry.name.slice(0, -ext.length)
-        // Skip explicitly reserved basenames and any underscore-prefixed file
         if (reservedBasenames.has(basename) || basename.startsWith('_'))
           continue
 
@@ -297,19 +385,24 @@ export class LLMsTxtAutoDiscovery {
           ? (routePrefix || '/')
           : path.posix.join(routePrefix, basename)
         const normalizedRoute = this.normalizeRoute(route)
-        const pageInfo = this.analyzePage(fullPath, normalizedRoute)
+        const pageInfo = await this.analyzePage(fullPath, normalizedRoute)
         pages.push(pageInfo)
       }
     }
 
-    walkDir(pagesDir)
+    await walkDir(pagesDir, '')
     return pages
   }
 
+  // ───────────────────────────────────────────────────────────────────────
+  // Per-page analysis — async, single-traverse, AST-cached
+  // ───────────────────────────────────────────────────────────────────────
+
   /**
-   * Analyzes a page file for llms.txt exports and metadata
+   * Read + parse + analyse a single page file, extracting either its
+   * `llmstxt` export (preferred) or its `metadata` export (fallback).
    */
-  private analyzePage(filePath: string, route: string): PageInfo {
+  private async analyzePage(filePath: string, route: string): Promise<PageInfo> {
     const pageInfo: PageInfo = {
       route,
       filePath,
@@ -319,101 +412,24 @@ export class LLMsTxtAutoDiscovery {
     }
 
     try {
-      const content = fs.readFileSync(filePath, 'utf-8')
-      const ast = parse(content, {
-        sourceType: 'module',
-        plugins: ['typescript', 'jsx'],
-      })
+      const ast = await this.parseFileCached(filePath)
+      const index = this.indexFile(ast, filePath)
 
-      let llmsTxtConfig: LLMsTxtConfig | undefined
-      // Next.js `metadata.title` can be a plain string or an object such as
-      // `{ default, template, absolute }`; we normalise it later before use.
-      let metadataConfig: { title?: unknown, description?: unknown } | undefined
-
-      traverse(ast, {
-        ExportNamedDeclaration: (path) => {
-          path.node.specifiers.forEach((specifier) => {
-            if (t.isIdentifier(specifier.exported) && specifier.exported.name === 'llmstxt') {
-              if (t.isExportSpecifier(specifier) && t.isIdentifier(specifier.local)) {
-                const localName = specifier.local.name
-                traverse(ast, {
-                  VariableDeclaration: (varPath) => {
-                    for (const declaration of varPath.node.declarations) {
-                      if (t.isIdentifier(declaration.id) && declaration.id.name === localName) {
-                        llmsTxtConfig = this.extractObjectExpression(declaration.init, ast, filePath)
-                      }
-                    }
-                  },
-                  ImportDeclaration: (importPath) => {
-                    for (const importSpecifier of importPath.node.specifiers) {
-                      if (t.isImportSpecifier(importSpecifier)
-                        && t.isIdentifier(importSpecifier.local)
-                        && importSpecifier.local.name === localName) {
-                        llmsTxtConfig = this.extractObjectExpression(
-                          t.identifier(localName),
-                          ast,
-                          filePath,
-                        )
-                      }
-                    }
-                  },
-                })
-              }
-            }
-
-            if (t.isIdentifier(specifier.exported) && specifier.exported.name === 'metadata') {
-              if (t.isExportSpecifier(specifier) && t.isIdentifier(specifier.local)) {
-                const localName = specifier.local.name
-                traverse(ast, {
-                  VariableDeclaration: (varPath) => {
-                    for (const declaration of varPath.node.declarations) {
-                      if (t.isIdentifier(declaration.id) && declaration.id.name === localName) {
-                        metadataConfig = this.extractObjectExpression(declaration.init, ast, filePath)
-                      }
-                    }
-                  },
-                  ImportDeclaration: (importPath) => {
-                    for (const importSpecifier of importPath.node.specifiers) {
-                      if (t.isImportSpecifier(importSpecifier)
-                        && t.isIdentifier(importSpecifier.local)
-                        && importSpecifier.local.name === localName) {
-                        metadataConfig = this.extractObjectExpression(
-                          t.identifier(localName),
-                          ast,
-                          filePath,
-                        )
-                      }
-                    }
-                  },
-                })
-              }
-            }
-          })
-
-          if (path.node.declaration && t.isVariableDeclaration(path.node.declaration)) {
-            path.node.declaration.declarations.forEach((declaration) => {
-              if (t.isIdentifier(declaration.id) && declaration.id.name === 'llmstxt') {
-                llmsTxtConfig = this.extractObjectExpression(declaration.init, ast, filePath)
-              }
-              if (t.isIdentifier(declaration.id) && declaration.id.name === 'metadata') {
-                metadataConfig = this.extractObjectExpression(declaration.init, ast, filePath)
-              }
-            })
-          }
-        },
-      })
+      const llmsTxtConfig = await this.resolveExportByName(index, ast, filePath, 'llmstxt')
+      const metadataConfig = await this.resolveExportByName(index, ast, filePath, 'metadata')
 
       if (llmsTxtConfig) {
         pageInfo.hasLLMsTxtExport = true
-        pageInfo.config = llmsTxtConfig
+        pageInfo.config = llmsTxtConfig as LLMsTxtConfig
       }
       else if (metadataConfig) {
         pageInfo.hasMetadataFallback = true
-        const normalisedTitle = this.coerceMetadataTitle(metadataConfig.title)
+        const md = metadataConfig as { title?: unknown, description?: unknown }
+        const normalisedTitle = this.coerceMetadataTitle(md.title)
         pageInfo.config = {
           title: normalisedTitle || this.generatePageTitle(route),
-          description: typeof metadataConfig.description === 'string'
-            ? metadataConfig.description
+          description: typeof md.description === 'string'
+            ? md.description
             : `Page: ${route}`,
         }
         this.addWarning(
@@ -436,17 +452,219 @@ export class LLMsTxtAutoDiscovery {
   }
 
   /**
-   * Public method to extract object expression (for testing)
-   * Handles identifiers, re-exports, and TypeScript path aliases
+   * Parse the file at `filePath` and memoise the resulting AST so that
+   * importing the same config from multiple pages doesn't repeatedly re-
+   * parse it. Keyed on the realpath of the file so two different symlinks
+   * to the same module hit the same cache entry.
+   */
+  private async parseFileCached(filePath: string): Promise<t.File> {
+    let key = filePath
+    try {
+      key = await fsp.realpath(filePath)
+    }
+    catch {
+      // Use the supplied path if realpath fails (e.g. missing file — the
+      // subsequent readFile will throw a more informative error).
+    }
+    const cached = this.astCache.get(key)
+    if (cached)
+      return cached
+
+    const content = await fsp.readFile(key, 'utf-8')
+    const ast = parse(content, {
+      sourceType: 'module',
+      plugins: ['typescript', 'jsx'],
+    })
+    this.astCache.set(key, ast)
+    return ast
+  }
+
+  /**
+   * Walk the AST exactly once and build maps from binding-name → AST node.
+   * Downstream identifier resolution then does cheap Map lookups instead
+   * of issuing nested `traverse()` calls per export specifier (which was
+   * the O(n²) AST scan the audit flagged).
+   */
+  private indexFile(ast: t.File, filePath: string): FileIndex {
+    const cached = this.indexCache.get(filePath)
+    if (cached)
+      return cached
+
+    const declarations = new Map<string, t.Expression | null | undefined>()
+    const imports = new Map<string, { source: string, importedName: string, isDefault: boolean }>()
+    const namedExports = new Map<string, { localName: string }>()
+    const directExports = new Map<string, t.Expression | null | undefined>()
+    let defaultExport: t.Expression | t.Identifier | null | undefined
+
+    traverse(ast, {
+      VariableDeclaration: (p) => {
+        for (const decl of p.node.declarations) {
+          if (t.isIdentifier(decl.id))
+            declarations.set(decl.id.name, decl.init)
+        }
+      },
+      ImportDeclaration: (p) => {
+        const source = p.node.source.value
+        for (const specifier of p.node.specifiers) {
+          if (t.isImportSpecifier(specifier) && t.isIdentifier(specifier.local)) {
+            const localName = specifier.local.name
+            const importedName = t.isIdentifier(specifier.imported)
+              ? specifier.imported.name
+              : localName
+            imports.set(localName, { source, importedName, isDefault: false })
+          }
+          else if (t.isImportDefaultSpecifier(specifier) && t.isIdentifier(specifier.local)) {
+            imports.set(specifier.local.name, { source, importedName: 'default', isDefault: true })
+          }
+        }
+      },
+      ExportNamedDeclaration: (p) => {
+        // export const foo = { ... }
+        if (p.node.declaration && t.isVariableDeclaration(p.node.declaration)) {
+          for (const decl of p.node.declaration.declarations) {
+            if (t.isIdentifier(decl.id))
+              directExports.set(decl.id.name, decl.init)
+          }
+        }
+        // export { foo } / export { foo as bar }
+        for (const specifier of p.node.specifiers) {
+          if (t.isExportSpecifier(specifier)) {
+            const exportedName = t.isIdentifier(specifier.exported)
+              ? specifier.exported.name
+              : specifier.exported.value
+            const localName = t.isIdentifier(specifier.local)
+              ? specifier.local.name
+              : (specifier.local as { value?: string }).value ?? exportedName
+            namedExports.set(exportedName, { localName })
+          }
+        }
+      },
+      ExportDefaultDeclaration: (p) => {
+        const decl = p.node.declaration
+        if (t.isObjectExpression(decl) || t.isIdentifier(decl))
+          defaultExport = decl
+      },
+    })
+
+    const index: FileIndex = { declarations, imports, namedExports, directExports, defaultExport: defaultExport ?? null }
+    this.indexCache.set(filePath, index)
+    return index
+  }
+
+  /**
+   * Resolve a named export (`llmstxt`, `metadata`, …) from a parsed file's
+   * pre-built index, recursing through aliased re-exports and following
+   * imports across files when necessary.
+   */
+  private async resolveExportByName(
+    index: FileIndex,
+    ast: t.File,
+    currentFilePath: string,
+    exportName: string,
+  ): Promise<unknown> {
+    // Form 1: `export const exportName = { ... }` — direct AST node lookup.
+    if (index.directExports.has(exportName)) {
+      const init = index.directExports.get(exportName)
+      return this.extractObjectExpression(init, ast, currentFilePath)
+    }
+
+    // Form 2: `export { foo as exportName }` or `export { exportName }`.
+    const specifier = index.namedExports.get(exportName)
+    if (specifier) {
+      // 2a: the local binding may be a top-level VariableDeclaration in
+      // this same file.
+      if (index.declarations.has(specifier.localName)) {
+        return this.extractObjectExpression(
+          index.declarations.get(specifier.localName),
+          ast,
+          currentFilePath,
+        )
+      }
+      // 2b: the local binding may be an import from another file — resolve
+      // it across files.
+      if (index.imports.has(specifier.localName))
+        return this.resolveImportedBinding(specifier.localName, index, currentFilePath)
+    }
+
+    // Form 3: the export name itself matches an import binding (e.g.
+    // `import { llmstxt } from '...'; export { llmstxt }`).
+    if (index.imports.has(exportName))
+      return this.resolveImportedBinding(exportName, index, currentFilePath)
+
+    return undefined
+  }
+
+  /**
+   * Follow `localName` through the file's import map to its source module,
+   * parse that module via the cache, and extract the corresponding
+   * exported value. Pure async helper used only when cross-file resolution
+   * is actually needed — the pure-AST cases never touch the filesystem.
+   */
+  private async resolveImportedBinding(
+    localName: string,
+    index: FileIndex,
+    currentFilePath: string,
+  ): Promise<unknown> {
+    const importRef = index.imports.get(localName)
+    if (!importRef)
+      return undefined
+
+    const resolvedPath = await this.resolveImportPath(currentFilePath, importRef.source)
+    if (!resolvedPath)
+      return undefined
+
+    let importedAst: t.File
+    try {
+      importedAst = await this.parseFileCached(resolvedPath)
+    }
+    catch (err) {
+      log('Failed to parse imported file %s: %O', resolvedPath, err)
+      return undefined
+    }
+
+    const importedIndex = this.indexFile(importedAst, resolvedPath)
+    return importRef.isDefault
+      ? this.resolveDefaultExport(importedIndex, importedAst, resolvedPath)
+      : this.resolveExportByName(importedIndex, importedAst, resolvedPath, importRef.importedName)
+  }
+
+  /**
+   * Resolve `export default <expr>` through the pre-built index.
+   */
+  private resolveDefaultExport(
+    index: FileIndex,
+    ast: t.File,
+    filePath: string,
+  ): unknown {
+    const decl = index.defaultExport
+    if (!decl)
+      return undefined
+    if (t.isObjectExpression(decl))
+      return this.extractObjectExpression(decl, ast, filePath)
+    if (t.isIdentifier(decl) && index.declarations.has(decl.name))
+      return this.extractObjectExpression(index.declarations.get(decl.name), ast, filePath)
+    return undefined
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Public synchronous extractor (kept for backward-compat with tests that
+  // construct an AST themselves and want a pure-data extraction without
+  // any cross-file work).
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * Pure-AST object extraction. Synchronous — only handles literals,
+   * nested objects, arrays, and local-variable identifier references. For
+   * cross-file resolution use the internal async helpers, which `analyzePage`
+   * wires up automatically.
    */
   public extractObjectExpression(
     node: t.Expression | null | undefined,
     ast: t.File,
     currentFilePath: string,
-  ) {
-    // Case 1: Direct object expression
+  ): any {
     if (t.isObjectExpression(node)) {
-      const obj: { [key: string]: any } = {}
+      const obj: Record<string, any> = {}
       for (const prop of node.properties) {
         if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
           const key = prop.key.name
@@ -466,25 +684,17 @@ export class LLMsTxtAutoDiscovery {
           }
           else if (t.isArrayExpression(value)) {
             obj[key] = value.elements.map((el) => {
-              if (t.isObjectExpression(el)) {
+              if (t.isObjectExpression(el))
                 return this.extractObjectExpression(el, ast, currentFilePath)
-              }
-              else if (t.isStringLiteral(el)) {
+              if (t.isStringLiteral(el))
                 return el.value
-              }
-              else if (t.isNumericLiteral(el)) {
+              if (t.isNumericLiteral(el))
                 return el.value
-              }
-              else if (t.isBooleanLiteral(el)) {
+              if (t.isBooleanLiteral(el))
                 return el.value
-              }
-              else if (el == null) {
+              if (el == null)
                 return null
-              }
-              else {
-                // For nested arrays or other types
-                return el
-              }
+              return el
             })
           }
           else if (t.isObjectExpression(value)) {
@@ -492,145 +702,62 @@ export class LLMsTxtAutoDiscovery {
           }
         }
       }
-
       return obj
     }
 
-    // Case 2: Identifier reference
     if (t.isIdentifier(node)) {
-      log('Node is an identifier: %s', node.name)
-
-      let resolvedValue: any
-      // Important, use arrow funcs because of 'this'
-      traverse(ast, {
-        ImportDeclaration: (path) => {
-          const importPath = path.node
-          for (const specifier of importPath.specifiers) {
-            if (t.isImportSpecifier(specifier)
-              && t.isIdentifier(specifier.local)
-              && specifier.local.name === node.name) {
-              const importSource = importPath.source.value
-              const resolvedPath = this.resolveImportPath(currentFilePath, importSource)
-
-              if (resolvedPath && fs.existsSync(resolvedPath)) {
-                try {
-                  const importedContent = fs.readFileSync(resolvedPath, 'utf-8')
-                  const importedAst = parse(importedContent, {
-                    sourceType: 'module',
-                    plugins: ['typescript', 'jsx'],
-                  })
-
-                  const importedName = t.isIdentifier(specifier.imported)
-                    ? specifier.imported.name
-                    : node.name
-
-                  resolvedValue = this.findExportedValue(importedAst, importedName, resolvedPath)
-                }
-                catch (err) {
-                  log('Failed to read imported file %s: %O', resolvedPath, err)
-                }
-              }
-            }
-
-            if (t.isImportDefaultSpecifier(specifier)
-              && t.isIdentifier(specifier.local)
-              && specifier.local.name === node.name) {
-              const importSource = importPath.source.value
-              const resolvedPath = this.resolveImportPath(currentFilePath, importSource)
-
-              if (resolvedPath && fs.existsSync(resolvedPath)) {
-                try {
-                  const importedContent = fs.readFileSync(resolvedPath, 'utf-8')
-                  const importedAst = parse(importedContent, {
-                    sourceType: 'module',
-                    plugins: ['typescript', 'jsx'],
-                  })
-
-                  resolvedValue = this.findDefaultExport(importedAst, resolvedPath)
-                }
-                catch (err) {
-                  log('Failed to read imported file %s: %O', resolvedPath, err)
-                }
-              }
-            }
-          }
-        },
-
-        VariableDeclaration: (path) => {
-          for (const declaration of path.node.declarations) {
-            if (t.isIdentifier(declaration.id) && declaration.id.name === node.name) {
-              if (declaration.init) {
-                resolvedValue = this.extractObjectExpression(declaration.init, ast, currentFilePath)
-              }
-            }
-          }
-        },
-      })
-
-      return resolvedValue
+      // Local lookup only — for cross-file resolution we route through
+      // `resolveExportByName` / `resolveImportedBinding` in analyzePage.
+      const index = this.indexCache.get(currentFilePath) ?? this.indexFile(ast, currentFilePath)
+      if (index.declarations.has(node.name))
+        return this.extractObjectExpression(index.declarations.get(node.name), ast, currentFilePath)
     }
 
     return undefined
   }
 
-  /**
-   * Helper function to resolve import paths (including TypeScript aliases)
-   */
-  private resolveImportPath(currentFilePath: string, importSource: string): string | null {
+  // ───────────────────────────────────────────────────────────────────────
+  // Path resolution — async fs throughout
+  // ───────────────────────────────────────────────────────────────────────
+
+  private async resolveImportPath(currentFilePath: string, importSource: string): Promise<string | null> {
     log('Resolving import: %s from %s', importSource, currentFilePath)
 
-    // Check if this is a TypeScript path alias
     for (const alias of this.pathAliases) {
       if (importSource.startsWith(alias.prefix)) {
-        // Replace the alias prefix with the actual path
         const relativePath = importSource.substring(alias.prefix.length)
         const resolvedPath = path.join(alias.replacement, relativePath)
-
         log('Resolved alias %s to: %s', alias.prefix, resolvedPath)
-
-        // Try different extensions
-        const result = this.tryResolveWithExtensions(resolvedPath)
-        if (result) {
+        const result = await this.tryResolveWithExtensions(resolvedPath)
+        if (result)
           return result
-        }
       }
     }
 
-    // Handle relative imports
     if (importSource.startsWith('.')) {
       const currentDir = path.dirname(currentFilePath)
       const resolvedPath = path.resolve(currentDir, importSource)
       return this.tryResolveWithExtensions(resolvedPath)
     }
 
-    // Node modules or other non-resolvable paths
     return null
   }
 
-  /**
-   * Try to resolve a path with different extensions
-   */
-  private tryResolveWithExtensions(resolvedPath: string): string | null {
-    const extensions = ['.ts', '.tsx', '.js', '.jsx']
-
-    // If path already has extension and exists
-    if (fs.existsSync(resolvedPath)) {
+  private async tryResolveWithExtensions(resolvedPath: string): Promise<string | null> {
+    if (await this.fileExists(resolvedPath))
       return resolvedPath
-    }
 
-    // Try adding extensions
-    for (const ext of extensions) {
+    for (const ext of PAGE_EXTENSIONS) {
       const pathWithExt = resolvedPath + ext
-      if (fs.existsSync(pathWithExt)) {
+      if (await this.fileExists(pathWithExt)) {
         log('Resolved to: %s', pathWithExt)
         return pathWithExt
       }
     }
 
-    // Try index files
-    for (const ext of extensions) {
+    for (const ext of PAGE_EXTENSIONS) {
       const indexPath = path.join(resolvedPath, `index${ext}`)
-      if (fs.existsSync(indexPath)) {
+      if (await this.fileExists(indexPath)) {
         log('Resolved to index: %s', indexPath)
         return indexPath
       }
@@ -639,111 +766,36 @@ export class LLMsTxtAutoDiscovery {
     return null
   }
 
-  /**
-   * Helper function to find exported value by name
-   */
-  private findExportedValue(ast: t.File, exportName: string, filePath: string): any {
-    let result: any
-
-    traverse(ast, {
-      ExportNamedDeclaration: (path) => {
-        if (path.node.declaration && t.isVariableDeclaration(path.node.declaration)) {
-          for (const declaration of path.node.declaration.declarations) {
-            if (t.isIdentifier(declaration.id) && declaration.id.name === exportName) {
-              if (t.isObjectExpression(declaration.init)) {
-                result = this.extractObjectExpression(declaration.init, ast, filePath)
-              }
-            }
-          }
-        }
-
-        // Handle re-exports: export { LLMSTXT }
-        for (const specifier of path.node.specifiers) {
-          if (t.isExportSpecifier(specifier)) {
-            const exported = t.isIdentifier(specifier.exported)
-              ? specifier.exported.name
-              : specifier.exported.value
-            const local = t.isIdentifier(specifier.local)
-              ? specifier.local.name
-              // @ts-expect-error - FIXME: Babel types missing 'value'?
-              : specifier.local.value
-
-            if (exported === exportName) {
-              // Now find the local variable
-              traverse(ast, {
-                VariableDeclaration: (varPath) => {
-                  for (const declaration of varPath.node.declarations) {
-                    if (t.isIdentifier(declaration.id) && declaration.id.name === local) {
-                      if (t.isObjectExpression(declaration.init)) {
-                        result = this.extractObjectExpression(declaration.init, ast, filePath)
-                      }
-                    }
-                  }
-                },
-              })
-            }
-          }
-        }
-      },
-    })
-
-    return result
-  }
-
-  /**
-   * Helper function to find default export
-   */
-  private findDefaultExport(ast: t.File, filePath: string): any {
-    let result: any
-
-    traverse(ast, {
-      ExportDefaultDeclaration: (path) => {
-        if (t.isObjectExpression(path.node.declaration)) {
-          result = this.extractObjectExpression(path.node.declaration, ast, filePath)
-        }
-        else if (t.isIdentifier(path.node.declaration)) {
-          const identifierName = path.node.declaration.name
-          traverse(ast, {
-            VariableDeclaration: (varPath) => {
-              for (const declaration of varPath.node.declarations) {
-                if (t.isIdentifier(declaration.id) && declaration.id.name === identifierName) {
-                  if (t.isObjectExpression(declaration.init)) {
-                    result = this.extractObjectExpression(declaration.init, ast, filePath)
-                  }
-                }
-              }
-            },
-          })
-        }
-      },
-    })
-
-    return result
-  }
-
-  /**
-   * Utility methods
-   */
-  private directoryExists(dir: string): boolean {
+  private async fileExists(p: string): Promise<boolean> {
     try {
-      return fs.statSync(dir).isDirectory()
+      await fsp.access(p)
+      return true
     }
     catch {
       return false
     }
   }
 
+  private async directoryExists(dir: string): Promise<boolean> {
+    try {
+      const stat = await fsp.stat(dir)
+      return stat.isDirectory()
+    }
+    catch {
+      return false
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Misc helpers
+  // ───────────────────────────────────────────────────────────────────────
+
   private normalizeRoute(route: string): string {
-    if (!route.startsWith('/')) {
+    if (!route.startsWith('/'))
       route = `/${route}`
-    }
-
     route = route.replace(/\\/g, '/')
-
-    if (route.length > 1 && route.endsWith('/')) {
+    if (route.length > 1 && route.endsWith('/'))
       route = route.slice(0, -1)
-    }
-
     return route
   }
 

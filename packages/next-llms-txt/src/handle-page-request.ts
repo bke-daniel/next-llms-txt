@@ -7,6 +7,7 @@ import { LLMsTxtAutoDiscovery } from './discovery.js'
 import { generateLLMsTxt } from './generator.js'
 import mergeConfig from './merge-with-default-config.js'
 import normalizePath from './normalize-path.js'
+import { composeDiscoverySignal } from './request-signal.js'
 
 const AUTODISCOVERY_OFF_BODY = 'Auto-discovery must be enabled for page-specific llms.txt files.'
 
@@ -29,7 +30,11 @@ export default async function handlePageRequest(
   const { pathname } = new URL(request.url)
   const mergedConfig: RequiredLLMsTxtHandlerConfig = mergeConfig(handlerConfig)
   const discovery = new LLMsTxtAutoDiscovery(mergedConfig)
-  const pages = await discovery.discoverPages()
+  const signal = composeDiscoverySignal(
+    (request as { signal?: AbortSignal }).signal,
+    handlerConfig.discoveryTimeoutMs,
+  )
+  const pages = await discovery.discoverPages(signal)
 
   // Strip .html.md extension to get the actual route
   const routePath = pathname.replace(/\.html\.md$/, '')

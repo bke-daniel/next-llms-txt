@@ -131,6 +131,14 @@ export interface LLMsTxtHandlerConfig {
    * after invoking this hook.
    */
   onError?: (error: unknown) => void
+
+  /**
+   * Maximum time (in milliseconds) that page discovery may run for a
+   * single request before being aborted. The handler returns a 500
+   * response when the timeout fires (or the consumer's
+   * `request.signal` aborts first). Defaults to no timeout.
+   */
+  discoveryTimeoutMs?: number
 }
 
 /**

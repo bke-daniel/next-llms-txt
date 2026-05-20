@@ -5,6 +5,7 @@ import { LLMsTxtAutoDiscovery } from './discovery.js'
 import { LLMsTxtConfigError, LLMsTxtGenerationError } from './errors.js'
 import { generateLLMsTxt } from './generator.js'
 import mergeConfig from './merge-with-default-config.js'
+import { composeDiscoverySignal } from './request-signal.js'
 
 /**
  * De-dupe user-supplied pages against routes already emitted by
@@ -55,7 +56,7 @@ function dedupePagesByRoute(pages: PageInfo[]): PageInfo[] {
  * Handles requests for the site-wide llms.txt file.
  */
 export default async function handleSiteRequest(
-  _request: NextRequest,
+  request: NextRequest,
   handlerConfig: LLMsTxtHandlerConfig,
 ): Promise<NextResponse> {
   const userPages: PageInfo[] = dedupePagesByRoute(handlerConfig.pages ?? [])
@@ -69,8 +70,12 @@ export default async function handleSiteRequest(
   if (handlerConfig.autoDiscovery) {
     const mergedConfig: RequiredLLMsTxtHandlerConfig = mergeConfig(handlerConfig)
     const discovery = new LLMsTxtAutoDiscovery(mergedConfig)
+    const signal = composeDiscoverySignal(
+      (request as { signal?: AbortSignal }).signal,
+      handlerConfig.discoveryTimeoutMs,
+    )
 
-    const siteConfigFromDiscovery = await discovery.generateSiteConfig()
+    const siteConfigFromDiscovery = await discovery.generateSiteConfig(signal)
     const userSections = finalConfig?.sections ?? []
     // `generateSiteConfig` always returns a sections array (the optional
     // marker on `LLMsTxtConfig.sections` is just to keep the public type
