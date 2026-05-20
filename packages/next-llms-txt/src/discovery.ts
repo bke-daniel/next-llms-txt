@@ -6,7 +6,8 @@ import { parse } from '@babel/parser'
 import traverse from '@babel/traverse'
 import * as t from '@babel/types'
 import debug from 'debug'
-import { DEFAULT_CONFIG } from './constants.js'
+import { DEFAULT_CONFIG, DEFAULT_PAGE_EXTENSIONS } from './constants.js'
+import normalizePath from './normalize-path.js'
 import stripJsonComments from './strip-json-comments.js'
 
 // Trace-level diagnostics — opt in via `DEBUG=next-llms-txt:discovery` or
@@ -52,8 +53,6 @@ interface FileIndex {
   /** `export default <expr>` */
   defaultExport?: t.Expression | t.Identifier | null
 }
-
-const PAGE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx'] as const
 
 /**
  * Throws an `AbortError`-style DOMException if the signal has fired, so
@@ -231,7 +230,19 @@ export class LLMsTxtAutoDiscovery {
       }
 
       const cleanedContent = stripJsonComments(tsconfigContent)
-      const tsconfig = JSON.parse(cleanedContent)
+      let tsconfig: { compilerOptions?: { baseUrl?: string, paths?: Record<string, string[]> } }
+      try {
+        tsconfig = JSON.parse(cleanedContent)
+      }
+      catch (parseError) {
+        // Wrap the JSON.parse error with the file path so misconfigured
+        // tsconfig.json failures are debuggable instead of being a bare
+        // SyntaxError that doesn't say which file.
+        throw new Error(
+          `Failed to parse tsconfig.json at ${tsconfigPath}: ${(parseError as Error).message}`,
+          { cause: parseError },
+        )
+      }
       const compilerOptions = tsconfig.compilerOptions || {}
       const baseUrl = compilerOptions.baseUrl || '.'
       const paths = compilerOptions.paths || {}
@@ -276,7 +287,7 @@ export class LLMsTxtAutoDiscovery {
     signal?: AbortSignal,
   ): Promise<PageInfo[]> {
     const pages: PageInfo[] = []
-    const pageEntryNames = new Set(['page.tsx', 'page.ts', 'page.jsx', 'page.js'])
+    const pageEntryNames = new Set(this.getConfiguredExtensions().map(ext => `page${ext}`))
 
     const walkDir = async (dir: string, routePrefix: string): Promise<void> => {
       throwIfAborted(signal)
@@ -332,7 +343,7 @@ export class LLMsTxtAutoDiscovery {
     signal?: AbortSignal,
   ): Promise<PageInfo[]> {
     const pages: PageInfo[] = []
-    const pageExtensions = new Set(PAGE_EXTENSIONS)
+    const pageExtensions = new Set(this.getConfiguredExtensions())
     const reservedBasenames = new Set([
       '_app',
       '_document',
@@ -372,7 +383,7 @@ export class LLMsTxtAutoDiscovery {
         }
 
         const ext = path.extname(entry.name)
-        if (!pageExtensions.has(ext as typeof PAGE_EXTENSIONS[number]))
+        if (!pageExtensions.has(ext))
           continue
         if (nonPageFileRegex.test(entry.name))
           continue
@@ -415,7 +426,7 @@ export class LLMsTxtAutoDiscovery {
       const ast = await this.parseFileCached(filePath)
       const index = this.indexFile(ast, filePath)
 
-      const llmsTxtConfig = await this.resolveExportByName(index, ast, filePath, 'llmstxt')
+      const llmsTxtConfig = await this.resolveExportByName(index, ast, filePath, this.getLLMsTxtExportName())
       const metadataConfig = await this.resolveExportByName(index, ast, filePath, 'metadata')
 
       if (llmsTxtConfig) {
@@ -532,9 +543,11 @@ export class LLMsTxtAutoDiscovery {
             const exportedName = t.isIdentifier(specifier.exported)
               ? specifier.exported.name
               : specifier.exported.value
-            const localName = t.isIdentifier(specifier.local)
-              ? specifier.local.name
-              : (specifier.local as { value?: string }).value ?? exportedName
+            // Babel: `ExportSpecifier.local` is always `Identifier` (only
+            // `.exported` widens to `Identifier | StringLiteral`). The
+            // earlier `@ts-expect-error` workaround for a phantom
+            // string-literal branch was unnecessary.
+            const localName = specifier.local.name
             namedExports.set(exportedName, { localName })
           }
         }
@@ -662,9 +675,9 @@ export class LLMsTxtAutoDiscovery {
     node: t.Expression | null | undefined,
     ast: t.File,
     currentFilePath: string,
-  ): any {
+  ): unknown {
     if (t.isObjectExpression(node)) {
-      const obj: Record<string, any> = {}
+      const obj: Record<string, unknown> = {}
       for (const prop of node.properties) {
         if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
           const key = prop.key.name
@@ -674,7 +687,15 @@ export class LLMsTxtAutoDiscovery {
             obj[key] = value.value
           }
           else if (t.isTemplateLiteral(value)) {
-            obj[key] = value.quasis.map(q => q.value.raw).join('')
+            // Preserve interpolations as visible placeholders so a title
+            // like `Page ${id}` becomes `Page ${id}` in the output rather
+            // than `Page ` with the substitution dropped.
+            obj[key] = value.quasis.map((q, i) => {
+              const placeholder = i < value.expressions.length
+                ? `\${${this.describeTemplateExpression(value.expressions[i])}}`
+                : ''
+              return q.value.raw + placeholder
+            }).join('')
           }
           else if (t.isNumericLiteral(value)) {
             obj[key] = value.value
@@ -747,7 +768,8 @@ export class LLMsTxtAutoDiscovery {
     if (await this.fileExists(resolvedPath))
       return resolvedPath
 
-    for (const ext of PAGE_EXTENSIONS) {
+    const extensions = this.getConfiguredExtensions()
+    for (const ext of extensions) {
       const pathWithExt = resolvedPath + ext
       if (await this.fileExists(pathWithExt)) {
         log('Resolved to: %s', pathWithExt)
@@ -755,7 +777,7 @@ export class LLMsTxtAutoDiscovery {
       }
     }
 
-    for (const ext of PAGE_EXTENSIONS) {
+    for (const ext of extensions) {
       const indexPath = path.join(resolvedPath, `index${ext}`)
       if (await this.fileExists(indexPath)) {
         log('Resolved to index: %s', indexPath)
@@ -764,6 +786,43 @@ export class LLMsTxtAutoDiscovery {
     }
 
     return null
+  }
+
+  /**
+   * Best-effort label for a template-literal interpolation, used only so
+   * extracted titles like `Page ${id}` round-trip as `Page ${id}` (rather
+   * than `Page ` with the substitution silently dropped).
+   */
+  private describeTemplateExpression(expr: t.Expression | t.TSType): string {
+    if (t.isIdentifier(expr))
+      return expr.name
+    if (t.isMemberExpression(expr) && t.isIdentifier(expr.property))
+      return expr.property.name
+    if (t.isStringLiteral(expr) || t.isNumericLiteral(expr) || t.isBooleanLiteral(expr))
+      return String(expr.value)
+    return 'expr'
+  }
+
+  /**
+   * Resolve the configured extension list, defaulting to
+   * `DEFAULT_PAGE_EXTENSIONS` when auto-discovery is disabled or the
+   * user didn't override.
+   */
+  private getConfiguredExtensions(): readonly string[] {
+    const ad = this.config.autoDiscovery
+    return (ad && ad.extensions && ad.extensions.length > 0)
+      ? ad.extensions
+      : DEFAULT_PAGE_EXTENSIONS
+  }
+
+  /**
+   * The named export the discovery looks for on each page file.
+   * Defaults to `'llmstxt'`; user-overridable via
+   * `autoDiscovery.llmstxtExportName`.
+   */
+  private getLLMsTxtExportName(): string {
+    const ad = this.config.autoDiscovery
+    return (ad && ad.llmstxtExportName) || 'llmstxt'
   }
 
   private async fileExists(p: string): Promise<boolean> {
@@ -791,12 +850,9 @@ export class LLMsTxtAutoDiscovery {
   // ───────────────────────────────────────────────────────────────────────
 
   private normalizeRoute(route: string): string {
-    if (!route.startsWith('/'))
-      route = `/${route}`
-    route = route.replace(/\\/g, '/')
-    if (route.length > 1 && route.endsWith('/'))
-      route = route.slice(0, -1)
-    return route
+    // Single source of truth for route shape — same helper the request
+    // dispatcher uses, so the two paths can never drift.
+    return normalizePath(route)
   }
 
   /**
@@ -824,8 +880,25 @@ export class LLMsTxtAutoDiscovery {
     return route
       .split('/')
       .filter(Boolean)
-      .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .map(segment => this.humaniseRouteSegment(segment))
+      .filter(Boolean)
       .join(' - ')
+  }
+
+  /**
+   * Turn a Next.js route segment into something printable. Strips dynamic-
+   * route brackets (`[id]` → `id`), catch-all prefixes (`[...slug]` →
+   * `slug`), and parallel/intercepting decorators (`@modal` → `modal`,
+   * `(group)` → `group`); then capitalises the first character.
+   */
+  private humaniseRouteSegment(segment: string): string {
+    // Strip leading `(` / `@` decorators and any matching trailing `)`.
+    let s = segment.replace(/^[@(]+/, '').replace(/\)+$/, '')
+    // Unwrap `[…]` / `[[…]]`, dropping catch-all `...` prefixes.
+    s = s.replace(/^\[+\.{0,3}/, '').replace(/\]+$/, '')
+    if (!s)
+      return ''
+    return s.charAt(0).toUpperCase() + s.slice(1)
   }
 
   private addWarning(message: string, pageInfo: PageInfo): void {

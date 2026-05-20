@@ -41,5 +41,6 @@ export type {
   LLMsTxtConfig,
   LLMsTxtHandlerConfig,
   LLMsTxtItem,
+  LLMsTxtPage,
   LLMsTxtSection,
 } from './types.js'

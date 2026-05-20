@@ -1,22 +1,16 @@
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
-import { getAutoDiscoveryConfig } from '../../src/get-auto-discovery-config'
 import { LLMS_TXT_HANDLER_CONFIG } from '../constants'
 
 describe('uncovered logic tests', () => {
   const custom = new LLMsTxtAutoDiscovery(LLMS_TXT_HANDLER_CONFIG)
 
-  it('discovers pages from pagesDir', async () => {
+  it('discovers pages from the configured app directory', async () => {
     const pages = await custom.discoverPages()
     expect(Array.isArray(pages)).toBe(true)
   })
 
-  it('walkDir discovers .tsx files', async () => {
-    // walkDir is private, but discoverPages uses it internally
+  it('walkDir picks up real .tsx page entries', async () => {
     const pages = await custom.discoverPages()
-    expect(pages.some(p => p.filePath.endsWith('page.tsx'))).toBe(true)
-  })
-
-  it('getAutoDiscoveryConfig throws if baseUrl missing', () => {
-    expect(() => getAutoDiscoveryConfig({} as any)).toThrow(/baseUrl/)
+    expect(pages.some(p => p.filePath?.endsWith('page.tsx'))).toBe(true)
   })
 })

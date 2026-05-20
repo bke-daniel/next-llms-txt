@@ -75,23 +75,43 @@ export interface LLMsTxtItem {
 }
 
 /**
+ * A user-supplied page entry. Pass these via
+ * `LLMsTxtHandlerConfig.pages` to inject additional pages into the
+ * generated llms.txt — typically alongside or in place of auto-
+ * discovery. Internal discovery fills in the rest of the `PageInfo`
+ * fields automatically.
+ */
+export interface LLMsTxtPage {
+  /** Absolute path-style route (e.g. `/blog/post`). */
+  route: string
+  /** Optional llms.txt config for the route. If omitted the entry is dropped. */
+  config?: LLMsTxtConfig
+}
+
+/**
  * Global configuration for the llms.txt handler
  */
 export interface LLMsTxtHandlerConfig {
   /**
-   * Base URL for the application
+   * Base URL for the application. Used to build absolute URLs in the
+   * generated markdown. Lives at the top level of the config — NOT
+   * inside `autoDiscovery`. Strongly recommended in production; falls
+   * back to `http://localhost:${PORT ?? 3000}` if omitted.
    */
   baseUrl?: string
 
   /**
-   * Default configuration to use if no page-specific config is found
+   * Default configuration to use if no page-specific config is found.
+   * Sibling keys are deep-merged with `DEFAULT_CONFIG.defaultConfig` so a
+   * partial override (e.g. just `title`) doesn't drop unspecified fields.
    */
   defaultConfig?: LLMsTxtConfig
 
   /**
-   * Custom generator function
+   * Custom generator function. When set, the plugin defers to this for
+   * markdown rendering and skips the built-in `generateLLMsTxt`.
    */
-  generator?: (config: LLMsTxtConfig, pages?: PageInfo[]) => string | undefined
+  generator?: (config: LLMsTxtConfig, pages?: LLMsTxtPage[]) => string | undefined
 
   /**
    * Enable automatic page discovery. Pass `false` to disable, `true` to
@@ -100,10 +120,11 @@ export interface LLMsTxtHandlerConfig {
   autoDiscovery?: AutoDiscoveryConfig | boolean
 
   /**
-   * Pages to include in the site-wide llms.txt in addition to (or in place of)
-   * any pages found by auto-discovery.
+   * Pages to include in the site-wide llms.txt in addition to (or in
+   * place of) any pages found by auto-discovery. User entries win when
+   * a route also matches a discovered page.
    */
-  pages?: PageInfo[]
+  pages?: LLMsTxtPage[]
 
   /**
    * Support trailing slash variations
@@ -156,19 +177,52 @@ export interface AutoDiscoveryConfig {
   pagesDir?: string
 
   /**
-   * Project root directory
+   * Project root directory. Empty string means "resolve against
+   * `process.cwd()` at discovery time"; never freeze
+   * `process.cwd()` here at module-load time.
    */
   rootDir?: string
+
+  /**
+   * Name of the named export discovery looks for on each page file.
+   * Defaults to `'llmstxt'`. Override if your project uses a different
+   * convention (e.g. `'pageLLmsTxt'`).
+   */
+  llmstxtExportName?: string
+
+  /**
+   * File-extension priority for both page detection AND import
+   * resolution. Defaults to `['.ts', '.tsx', '.js', '.jsx']`. Reorder
+   * (or shrink) if a workspace uses `.ts` for compiled artifacts and
+   * needs `.tsx` source files to win.
+   */
+  extensions?: readonly string[]
 }
 
 /**
- * LLMs.txt handler configuration with all keys required except 'generator'
- * and 'pages'. `autoDiscovery` may be `false` to explicitly disable
- * discovery; otherwise its nested fields are required.
+ * Map every leaf of `T` to its non-optional, non-nullable variant.
+ * Used to express the post-merge config shape — every leaf that
+ * `DEFAULT_CONFIG` populates is guaranteed to be present, so internal
+ * code can stop null-checking.
+ */
+type DeepRequired<T> = T extends (...args: any[]) => any
+  ? T
+  : T extends object
+    ? { [K in keyof T]-?: DeepRequired<NonNullable<T[K]>> }
+    : T
+
+/**
+ * LLMs.txt handler configuration with all keys recursively required
+ * except `generator`, `pages`, and the optional handler hooks.
+ * `autoDiscovery` may be `false` to explicitly disable discovery; when
+ * an object, its nested fields are guaranteed present.
  * @internal
  */
-export type RequiredLLMsTxtHandlerConfig = Required<
-  Omit<LLMsTxtHandlerConfig, 'generator' | 'autoDiscovery' | 'pages'>
-> & Pick<LLMsTxtHandlerConfig, 'generator' | 'pages'> & {
-  autoDiscovery: Required<AutoDiscoveryConfig> | false
-}
+export type RequiredLLMsTxtHandlerConfig
+  = & {
+    [K in Exclude<keyof LLMsTxtHandlerConfig, 'generator' | 'autoDiscovery' | 'pages' | 'onError' | 'cacheControl' | 'discoveryTimeoutMs'>]-?: DeepRequired<NonNullable<LLMsTxtHandlerConfig[K]>>
+  }
+  & Pick<LLMsTxtHandlerConfig, 'generator' | 'pages' | 'onError' | 'cacheControl' | 'discoveryTimeoutMs'>
+  & {
+    autoDiscovery: DeepRequired<AutoDiscoveryConfig> | false
+  }
