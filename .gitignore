@@ -11,5 +11,7 @@ build
 tmp
 .vscode/**
 .idea
+.claude
+ruvector.db
 .vercel
 .env*.local
