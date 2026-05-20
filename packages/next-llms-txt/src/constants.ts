@@ -7,11 +7,14 @@ export const DEFAULT_CONFIG: RequiredLLMsTxtHandlerConfig = {
     title: 'My llms.txt Site',
     description: 'This is my llms.txt generated site.',
   },
-  autoDiscovery: {
+  // Frozen so that `autoDiscovery: true` (which returns this exact reference
+  // from `mergeWithDefaultConfig`) can never be mutated by downstream code,
+  // preventing ref-leaks between consecutive handler invocations.
+  autoDiscovery: Object.freeze({
     appDir: 'src/app',
     pagesDir: 'src/pages',
     rootDir: process.cwd(),
-  },
+  }),
   trailingSlash: true,
   showWarnings: process.env.NODE_ENV === 'development',
 }

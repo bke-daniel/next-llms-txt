@@ -113,4 +113,19 @@ describe('discovery (extras fixture)', () => {
       expect(page?.config?.title).toBe('Object-shaped Title')
     })
   })
+
+  describe('pages-router non-page file filtering (QA must-fix)', () => {
+    it('skips *.test.*, _meta-style underscore files, and *.d.ts type-declarations', async () => {
+      const discovery = createDiscovery({ appDir: '' })
+      const pages = await discovery.discoverPages()
+      const routes = pages.map(p => p.route)
+
+      // None of these synthetic siblings should ever appear as routes.
+      expect(routes).not.toContain('/about.test')
+      expect(routes).not.toContain('/_meta')
+      expect(routes).not.toContain('/meta')
+      expect(routes).not.toContain('/feature.d')
+      expect(routes).not.toContain('/feature')
+    })
+  })
 })

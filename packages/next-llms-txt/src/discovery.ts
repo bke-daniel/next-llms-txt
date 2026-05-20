@@ -240,14 +240,25 @@ export class LLMsTxtAutoDiscovery {
 
   /**
    * Discovers Pages Router pages (pages directory). Each `.ts(x)`/`.js(x)`
-   * file (other than `_app`, `_document`, `_error`, `404`, `500`, and
-   * anything under `api/`) maps to a route. `index.tsx` maps to its parent
-   * directory.
+   * file (other than `_app`, `_document`, `_error`, `_middleware`, `_offline`,
+   * `404`, `500`, anything else with a leading underscore, test/spec/stories
+   * files, type-declaration files, and anything under `api/`) maps to a
+   * route. `index.tsx` maps to its parent directory.
    */
   private async discoverPagesRouterPages(pagesDir: string): Promise<PageInfo[]> {
     const pages: PageInfo[] = []
     const pageExtensions = new Set(['.tsx', '.ts', '.jsx', '.js'])
-    const reservedBasenames = new Set(['_app', '_document', '_error', '404', '500'])
+    const reservedBasenames = new Set([
+      '_app',
+      '_document',
+      '_error',
+      '_middleware',
+      '_offline',
+      '404',
+      '500',
+    ])
+    // Matches `*.test.*`, `*.spec.*`, `*.stories.*`, `*.d.ts`, `*.d.tsx`
+    const nonPageFileRegex = /\.(?:test|spec|stories)\.[a-z]+$|\.d\.tsx?$/i
 
     const walkDir = (dir: string, routePrefix = ''): void => {
       const entries = fs.readdirSync(dir, { withFileTypes: true })
@@ -269,8 +280,13 @@ export class LLMsTxtAutoDiscovery {
         if (!pageExtensions.has(ext))
           continue
 
+        // Skip test, spec, story, and type-declaration files
+        if (nonPageFileRegex.test(entry.name))
+          continue
+
         const basename = entry.name.slice(0, -ext.length)
-        if (reservedBasenames.has(basename))
+        // Skip explicitly reserved basenames and any underscore-prefixed file
+        if (reservedBasenames.has(basename) || basename.startsWith('_'))
           continue
 
         const route = basename === 'index'

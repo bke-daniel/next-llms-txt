@@ -49,6 +49,9 @@ describe('createLLmsTxt with autoDiscovery: false', () => {
 
     expect(res.status).toBe(200)
     expect(text).toContain('# Discovery On')
-    expect(text).toContain('## Pages')
+    // No user-supplied pages: discovered entries live in section headings,
+    // not under the legacy `## Pages` block.
+    expect(text).not.toContain('## Pages')
+    expect(text).toContain('## Main Pages')
   })
 })
