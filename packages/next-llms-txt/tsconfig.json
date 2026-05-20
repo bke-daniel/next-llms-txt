@@ -10,8 +10,8 @@
       ]
     },
     "types": [
-      "cypress",
-      "vitest"
+      "node",
+      "vitest/globals"
     ],
     "declaration": true,
     "declarationMap": true,

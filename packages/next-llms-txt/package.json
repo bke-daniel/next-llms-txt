@@ -30,26 +30,22 @@
     "documentation",
     "plugin"
   ],
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.mjs"
     }
   },
-  "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/**/*.cjs",
-    "dist/**/*.d.cts",
     "dist/**/*.d.mts",
     "dist/**/*.d.ts",
-    "dist/**/*.js",
     "dist/**/*.mjs"
   ],
   "engines": {
-    "node": "^22.0.0 || ^24.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "build": "tsup src/index.ts",
@@ -68,6 +64,11 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "typescript": "^5.9.3 || ^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@babel/generator": "^7.29.1",
