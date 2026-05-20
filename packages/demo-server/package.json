@@ -19,7 +19,7 @@
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^25",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "baseline-browser-mapping": "^2.8.32",
