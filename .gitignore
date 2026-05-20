@@ -17,3 +17,4 @@ ruvector.db
 .claude-flow
 agentdb.**
 .env*.local
+.swarm
