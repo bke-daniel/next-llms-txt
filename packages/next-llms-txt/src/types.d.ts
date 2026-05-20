@@ -201,9 +201,10 @@ export interface AutoDiscoveryConfig {
 
 /**
  * Map every leaf of `T` to its non-optional, non-nullable variant.
- * Used to express the post-merge config shape — every leaf that
- * `DEFAULT_CONFIG` populates is guaranteed to be present, so internal
- * code can stop null-checking.
+ * Only used for `autoDiscovery`, where the merge truly fills every
+ * leaf with a default. For `defaultConfig` we keep the original
+ * (partial) shape because consumers may legitimately supply a config
+ * with just a `title`.
  */
 type DeepRequired<T> = T extends (...args: any[]) => any
   ? T
@@ -212,17 +213,17 @@ type DeepRequired<T> = T extends (...args: any[]) => any
     : T
 
 /**
- * LLMs.txt handler configuration with all keys recursively required
- * except `generator`, `pages`, and the optional handler hooks.
- * `autoDiscovery` may be `false` to explicitly disable discovery; when
- * an object, its nested fields are guaranteed present.
+ * LLMs.txt handler configuration with all top-level keys present.
+ * `autoDiscovery` may be `false` (explicit disable) — when an object,
+ * its nested fields are guaranteed present. `defaultConfig` is the
+ * user-input shape with its nested fields STILL optional, since the
+ * merge can't synthesise a meaningful `title` if the user didn't give
+ * one.
  * @internal
  */
 export type RequiredLLMsTxtHandlerConfig
-  = & {
-    [K in Exclude<keyof LLMsTxtHandlerConfig, 'generator' | 'autoDiscovery' | 'pages' | 'onError' | 'cacheControl' | 'discoveryTimeoutMs'>]-?: DeepRequired<NonNullable<LLMsTxtHandlerConfig[K]>>
-  }
-  & Pick<LLMsTxtHandlerConfig, 'generator' | 'pages' | 'onError' | 'cacheControl' | 'discoveryTimeoutMs'>
-  & {
-    autoDiscovery: DeepRequired<AutoDiscoveryConfig> | false
-  }
+  = & Required<Omit<LLMsTxtHandlerConfig, 'generator' | 'autoDiscovery' | 'pages' | 'onError' | 'cacheControl' | 'discoveryTimeoutMs'>>
+    & Pick<LLMsTxtHandlerConfig, 'generator' | 'pages' | 'onError' | 'cacheControl' | 'discoveryTimeoutMs'>
+    & {
+      autoDiscovery: DeepRequired<AutoDiscoveryConfig> | false
+    }

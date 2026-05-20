@@ -68,7 +68,11 @@ See the Demo here: https://next-llms-txt-demo-server.vercel.app
 ### Pattern: Diagnostics Disabled in Production
 
 ```typescript
-autoDiscovery: { baseUrl: 'https://example.com', showWarnings: false }
+{
+  baseUrl: 'https://example.com',
+  autoDiscovery: true,
+  showWarnings: false,
+}
 ```
 
 ## 10. Best Practices
@@ -194,7 +198,6 @@ Key files in the demo:
     const { GET: handleLLmsTxt } = createLLmsTxt({
       baseUrl: 'http://localhost:3000',
       autoDiscovery: {
-        baseUrl: 'http://localhost:3000',
         appDir: 'src/app',
       },
     })
@@ -241,9 +244,7 @@ Key files in the demo:
         title: 'Next.js next-llms-txt is awesome!',
         description: 'A comprehensive toolkit for generating LLM-optimized documentation',
       },
-      autoDiscovery: {
-        baseUrl: 'https://example.com',
-      },
+      autoDiscovery: true,
     })
     ```
 
@@ -345,9 +346,7 @@ export const { GET } = createLLmsTxt({
     title: 'My Website',
     description: 'Automatically discovered content from my Next.js pages.',
   },
-  autoDiscovery: {
-    baseUrl: 'https://example.com',
-  },
+  autoDiscovery: true,
 });
 ```
 
@@ -404,7 +403,7 @@ const { GET } = createLLmsTxt({
     title: 'My Site',
     description: 'Documentation and reference'
   },
-  autoDiscovery: { baseUrl: 'https://example.com' }
+  autoDiscovery: true,
 });
 ```
 
@@ -472,8 +471,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Built with ❤️ by the open source community
 
 `llms.txt` is a markdown file that helps AI agents like ChatGPT and Claude understand your website structure and find key resources. It follows the [llmstxt.org specification](https://llmstxt.org) with a standardized format that's easy for both humans and LLMs to read.
-
-yarn add next-llms-txt
-autoDiscovery: {
-autoDiscovery: {
-git clone <https://github.com/yourusername/next-llms-txt.git>

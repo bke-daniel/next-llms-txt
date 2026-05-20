@@ -3,12 +3,26 @@ import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { parse } from '@babel/parser'
-import traverse from '@babel/traverse'
+import babelTraverseImport from '@babel/traverse'
 import * as t from '@babel/types'
-import debug from 'debug'
+import debugImport from 'debug'
 import { DEFAULT_CONFIG, DEFAULT_PAGE_EXTENSIONS } from './constants.js'
 import normalizePath from './normalize-path.js'
 import stripJsonComments from './strip-json-comments.js'
+
+// `@babel/traverse` and `debug` ship as CJS. Under raw Node ESM, the
+// default import resolves to the module namespace object — `traverse` and
+// `debug` are then on `.default`. Bundlers (Webpack, Turbopack, Vitest's
+// transformer) paper over this, which is why tests pass with the
+// straightforward default import, but a consumer who imports
+// `dist/index.mjs` from a non-bundling runtime (Edge, Deno, bare Node)
+// hits "traverse is not a function". Unwrap the interop wrapper here.
+const traverse: typeof babelTraverseImport
+  = (babelTraverseImport as unknown as { default?: typeof babelTraverseImport })
+    .default ?? babelTraverseImport
+const debug: typeof debugImport
+  = (debugImport as unknown as { default?: typeof debugImport })
+    .default ?? debugImport
 
 // Trace-level diagnostics — opt in via `DEBUG=next-llms-txt:discovery` or
 // `DEBUG=next-llms-txt:*` in the environment.
@@ -237,11 +251,14 @@ export class LLMsTxtAutoDiscovery {
       catch (parseError) {
         // Wrap the JSON.parse error with the file path so misconfigured
         // tsconfig.json failures are debuggable instead of being a bare
-        // SyntaxError that doesn't say which file.
-        throw new Error(
+        // SyntaxError that doesn't say which file. Attach `cause`
+        // manually instead of via the ES2022 two-arg `Error` constructor
+        // (which is unavailable on ES2020 `lib` targets).
+        const wrapped = new Error(
           `Failed to parse tsconfig.json at ${tsconfigPath}: ${(parseError as Error).message}`,
-          { cause: parseError },
         )
+        ;(wrapped as Error & { cause?: unknown }).cause = parseError
+        throw wrapped
       }
       const compilerOptions = tsconfig.compilerOptions || {}
       const baseUrl = compilerOptions.baseUrl || '.'
