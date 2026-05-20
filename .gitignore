@@ -11,5 +11,10 @@ build
 tmp
 .vscode/**
 .idea
+.claude
+ruvector.db
 .vercel
+.claude-flow
+agentdb.**
 .env*.local
+.swarm

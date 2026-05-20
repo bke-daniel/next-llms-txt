@@ -1,9 +1,10 @@
 /**
  * next-llms-txt - A Next.js 16+ plugin for generating llms.txt files
  *
- * This package helps you generate llms.txt files following the llmstxt.org specification.
- * It provides a proxy-first approach for intercepting /llms.txt and /*.html.md requests,
- * with support for automatic page discovery and comprehensive site-wide llms.txt generation.
+ * Generates llms.txt files following the llmstxt.org specification by
+ * intercepting `/llms.txt` and `/*.html.md` requests in Next 16+ Routing
+ * Middleware (`proxy.ts`). `baseUrl` lives at the top of the config — not
+ * inside `autoDiscovery`.
  *
  * @example
  * ```typescript
@@ -11,9 +12,9 @@
  * import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt';
  *
  * const { GET: handleLLmsTxt } = createLLmsTxt({
- *   autoDiscovery: {
- *     baseUrl: process.env.VERCEL_URL || 'http://localhost:3000',
- *   },
+ *   baseUrl: process.env.VERCEL_URL || 'http://localhost:3000',
+ *   defaultConfig: { title: 'My Site' },
+ *   autoDiscovery: true,
  * });
  *
  * export default async function proxy(request: NextRequest) {
@@ -26,9 +27,12 @@
  * ```
  */
 
-// export { LLMsTxtAutoDiscovery } from './discovery.js'
 export type { PageInfo } from './discovery.js'
-// export { generateLLMsTxt } from './generator.js'
+export {
+  LLMsTxtConfigError,
+  LLMsTxtError,
+  LLMsTxtGenerationError,
+} from './errors.js'
 export { createLLmsTxt } from './handler.js'
 export { isLLMsTxtPath } from './llms-txt-matcher.js'
 
@@ -37,5 +41,6 @@ export type {
   LLMsTxtConfig,
   LLMsTxtHandlerConfig,
   LLMsTxtItem,
+  LLMsTxtPage,
   LLMsTxtSection,
 } from './types.js'

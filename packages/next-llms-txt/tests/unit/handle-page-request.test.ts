@@ -17,9 +17,9 @@ const mockGenerateLLMsTxt = generateLLMsTxt as MockedFunction<typeof generateLLM
 
 beforeEach(() => {
   vi.clearAllMocks()
-  ; (LLMsTxtAutoDiscovery as any).mockImplementation(() => ({
-    discoverPages: mockDiscoverPages,
-  }))
+  ; (LLMsTxtAutoDiscovery as any).mockImplementation(class {
+    discoverPages = mockDiscoverPages
+  })
 })
 
 describe('handlePageRequest', () => {
@@ -135,7 +135,7 @@ describe('handlePageRequest', () => {
         title: 'About Page',
         description: 'About us',
       })
-      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('# About Page\n\n> About us')
+      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('# About Page\n\n> About us', undefined)
       expect(response.status).toBe(200)
     })
 
@@ -233,10 +233,10 @@ describe('handlePageRequest', () => {
 
       expect(customGenerator).toHaveBeenCalledWith(pageConfig)
       expect(mockGenerateLLMsTxt).not.toHaveBeenCalled()
-      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('Custom content')
+      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('Custom content', undefined)
     })
 
-    it('should return 400 when custom generator returns empty string', async () => {
+    it('returns 500 when custom generator returns empty string (P2 #39: server bug, not client misuse)', async () => {
       const customGenerator = vi.fn().mockReturnValue('')
       const handlerConfig: LLMsTxtHandlerConfig = {
         baseUrl: 'http://example.com',
@@ -263,10 +263,11 @@ describe('handlePageRequest', () => {
 
       const response = await handlePageRequest(request, handlerConfig)
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(500)
+      expect(await response.text()).toMatch(/empty content/i)
     })
 
-    it('should return 400 when custom generator returns undefined', async () => {
+    it('returns 500 when custom generator returns undefined (P2 #39)', async () => {
       const customGenerator = vi.fn().mockReturnValue(undefined)
       const handlerConfig: LLMsTxtHandlerConfig = {
         baseUrl: 'http://example.com',
@@ -293,7 +294,7 @@ describe('handlePageRequest', () => {
 
       const response = await handlePageRequest(request, handlerConfig)
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(500)
     })
   })
 
