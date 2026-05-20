@@ -109,7 +109,9 @@ export class LLMsTxtAutoDiscovery {
     if (!autoDiscovery)
       return pages
 
-    const rootDir = autoDiscovery.rootDir || ''
+    // Resolve the root lazily: an unset rootDir falls back to the live
+    // process.cwd() at request time rather than a value frozen at import.
+    const rootDir = autoDiscovery.rootDir || process.cwd()
     const seen = new Set<string>()
 
     // Discover App Router pages

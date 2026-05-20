@@ -13,7 +13,11 @@ export const DEFAULT_CONFIG: RequiredLLMsTxtHandlerConfig = {
   autoDiscovery: Object.freeze({
     appDir: 'src/app',
     pagesDir: 'src/pages',
-    rootDir: process.cwd(),
+    // Empty means "resolve against the live process.cwd() at discovery time".
+    // Baking process.cwd() in here would freeze whatever directory was
+    // current when this module first loaded, which is not necessarily the
+    // Next.js project root.
+    rootDir: '',
   }),
   trailingSlash: true,
   showWarnings: process.env.NODE_ENV === 'development',
