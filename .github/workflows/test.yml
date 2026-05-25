@@ -63,7 +63,7 @@ jobs:
 
       - name: Upload coverage artifact
         if: matrix.node-version == 22
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: packages/next-llms-txt/coverage/
@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload Cypress screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cypress-screenshots
           path: packages/cypress-tests/cypress/screenshots
