@@ -62,8 +62,8 @@
   },
   "peerDependencies": {
     "next": "^16.0.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "typescript": "^5.9.3"
   },
   "dependencies": {
@@ -83,9 +83,9 @@
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.1",
     "lodash": "^4.17.21",
-    "next": "16.0.10",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "next": "16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "supertest": "^7.0.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
