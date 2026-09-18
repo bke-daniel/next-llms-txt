@@ -19,10 +19,10 @@ jobs:
         node-version: [22]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -34,7 +34,7 @@ jobs:
           job-summary: all
 
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache-node-modules
         with:
           path: |
@@ -53,7 +53,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: matrix.node-version == 22
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./packages/next-llms-txt/coverage/lcov.info
@@ -85,10 +85,10 @@ jobs:
         node-version: [22]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -100,7 +100,7 @@ jobs:
           job-summary: all
 
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache-node-modules
         with:
           path: |
@@ -111,7 +111,7 @@ jobs:
             ${{ runner.os }}-node-${{ matrix.node-version }}-
 
       - name: Cache Cypress binary
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache-cypress
         with:
           path: ~/.cache/Cypress
