@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- TypeScript 6.x and 7.x support. The `typescript` peer range is now `^5.9.3 || ^6.0.0 || ^7.0.0`, and CI type-checks the sources and a consumer of the published declarations with TypeScript 5.9, 6.0 and 7.0. Installing next to TypeScript 6 or 7 previously failed with `ERESOLVE`.
+
+### Changed
+
+- `typescript` is an optional peer dependency; the library never imports it at runtime.
+- `engines.node` is now `>=22.0.0` (was `^22.0.0 || ^24.0.0`). CI runs the unit tests on Node.js 22 and 24.
+- TypeScript 5.9 remains supported. Note that TypeScript 6 requires Next.js 16.2.2+ and TypeScript 7 requires Next.js 16.3.0+ (or 16.2.12+ with `experimental.useTypeScriptCli`); see the Compatibility section of the README.
+
 ## [1.0.0] - 2025-11-24
 
 ### Added

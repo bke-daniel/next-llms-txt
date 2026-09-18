@@ -1,3 +1,5 @@
+import BackToHomeLink from '@/components/BackToHomeLink'
+
 export const llmstxt = {
   title: 'This is the llmstxt export',
   description: 'Is used for generation when it exists.',
@@ -19,7 +21,7 @@ export default function NestedAllExportsPage() {
       </div>
       <a className="underline" href="/nested/all-exports.html.md">View Markdown</a>
       <div className="mt-6">
-        <a className="underline" href="/">← Back to Home</a>
+        <BackToHomeLink />
       </div>
     </>
   )
