@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/test/constants": [
         "./tests/constants.ts"
@@ -11,8 +10,8 @@
       ]
     },
     "types": [
-      "cypress",
-      "vitest"
+      "node",
+      "vitest/globals"
     ],
     "declaration": true,
     "declarationMap": true,

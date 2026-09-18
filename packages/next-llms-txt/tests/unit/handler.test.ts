@@ -147,22 +147,17 @@ describe('createLLmsTxt', () => {
       expect(mockMergeConfig).toHaveBeenCalledWith(validatedConfig)
     })
 
-    it('should throw validation errors directly', async () => {
+    it('should throw validation errors at factory construction (fail fast)', () => {
       const config: LLMsTxtHandlerConfig = {} as any
 
       mockValidateConfig.mockImplementation(() => {
         throw new Error('Invalid config')
       })
 
-      const handler = createLLmsTxt(config)
-      const request = {
-        url: 'http://example.com/llms.txt',
-      } as NextRequest
-
-      await expect(async () => await handler.GET(request)).rejects.toThrow('Invalid config')
+      expect(() => createLLmsTxt(config)).toThrow('Invalid config')
     })
 
-    it('should throw merge errors directly', async () => {
+    it('should throw merge errors at factory construction (fail fast)', () => {
       const config: LLMsTxtHandlerConfig = {
         baseUrl: 'http://example.com',
       }
@@ -172,12 +167,7 @@ describe('createLLmsTxt', () => {
         throw new Error('Merge failed')
       })
 
-      const handler = createLLmsTxt(config)
-      const request = {
-        url: 'http://example.com/llms.txt',
-      } as NextRequest
-
-      await expect(async () => await handler.GET(request)).rejects.toThrow('Merge failed')
+      expect(() => createLLmsTxt(config)).toThrow('Merge failed')
     })
   })
 

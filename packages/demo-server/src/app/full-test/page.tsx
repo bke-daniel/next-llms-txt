@@ -1,4 +1,5 @@
 import type { LLMsTxtConfig } from 'next-llms-txt'
+import BackToHomeLink from '@/components/BackToHomeLink'
 
 export const llmstxt: LLMsTxtConfig = {
   title: 'Test LLMs.txt',
@@ -41,7 +42,7 @@ export default function FullTestPage() {
       </div>
       <a className="underline" href="/full-test.html.md">View Markdown</a>
       <div className="mt-6">
-        <a className="underline" href="/">← Back to Home</a>
+        <BackToHomeLink />
       </div>
     </>
   )

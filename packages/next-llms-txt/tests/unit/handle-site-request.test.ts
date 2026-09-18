@@ -182,18 +182,16 @@ describe('handleSiteRequest', () => {
         defaultConfig: {
           title: 'Test Site',
         },
-      }
-
-        // Add pages to config (as done internally)
-        ; (config as any).pages = [
-        {
-          route: '/manual-page',
-          config: {
-            title: 'Manual Page',
-            description: 'Manually added',
+        pages: [
+          {
+            route: '/manual-page',
+            config: {
+              title: 'Manual Page',
+              description: 'Manually added',
+            },
           },
-        },
-      ]
+        ],
+      }
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
@@ -209,16 +207,15 @@ describe('handleSiteRequest', () => {
           title: 'Test Site',
         },
         autoDiscovery: AUTO_DISCOVERY,
-      }
-
-        ; (config as any).pages = [
-        {
-          route: '/manual',
-          config: {
-            title: 'Manual',
+        pages: [
+          {
+            route: '/manual',
+            config: {
+              title: 'Manual',
+            },
           },
-        },
-      ]
+        ],
+      }
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
@@ -229,7 +226,7 @@ describe('handleSiteRequest', () => {
   })
 
   describe('with auto-discovery enabled', () => {
-    it('should discover pages from fixtures', async () => {
+    it('should discover pages from fixtures and emit them under section headings (not under ## Pages)', async () => {
       const config: LLMsTxtHandlerConfig = {
         baseUrl: BASE_URL,
         defaultConfig: DEFAULT_CONFIG,
@@ -239,7 +236,11 @@ describe('handleSiteRequest', () => {
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
 
-      expect(text).toContain('## Pages')
+      // No user pages were supplied, so the legacy `## Pages` block must not
+      // be emitted. Discovered routes live inside section headings instead.
+      expect(text).not.toContain('## Pages')
+      expect(text).toContain('## Main Pages')
+      expect(text).toContain('## Nested')
       expect(response.status).toBe(200)
     })
 
@@ -272,10 +273,12 @@ describe('handleSiteRequest', () => {
       const text = await response.text()
 
       expect(text).toContain('#')
+      // No user pages → no `## Pages` block; discovered sections only.
+      expect(text).not.toContain('## Pages')
       expect(response.status).toBe(200)
     })
 
-    it('should merge discovered sections with default config', async () => {
+    it('should merge discovered sections with default config (preserving user sections)', async () => {
       const config: LLMsTxtHandlerConfig = {
         baseUrl: BASE_URL,
         defaultConfig: {
@@ -297,9 +300,79 @@ describe('handleSiteRequest', () => {
       const text = await response.text()
 
       expect(text).toContain('# My Site')
-      // Discovered sections override default sections, but title and description are preserved
-      expect(text).toContain('## Pages')
+      expect(text).toContain('> Custom description')
+      expect(text).toContain('## Custom Section')
+      expect(text).toContain('- [Custom Item](/custom)')
+      // User did not supply any `pages` entries, so `## Pages` must not
+      // appear; discovered routes now live under section headings.
+      expect(text).not.toContain('## Pages')
+      expect(text).toContain('## Main Pages')
       expect(response.status).toBe(200)
+    })
+
+    it('emits a discovered route exactly once when there is no user override', async () => {
+      const config: LLMsTxtHandlerConfig = {
+        baseUrl: BASE_URL,
+        defaultConfig: DEFAULT_CONFIG,
+        autoDiscovery: AUTO_DISCOVERY,
+      }
+
+      const response = await handleSiteRequest(mockRequest, config)
+      const text = await response.text()
+      // Discovered section URLs are absolute (baseUrl + route); the previous
+      // double-render also emitted a relative `[Title](/all-exports)` under
+      // `## Pages`. Count both forms — together they should now appear once.
+      const absoluteHits = text.split(`](${BASE_URL}/all-exports)`).length - 1
+      const relativeHits = text.split('](/all-exports)').length - 1
+      expect(absoluteHits + relativeHits).toBe(1)
+    })
+
+    it('lets a user-supplied page override a discovered route by route (de-dup, user wins)', async () => {
+      const config: LLMsTxtHandlerConfig = {
+        baseUrl: BASE_URL,
+        defaultConfig: DEFAULT_CONFIG,
+        autoDiscovery: AUTO_DISCOVERY,
+        pages: [
+          {
+            route: '/all-exports',
+            config: {
+              title: 'OVERRIDE',
+              description: 'User override wins',
+            },
+          },
+        ],
+      }
+
+      const response = await handleSiteRequest(mockRequest, config)
+      const text = await response.text()
+
+      // The user override goes in `## Pages` (relative URL form). The
+      // discovered absolute-URL entry inside the section is filtered out, so
+      // the route is referenced exactly once across the document.
+      const absoluteHits = text.split(`](${BASE_URL}/all-exports)`).length - 1
+      const relativeHits = text.split('](/all-exports)').length - 1
+      expect(absoluteHits).toBe(0)
+      expect(relativeHits).toBe(1)
+      expect(text).toContain('## Pages')
+      expect(text).toContain('- [OVERRIDE](/all-exports): User override wins')
+    })
+
+    it('de-dupes user-supplied pages by route (user-wins, first occurrence)', async () => {
+      const config: LLMsTxtHandlerConfig = {
+        baseUrl: BASE_URL,
+        defaultConfig: DEFAULT_CONFIG,
+        pages: [
+          { route: '/dup', config: { title: 'First' } },
+          { route: '/dup', config: { title: 'Second' } },
+        ],
+      }
+
+      const response = await handleSiteRequest(mockRequest, config)
+      const text = await response.text()
+      const occurrences = text.split('/dup').length - 1
+      expect(occurrences).toBe(1)
+      expect(text).toContain('- [First](/dup)')
+      expect(text).not.toContain('- [Second](/dup)')
     })
   })
 
@@ -556,21 +629,22 @@ describe('handleSiteRequest', () => {
           ],
         },
         autoDiscovery: AUTO_DISCOVERY,
+        pages: [
+          {
+            route: '/custom',
+            config: { title: 'Custom Page' },
+          },
+        ],
       }
-
-        ; (config as any).pages = [
-        {
-          route: '/custom',
-          config: { title: 'Custom Page' },
-        },
-      ]
 
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
 
       expect(text).toContain('# Complete Site')
       expect(text).toContain('> A complete example')
+      // User supplied a `/custom` page → `## Pages` still rendered for it.
       expect(text).toContain('## Pages')
+      expect(text).toContain('- [Custom Page](/custom)')
       expect(text).toContain('## Main')
       expect(text).toContain('## Optional')
     })

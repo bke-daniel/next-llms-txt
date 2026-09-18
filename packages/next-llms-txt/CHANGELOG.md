@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - Unreleased
+
+See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
+
+### Breaking
+
+- **Configuration is validated when `createLLmsTxt` is called**, not on the first request. A config without `defaultConfig.title`, a non-empty `pages` array or an enabled `autoDiscovery` now throws `LLMsTxtConfigError` at startup. In 1.x the validator was never enforced.
+- **`autoDiscovery: false` is respected.** 1.x silently re-enabled discovery with the default settings.
+- **`llms.txt` output changed.** Discovered pages are grouped into sections (root-level routes under `Main Pages`, deeper routes by their first path segment) and each route is emitted once. 1.x put every discovered page into a single bucket and could list a route twice. `## Pages` now only holds pages passed through `pages`. Items without a `title` and sections without renderable items are dropped, and the output ends with a single newline.
+- **Pages Router files are discovered by default** (`pagesDir: 'src/pages'`); 1.x only scanned the App Router. When both routers register the same route, the App Router page wins.
+- **`generator` receives `LLMsTxtPage[]`** as its second argument instead of the internal `PageInfo[]`. `LLMsTxtPage` has `route` and `config` only.
+- **Per-page `*.html.md` status codes:** `400` when auto-discovery is off, `404` when no page matches, `500` when a custom `generator` returns an empty result (was `400`).
+- **Discovery trace output moved from `console.log` to `debug`.** Enable it with `DEBUG=next-llms-txt:*`. Warnings controlled by `showWarnings` still use `console.warn`.
+- **ESM-only manifest.** `main` and the `require` export are gone. They pointed at `dist/index.js`, which the build never produced, so `require('next-llms-txt')` did not work in 1.x either; it now fails with Node's ESM-only error instead of module-not-found.
+- **Dead code removed:** the unexported, deprecated `createPageLLMsTxtHandlers` helper and `getAutoDiscoveryConfig`.
+
+### Added
+
+- TypeScript 6.x and 7.x support. The `typescript` peer range is now `^5.9.3 || ^6.0.0 || ^7.0.0`, and CI type-checks the sources and a consumer of the published declarations with TypeScript 5.9, 6.0 and 7.0. Installing 1.0.2 next to TypeScript 6 or 7 failed with `ERESOLVE`.
+- `LLMsTxtError`, `LLMsTxtConfigError` and `LLMsTxtGenerationError`, exported for `instanceof` checks.
+- `LLMsTxtPage` type and a typed `pages` option for supplying pages by hand. A page passed through `pages` overrides a discovered page with the same route.
+- `onError` hook, called with the original error (including its `cause` chain) before the `500` response is sent.
+- `cacheControl` option: a custom header value, or `false` to omit the header. The default stays `public, max-age=3600, s-maxage=3600`.
+- `discoveryTimeoutMs` option. Discovery also stops when the request is aborted.
+- `autoDiscovery.llmstxtExportName` (default `llmstxt`) and `autoDiscovery.extensions` (extension priority for page entries and import resolution).
+- Pages Router discovery. It skips `_app`, `_document`, `_error`, `404`, `500`, the `api/` directory, underscore-prefixed files, and test, spec, story and declaration files.
+- App Router discovery of `page.js` and `page.jsx`.
+- `"sideEffects": false`, so bundlers can tree-shake the package.
+
+### Changed
+
+- `typescript` is an optional peer dependency; the library never imports it at runtime.
+- `engines.node` is now `>=22.0.0`. The last release, 1.0.2, declared `^22.0.0 || ^24.0.0`, so Node.js 23 and 25+ are no longer excluded. CI runs the unit tests on Node.js 22 and 24.
+- TypeScript 5.9 remains supported. TypeScript 6 requires Next.js 16.2.2+ and TypeScript 7 requires Next.js 16.3.0+ (or 16.2.12+ with `experimental.useTypeScriptCli`); see the Compatibility section of the README.
+- `autoDiscovery.rootDir` resolves against the current working directory at request time when unset. 1.x froze a directory at module load.
+- `defaultConfig` is deep-merged with the defaults, so a partial override no longer drops sibling keys.
+- `/llms.txt/` (trailing slash) is routed to the site handler. `/foo/index` and `/foo/` normalise to `/foo`, and Windows path separators are normalised once at the boundary.
+- Discovery uses asynchronous file system access, extracts exports in a single AST pass and caches parsed files, so a module imported by many pages is parsed once.
+- Dependencies upgraded, including `@babel/*` 7.29.
+
+### Fixed
+
+- Object-shaped `metadata.title` (`{ default, template, absolute }`) is resolved to a string in the metadata fallback.
+- Template-literal titles keep their placeholders instead of being cut off at the first interpolation.
+- Dynamic, catch-all, group and parallel route segments (`[id]`, `[...slug]`, `(group)`, `@modal`) no longer leak into generated titles.
+- Sections from `defaultConfig` are kept next to discovered sections instead of being overwritten.
+- Error responses are created per request. 1.x reused one `NextResponse` instance, whose body can only be read once.
+- Symlink cycles no longer hang discovery.
+- A malformed `tsconfig.json` is reported with its path and the original parse error as `cause`.
+- `@babel/traverse` and `debug` (both CommonJS) are unwrapped correctly when the bundle runs as native ESM.
+- The published bundle no longer references a source map that is not part of the tarball.
+
+### Removed
+
+- `@babel/generator` from the runtime dependencies; it was unused.
+
+## [1.0.2] - 2025-12-03
+
+### Changed
+
+- `engines.node` widened from `^22.0.0` to `^22.0.0 || ^24.0.0`.
+
+## [1.0.1] - 2025-12-02
+
+### Changed
+
+- `llms.txt` and `*.html.md` responses are served as `text/markdown; charset=utf-8` instead of `text/plain`.
+
 ## [1.0.0] - 2025-11-24
 
 ### Added

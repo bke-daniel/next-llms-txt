@@ -93,7 +93,7 @@ E2E test suite for integration testing.
 
 ## Configuration
 
-- **TypeScript**: Shared base configuration at `tsconfig.base.json`, extended by all packages
+- **TypeScript**: Shared base configuration at `tsconfig.base.json`, extended by `next-llms-txt` and `demo-server`. The test servers and `cypress-tests` keep the standalone tsconfig their framework generates. The repository builds and lints on TypeScript 6.0; `npm run type-check` checks every workspace, and CI repeats the check with TypeScript 5.9, 6.0 and 7.0.
 - **ESLint**: Each package has its own configuration
 - **Workspaces**: Managed via npm workspaces
 
