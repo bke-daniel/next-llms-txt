@@ -23,10 +23,10 @@ jobs:
         node-version: [22, 24]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -38,7 +38,7 @@ jobs:
           job-summary: all
 
       - name: Cache node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: cache-node-modules
         with:
           path: |
@@ -66,7 +66,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: matrix.node-version == 24
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./packages/next-llms-txt/coverage/lcov.info
@@ -76,7 +76,7 @@ jobs:
 
       - name: Upload coverage artifact
         if: matrix.node-version == 24
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: packages/next-llms-txt/coverage/
@@ -107,10 +107,10 @@ jobs:
       TSC: ${{ github.workspace }}/../typescript-${{ matrix.typescript }}/node_modules/.bin/tsc
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -173,10 +173,10 @@ jobs:
         node-version: [24]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -188,7 +188,7 @@ jobs:
           job-summary: all
 
       - name: Cache node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: cache-node-modules
         with:
           path: |
@@ -199,7 +199,7 @@ jobs:
             ${{ runner.os }}-node-${{ matrix.node-version }}-
 
       - name: Cache Cypress binary
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: cache-cypress
         with:
           path: ~/.cache/Cypress
@@ -222,7 +222,7 @@ jobs:
 
       - name: Upload Cypress screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cypress-screenshots
           path: packages/cypress-tests/cypress/screenshots
