@@ -3,8 +3,9 @@ name: Test
 on:
   push:
     branches: [main, develop]
+  # Every pull request, whatever its base: stacked PRs that target a feature
+  # branch would otherwise merge without having run the tests.
   pull_request:
-    branches: [main, develop]
 
 permissions:
   checks: write
