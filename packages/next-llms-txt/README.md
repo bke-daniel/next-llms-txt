@@ -42,6 +42,7 @@ LLM-focused content discovery and delivery for **Next.js 16+**. Generates a spec
 - [Features](#2-features)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
+- [Migrating from 1.x to 2.0](#migrating-from-1x-to-20)
 - [Guides](#guides)
 - [API Reference](#api-reference)
 - [Best Practices](#10-best-practices)
@@ -275,6 +276,55 @@ pnpm add next-llms-txt
 # bun
 bun add next-llms-txt
 ```
+
+## Migrating from 1.x to 2.0
+
+Most projects only need steps 1 and 2. The full list of changes is in the [changelog](./CHANGELOG.md).
+
+**1. Check your runtime.** 2.0 needs Node.js 22 or newer and supports TypeScript 5.9, 6.x and 7.x. TypeScript 6 and 7 also put a floor on Next.js itself; see [Compatibility](#11-compatibility).
+
+**2. Make sure the config passes validation.** `createLLmsTxt` now validates when it is called, so a bad config fails at startup instead of on the first request. It throws `LLMsTxtConfigError` unless the config has at least one of:
+
+- `defaultConfig.title`
+- a non-empty `pages` array
+- `autoDiscovery` set to `true` or to an object
+
+```typescript
+import { createLLmsTxt, LLMsTxtConfigError } from 'next-llms-txt'
+
+try {
+  createLLmsTxt({ autoDiscovery: false }) // nothing to generate from
+}
+catch (error) {
+  if (error instanceof LLMsTxtConfigError) {
+    // fix the config
+  }
+}
+```
+
+**3. Review your generated `llms.txt`.** The output changed, so diff it once after upgrading:
+
+- Discovered pages are grouped into sections: root-level routes under `Main Pages`, deeper routes by their first path segment. 1.x used a single bucket.
+- Each route appears once. A page passed through `pages` replaces a discovered page with the same route.
+- `## Pages` now only lists pages passed through `pages`.
+- Files in `src/pages` (Pages Router) are discovered by default. Point `autoDiscovery.pagesDir` somewhere else if you do not want them.
+- `autoDiscovery: false` really turns discovery off now. 1.x ignored it. With discovery off, `*.html.md` requests answer `400`.
+
+**4. If you use a custom `generator`,** its second argument is now `LLMsTxtPage[]` (`route` and `config`) instead of the internal `PageInfo[]`. `filePath`, `hasLLMsTxtExport`, `hasMetadataFallback` and `warnings` are no longer passed.
+
+```typescript
+import type { LLMsTxtConfig, LLMsTxtPage } from 'next-llms-txt'
+
+function generator(config: LLMsTxtConfig, pages?: LLMsTxtPage[]) {
+  return `# ${config.title}\n\n${(pages ?? []).map(page => `- ${page.route}`).join('\n')}\n`
+}
+```
+
+**5. If you relied on status codes of `*.html.md`:** `400` means auto-discovery is off, `404` means no page matched, and `500` means a custom `generator` returned nothing (this case was `400` in 1.x).
+
+**6. If you read the discovery logs,** they moved from `console.log` to the `debug` package. Run with `DEBUG=next-llms-txt:*`. Warnings controlled by `showWarnings` still go to `console.warn`.
+
+**7. CommonJS.** The package is ESM-only. `require('next-llms-txt')` did not work in 1.x either, because the `require` export pointed at a file that was never built; it now fails with Node's ESM-only error. Use `import`.
 
 ## Guides
 
