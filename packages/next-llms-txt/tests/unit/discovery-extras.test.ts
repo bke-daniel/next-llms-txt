@@ -86,12 +86,16 @@ describe('discovery (extras fixture)', () => {
       expect(sectionTitles).toContain('Blog')
     })
 
-    it('puts /docs and /docs/getting-started both under Docs', async () => {
+    it('puts /docs under "Main Pages" and /docs/getting-started under "Docs"', async () => {
       const discovery = createDiscovery({ pagesDir: '' })
       const siteConfig = await discovery.generateSiteConfig()
-      const docsSection = siteConfig.sections!.find(s => s.title === 'Docs')!
-      const urls = docsSection.items.map(i => i.url)
-      expect(urls).toContain(`${BASE_URL}/docs/getting-started`)
+      const urlsOf = (title: string) =>
+        siteConfig.sections!.find(s => s.title === title)!.items.map(i => i.url)
+
+      // Only routes with two or more segments get their own section; a
+      // single-segment route is root-level, even when it has child routes.
+      expect(urlsOf('Docs')).toEqual([`${BASE_URL}/docs/getting-started`])
+      expect(urlsOf('Main Pages')).toContain(`${BASE_URL}/docs`)
     })
 
     it('produces absolute URLs using the configured baseUrl', async () => {
