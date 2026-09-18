@@ -16,20 +16,23 @@ packages/
   nextjs-test-server-app-router/   # Live test harness — Next 16 App Router
   nextjs-test-server-pages-router/ # Live test harness — Next 16 Pages Router
   demo-server/                     # Larger demo with Tailwind, used as a Vercel preview
-  cypress-tests/                   # Cypress E2E (currently disabled in tests/e2e)
+  cypress-tests/                   # Cypress E2E against the App Router test server (runs in CI)
 examples/                          # Documentation-only example READMEs
 ```
 
-## Tech stack (current, post-2026-05 upgrade)
+## Tech stack
 
-- **Next.js 16.2.6** (App Router + Pages Router both supported by the plugin)
+Versions live in the `package.json` files; this list only records the decisions behind them.
+
+- **Next.js 16.3.x**, the same exact version in every workspace so npm hoists one copy (two copies make `NextRequest` types incompatible, and `eslint-config-next` needs `next` hoisted). App Router + Pages Router are both supported by the plugin.
 - **React 19.2.6** / React DOM
-- **TypeScript 6.0.3** (peer dep on the plugin widened to `^5.9.3 || ^6.0.0`)
+- **TypeScript `~6.0.3`** in every workspace. The plugin's optional peer range is `^5.9.3 || ^6.0.0 || ^7.0.0`, but the repo cannot build or lint on TypeScript 7: it ships no JavaScript compiler API, which tsup's dts build and typescript-eslint (`<6.1.0`) need. TypeScript 7 is covered by the `typescript-compat` CI job instead (see CONTRIBUTING.md, "TypeScript Versions").
+- **Node.js 24** (`.nvmrc`), `engines.node >=22.0.0`, `@types/node ^24` enforced by a root `overrides` entry. CI runs the unit tests on 22 and 24.
 - **Vitest 4.1.6** + `@vitest/coverage-v8`
-- **ESLint 9.39.x** for the Next.js consumer packages (eslint-config-next 16.2.6 pins typescript-eslint 8 which is not ESLint-10-compatible)
+- **ESLint 9.39.x** for the Next.js consumer packages (eslint-config-next pins typescript-eslint 8, which is not ESLint-10-compatible)
 - **ESLint 10.3.x** for the plugin itself (via `@antfu/eslint-config@9`)
 - **tsup** for the plugin build (ESM only)
-- `@babel/parser`/`traverse`/`generator`/`types` — AST-driven auto-discovery of `llmstxt` exports
+- `@babel/parser`/`traverse`/`types` — AST-driven auto-discovery of `llmstxt` exports
 
 ## Plugin internals (`packages/next-llms-txt/src/`)
 
@@ -54,9 +57,10 @@ Unit tests catch logic regressions. The live test servers catch contract regress
 
 ```bash
 npm run test:unit -w next-llms-txt
-npm run test:coverage:ci -w next-llms-txt   # gates: 100% stmts/funcs/lines, ≥98% branches
+npm run test:coverage:ci -w next-llms-txt   # gates: the `thresholds` in vitest.config.ts
 npm run lint -w next-llms-txt
 npm run build -w next-llms-txt
+npm run type-check                          # every workspace; run after the build, the apps resolve the plugin through dist/
 ```
 
 A green suite is necessary but not sufficient.
@@ -148,14 +152,14 @@ Run a single workspace's test server from anywhere via `npm --prefix packages/<n
 - `DEFAULT_CONFIG.autoDiscovery` is `Object.freeze`d — never mutate it (use the `mergeWithDefaultConfig` output instead).
 - `DEFAULT_CONFIG.autoDiscovery.rootDir` is `''` (the "unset" sentinel) and `discoverPages()` resolves `rootDir || process.cwd()` lazily at request time. Never set `rootDir` to `process.cwd()` at module-load time — that freezes the directory at first import and breaks discovery when cwd diverges later (e.g. under Cypress / a different invocation path). An explicitly configured `rootDir` still wins.
 - `PageInfo` user-facing fields are optional except `route`. Internal discovery fills the rest in.
-- Section titles in `generateSiteConfig` are derived from the first path segment (`/docs/foo` → `Docs`). Root-level routes → `Main Pages`.
+- Section titles in `generateSiteConfig` are derived from the first path segment of routes with two or more segments (`/docs/foo` → `Docs`). Routes with at most one segment (`/`, `/docs`) → `Main Pages`.
 - When fixing a discovery bug, add a fixture under `packages/next-llms-txt/tests/fixtures/discovery-extras/` plus a regression test in `tests/unit/discovery-extras.test.ts`.
 
 ## Known constraints
 
-- `--legacy-peer-deps` is required for installs because some peer ranges lag React 19.2 / Next 16.
 - ESLint 10 in `packages/next-llms-txt/` lives alongside ESLint 9 in the Next.js consumer packages — that split is intentional; do not "unify" them until eslint-config-next picks up typescript-eslint 9+.
 - Cypress binary install is blocked in sandboxed environments; `CYPRESS_INSTALL_BINARY=0 npm install` skips it.
+- Every `tsc` run against a repo tsconfig needs `--noEmit` (the `type-check` scripts have it). Under TypeScript 6/7 `rootDir` defaults to the tsconfig directory, so an emitting run writes `.js` files next to sources outside it, even with `--outDir`.
 - Husky's `prepare` step requires a git repo — fresh `git clone` is fine, `npm install` inside an unpacked tarball is not.
 
 ## Working notes

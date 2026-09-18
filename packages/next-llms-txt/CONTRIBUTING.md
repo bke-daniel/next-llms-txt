@@ -17,7 +17,6 @@ Thanks for your interest in contributing! This guide covers the practical setup 
    npm install
    ```
 
-   `--legacy-peer-deps` is required because some peer ranges lag React 19.2.
    Cypress binary download is blocked in sandboxed environments; use
    `CYPRESS_INSTALL_BINARY=0 npm install` if you don't need the E2E suite.
 
