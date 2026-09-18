@@ -7,11 +7,12 @@
     "build": "rm -rf .next && next build",
     "prebuild": "npm run build -w next-llms-txt",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "type-check": "tsc --noEmit --incremental false"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",
-    "next": "16.2.6",
+    "next": "16.3.5",
     "next-llms-txt": "^2.0.0",
     "postcss": "^8.5.14",
     "react": "^19.2.6",
@@ -19,12 +20,12 @@
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
-    "@types/node": "^25",
+    "@types/node": "^24",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "baseline-browser-mapping": "^2.10.29",
     "eslint": "^9.39.4",
-    "eslint-config-next": "16.2.6",
-    "typescript": "^6.0.3"
+    "eslint-config-next": "16.3.5",
+    "typescript": "~6.0.3"
   }
 }

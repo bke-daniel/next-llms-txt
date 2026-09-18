@@ -134,10 +134,47 @@ packages/
 2. [ ] `npm run lint -w next-llms-txt` reports only the pre-existing
        disabled-suite warning, no new errors.
 3. [ ] `npm run build -w next-llms-txt` emits cleanly.
-4. [ ] Both live test servers were exercised for any UI- or contract-
+4. [ ] `npm run type-check` is green (run it after the build: the apps
+       resolve the plugin's types through `dist/`).
+5. [ ] Both live test servers were exercised for any UI- or contract-
        affecting change.
-5. [ ] CHANGELOG.md updated.
-6. [ ] PR description explains the *why*, not just the *what*.
+6. [ ] CHANGELOG.md updated.
+7. [ ] PR description explains the *why*, not just the *what*.
+
+## TypeScript Versions
+
+The plugin supports consumers on TypeScript 5.9, 6.x and 7.x, but the
+repository itself stays on TypeScript 6.0 (`~6.0.3` in every workspace).
+TypeScript 7 ships no JavaScript compiler API, which tsup's declaration
+build and typescript-eslint both need, and typescript-eslint supports
+`<6.1.0` only. Keep the range identical across workspaces so npm hoists a
+single compiler.
+
+The `typescript-compat` job in `.github/workflows/test.yml` installs each
+supported version side by side and type-checks the sources, the workspace
+apps and `tests/type-consumer/` (a consumer of the published
+`dist/index.d.ts`). To reproduce one leg locally after a build:
+
+```bash
+npx -y -p typescript@~7.0.0 tsc -p packages/next-llms-txt/tests/type-consumer/tsconfig.json
+```
+
+Do not put options that only one version understands into a shared
+tsconfig. `ignoreDeprecations: "6.0"`, for example, is rejected by
+TypeScript 5.9, which is why it lives in `tsup.config.ts`.
+
+## Node.js Typings
+
+`@types/node` follows the Node.js major in `.nvmrc` (24), so the compiler
+never accepts an API the runtime does not have. Every workspace declares
+`^24`, and the root `package.json` repeats it under `overrides`: some
+transitive dependencies ask for `@types/node: "*"`, which would otherwise
+hoist the newest major next to ours. Dependabot ignores versions outside
+24.x. Raise all three together when `.nvmrc` moves to a new major.
+
+The plugin supports Node.js 22 and up (`engines.node`). The typings cannot
+flag an API that only exists in Node 24, so the `test` job in CI runs on
+both 22 and 24. Everything else in CI runs on the `.nvmrc` version.
 
 ## Versioning
 

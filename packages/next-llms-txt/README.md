@@ -90,7 +90,17 @@ See the Demo here: https://next-llms-txt-demo-server.vercel.app
 - **Next.js**: 16.x official. 15.x may work with manual proxy wiring; not supported.
 - **Node.js**: 22+
 - **React**: 19.2+
-- **TypeScript**: 5.9+
+- **TypeScript**: 5.9, 6.x and 7.x. `typescript` is an optional peer dependency; the library never imports it at runtime. The published declarations are type-checked against all three in CI.
+
+TypeScript 6 and 7 also put a floor on Next.js itself, independent of this library:
+
+| TypeScript | Next.js needed |
+| --- | --- |
+| 5.9 | 16.0+ |
+| 6.x | 16.2.2+ |
+| 7.x | 16.3.0+, or 16.2.12+ with `experimental.useTypeScriptCli: true` |
+
+TypeScript 7 no longer ships the JavaScript compiler API that older Next.js versions load to type-check and to read `next.config.ts`, so `next build` and `next dev` fail there before this library is involved.
 
 ## 12. FAQ
 
