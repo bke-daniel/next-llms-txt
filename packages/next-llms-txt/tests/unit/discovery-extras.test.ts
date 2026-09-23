@@ -1,7 +1,9 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
+import { createLLmsTxt } from '../../src/handler'
 import { BASE_URL } from '../constants'
+import createMockRequest from '../create-mock-request'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -105,6 +107,82 @@ describe('discovery (extras fixture)', () => {
       for (const url of allUrls) {
         expect(url.startsWith(BASE_URL)).toBe(true)
       }
+    })
+  })
+
+  describe('app-router special directories (#51 items 1, 2)', () => {
+    it('strips route groups from the URL instead of skipping their pages', async () => {
+      const discovery = createDiscovery({ pagesDir: '' })
+      const pages = await discovery.discoverPages()
+      const pricing = pages.find(p => p.route === '/pricing')
+      expect(pricing?.config?.title).toBe('Pricing')
+      expect(pricing?.filePath).toContain('(marketing)')
+      // Nested groups collapse the same way.
+      expect(pages.find(p => p.route === '/team')?.config?.title).toBe('Team')
+      // The group name never becomes a segment.
+      expect(pages.map(p => p.route).some(r => r.includes('('))).toBe(false)
+    })
+
+    it('does not list intercepting routes or parallel-route slots', async () => {
+      const discovery = createDiscovery({ pagesDir: '' })
+      const pages = await discovery.discoverPages()
+      const titles = pages.map(p => p.config?.title)
+      expect(titles).not.toContain('Intercepted pricing')
+      expect(titles).not.toContain('Login modal')
+      expect(pages.map(p => p.route).some(r => r.includes('@'))).toBe(false)
+    })
+  })
+
+  describe('llmstxt export shapes (#51 items 3, 4)', () => {
+    it('reads an export declared with `satisfies`', async () => {
+      const discovery = createDiscovery({ pagesDir: '' })
+      const pages = await discovery.discoverPages()
+      const page = pages.find(p => p.route === '/satisfies-config')
+      expect(page?.hasLLMsTxtExport).toBe(true)
+      expect(page?.config).toEqual({ title: 'Satisfies Config', description: 'Declared with `satisfies`' })
+    })
+
+    it('reads an export declared with `as const`, including nested arrays', async () => {
+      const discovery = createDiscovery({ pagesDir: '' })
+      const pages = await discovery.discoverPages()
+      const page = pages.find(p => p.route === '/as-const-config')
+      expect(page?.config?.title).toBe('As Const Config')
+      expect(page?.config?.sections).toEqual([{ title: 'Links', items: [{ title: 'Docs', url: '/docs' }] }])
+    })
+
+    it('resolves property values that are identifiers declared in the same file', async () => {
+      const discovery = createDiscovery({ pagesDir: '' })
+      const pages = await discovery.discoverPages()
+      const page = pages.find(p => p.route === '/identifier-title')
+      expect(page?.config?.title).toBe('Identifier Title')
+      // Template interpolations stay visible as placeholders (see extractValue).
+      // eslint-disable-next-line no-template-curly-in-string
+      expect(page?.config?.description).toBe('Description for ${PAGE_TITLE}')
+    })
+
+    it('falls back to a route-derived title when the title cannot be read statically', async () => {
+      const discovery = createDiscovery({ pagesDir: '' })
+      const pages = await discovery.discoverPages()
+      const page = pages.find(p => p.route === '/unresolvable-title')
+      expect(page?.hasLLMsTxtExport).toBe(true)
+      expect(page?.config?.title).toBe('Unresolvable-title')
+      expect(page?.config?.description).toBe('Title comes from a function call')
+      expect(page?.warnings?.join('\n')).toContain('no static string title')
+    })
+
+    it('serves the page route with a 200 instead of a 500 when the title is unresolvable', async () => {
+      const { GET } = createLLmsTxt({
+        baseUrl: BASE_URL,
+        defaultConfig: { title: 'Extras Site' },
+        autoDiscovery: { rootDir: ROOT_DIR, appDir: 'app', pagesDir: '' },
+        showWarnings: false,
+      })
+      const response = await GET(createMockRequest('/unresolvable-title.html.md'))
+      expect(response.status).toBe(200)
+      expect(await response.text()).toContain('# Unresolvable-title')
+
+      const site = await GET(createMockRequest('/llms.txt'))
+      expect(await site.text()).toContain(`${BASE_URL}/unresolvable-title`)
     })
   })
 

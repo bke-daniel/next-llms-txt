@@ -69,6 +69,48 @@ interface FileIndex {
 }
 
 /**
+ * How an App Router directory name contributes to the URL.
+ *
+ * - `(group)` route groups are organisational only: recurse, no segment.
+ * - `(.)x` / `(..)x` / `(...)x` intercepting routes and `@slot` parallel
+ *   routes render inside another page rather than at a URL of their own,
+ *   so they hold no standalone pages worth listing.
+ * - `_private` folders are opted out of routing by Next.js.
+ */
+function classifyAppSegment(name: string): 'segment' | 'group' | 'skip' {
+  if (name.startsWith('_') || name.startsWith('@'))
+    return 'skip'
+  if (name.startsWith('(')) {
+    const isInterceptingRoute = /^\(\.{1,3}\)/.test(name)
+    return isInterceptingRoute ? 'skip' : 'group'
+  }
+  return 'segment'
+}
+
+/**
+ * Peel off TypeScript-only and grouping wrappers that carry no runtime
+ * value: `expr as T`, `expr satisfies T`, `<T>expr`, `expr!`, `(expr)`.
+ * `export const llmstxt = { … } satisfies LLMsTxtConfig` is the idiom the
+ * exported `LLMsTxtConfig` type invites, and it must read like a plain
+ * object literal.
+ */
+function unwrapExpression(
+  node: t.Expression | null | undefined,
+): t.Expression | null | undefined {
+  let current = node
+  while (
+    t.isTSAsExpression(current)
+    || t.isTSSatisfiesExpression(current)
+    || t.isTSTypeAssertion(current)
+    || t.isTSNonNullExpression(current)
+    || t.isParenthesizedExpression(current)
+  ) {
+    current = current.expression
+  }
+  return current
+}
+
+/**
  * Throws an `AbortError`-style DOMException if the signal has fired, so
  * deeply-nested async walks bail out promptly when a request is cancelled.
  */
@@ -329,9 +371,14 @@ export class LLMsTxtAutoDiscovery {
         const fullPath = path.join(dir, entry.name)
 
         if (entry.isDirectory()) {
-          if (entry.name.startsWith('(') || entry.name.startsWith('_'))
+          const segmentKind = classifyAppSegment(entry.name)
+          if (segmentKind === 'skip')
             continue
-          const newRoute = path.posix.join(routePrefix, entry.name)
+          // Route groups organise files without adding a URL segment, so
+          // the prefix is carried through unchanged.
+          const newRoute = segmentKind === 'group'
+            ? routePrefix
+            : path.posix.join(routePrefix, entry.name)
           await walkDir(fullPath, newRoute)
         }
         else if (pageEntryNames.has(entry.name)) {
@@ -448,7 +495,21 @@ export class LLMsTxtAutoDiscovery {
 
       if (llmsTxtConfig) {
         pageInfo.hasLLMsTxtExport = true
-        pageInfo.config = llmsTxtConfig as LLMsTxtConfig
+        const config = llmsTxtConfig as Partial<LLMsTxtConfig>
+        if (typeof config.title === 'string' && config.title.trim()) {
+          pageInfo.config = config as LLMsTxtConfig
+        }
+        else {
+          // The export exists but its title could not be read statically
+          // (an imported binding, a call, a member expression). Keep the
+          // page visible on both endpoints instead of dropping it from
+          // llms.txt and crashing the *.html.md route.
+          pageInfo.config = { ...config, title: this.generatePageTitle(route) }
+          this.addWarning(
+            `${this.getLLMsTxtExportName()} export has no static string title - using a title derived from the route`,
+            pageInfo,
+          )
+        }
       }
       else if (metadataConfig) {
         pageInfo.hasMetadataFallback = true
@@ -528,7 +589,7 @@ export class LLMsTxtAutoDiscovery {
       VariableDeclaration: (p) => {
         for (const decl of p.node.declarations) {
           if (t.isIdentifier(decl.id))
-            declarations.set(decl.id.name, decl.init)
+            declarations.set(decl.id.name, unwrapExpression(decl.init))
         }
       },
       ImportDeclaration: (p) => {
@@ -551,7 +612,7 @@ export class LLMsTxtAutoDiscovery {
         if (p.node.declaration && t.isVariableDeclaration(p.node.declaration)) {
           for (const decl of p.node.declaration.declarations) {
             if (t.isIdentifier(decl.id))
-              directExports.set(decl.id.name, decl.init)
+              directExports.set(decl.id.name, unwrapExpression(decl.init))
           }
         }
         // `export { foo } from '…'` — single-source re-exports. Treat the
@@ -576,7 +637,9 @@ export class LLMsTxtAutoDiscovery {
         }
       },
       ExportDefaultDeclaration: (p) => {
-        const decl = p.node.declaration
+        const decl = t.isExpression(p.node.declaration)
+          ? unwrapExpression(p.node.declaration)
+          : null
         if (t.isObjectExpression(decl) || t.isIdentifier(decl))
           defaultExport = decl
       },
@@ -692,72 +755,85 @@ export class LLMsTxtAutoDiscovery {
   // ───────────────────────────────────────────────────────────────────────
 
   /**
-   * Pure-AST object extraction. Synchronous — only handles literals,
-   * nested objects, arrays, and local-variable identifier references. For
-   * cross-file resolution use the internal async helpers, which `analyzePage`
-   * wires up automatically.
+   * Pure-AST object extraction. Synchronous — handles literals, template
+   * literals, nested objects, arrays, and identifiers bound by a top-level
+   * declaration in the same file (`const TITLE = '…'; { title: TITLE }`).
+   * For cross-file resolution use the internal async helpers, which
+   * `analyzePage` wires up automatically.
    */
   public extractObjectExpression(
     node: t.Expression | null | undefined,
     ast: t.File,
     currentFilePath: string,
   ): unknown {
-    if (t.isObjectExpression(node)) {
-      const obj: Record<string, unknown> = {}
-      for (const prop of node.properties) {
-        if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
-          const key = prop.key.name
-          const value = prop.value
+    const value = this.extractValue(node, ast, currentFilePath, new Set())
+    const isPlainObject = value !== null && typeof value === 'object' && !Array.isArray(value)
+    return isPlainObject ? value : undefined
+  }
 
-          if (t.isStringLiteral(value)) {
-            obj[key] = value.value
-          }
-          else if (t.isTemplateLiteral(value)) {
-            // Preserve interpolations as visible placeholders so a title
-            // like `Page ${id}` becomes `Page ${id}` in the output rather
-            // than `Page ` with the substitution dropped.
-            obj[key] = value.quasis.map((q, i) => {
-              const placeholder = i < value.expressions.length
-                ? `\${${this.describeTemplateExpression(value.expressions[i])}}`
-                : ''
-              return q.value.raw + placeholder
-            }).join('')
-          }
-          else if (t.isNumericLiteral(value)) {
-            obj[key] = value.value
-          }
-          else if (t.isBooleanLiteral(value)) {
-            obj[key] = value.value
-          }
-          else if (t.isArrayExpression(value)) {
-            obj[key] = value.elements.map((el) => {
-              if (t.isObjectExpression(el))
-                return this.extractObjectExpression(el, ast, currentFilePath)
-              if (t.isStringLiteral(el))
-                return el.value
-              if (t.isNumericLiteral(el))
-                return el.value
-              if (t.isBooleanLiteral(el))
-                return el.value
-              if (el == null)
-                return null
-              return el
-            })
-          }
-          else if (t.isObjectExpression(value)) {
-            obj[key] = this.extractObjectExpression(value, ast, currentFilePath)
-          }
-        }
+  /**
+   * Turn an expression into plain data. `resolving` holds the identifier
+   * names currently being followed, so `const a = b; const b = a` ends in
+   * `undefined` instead of a stack overflow. Anything that cannot be
+   * evaluated statically (calls, member access, imported bindings) yields
+   * `undefined`, and object properties with such values are omitted.
+   */
+  private extractValue(
+    node: t.Expression | t.SpreadElement | t.ArgumentPlaceholder | null | undefined,
+    ast: t.File,
+    currentFilePath: string,
+    resolving: Set<string>,
+  ): unknown {
+    if (node == null)
+      return null
+    if (!t.isExpression(node))
+      return undefined
+
+    const value = unwrapExpression(node)
+
+    if (t.isStringLiteral(value))
+      return value.value
+    if (t.isNumericLiteral(value) || t.isBooleanLiteral(value))
+      return value.value
+    if (t.isNullLiteral(value))
+      return null
+    if (t.isTemplateLiteral(value)) {
+      // Preserve interpolations as visible placeholders so a title like
+      // `Page ${id}` becomes `Page ${id}` in the output rather than
+      // `Page ` with the substitution dropped.
+      return value.quasis.map((q, i) => {
+        const placeholder = i < value.expressions.length
+          ? `\${${this.describeTemplateExpression(value.expressions[i])}}`
+          : ''
+        return q.value.raw + placeholder
+      }).join('')
+    }
+    if (t.isArrayExpression(value)) {
+      return value.elements.map(el => this.extractValue(el, ast, currentFilePath, resolving))
+    }
+    if (t.isObjectExpression(value)) {
+      const obj: Record<string, unknown> = {}
+      for (const prop of value.properties) {
+        if (!t.isObjectProperty(prop) || !t.isIdentifier(prop.key))
+          continue
+        const propValue = this.extractValue(prop.value as t.Expression, ast, currentFilePath, resolving)
+        if (propValue !== undefined)
+          obj[prop.key.name] = propValue
       }
       return obj
     }
-
-    if (t.isIdentifier(node)) {
+    if (t.isIdentifier(value)) {
       // Local lookup only — for cross-file resolution we route through
       // `resolveExportByName` / `resolveImportedBinding` in analyzePage.
+      if (resolving.has(value.name))
+        return undefined
       const index = this.indexCache.get(currentFilePath) ?? this.indexFile(ast, currentFilePath)
-      if (index.declarations.has(node.name))
-        return this.extractObjectExpression(index.declarations.get(node.name), ast, currentFilePath)
+      if (!index.declarations.has(value.name))
+        return undefined
+      resolving.add(value.name)
+      const resolved = this.extractValue(index.declarations.get(value.name), ast, currentFilePath, resolving)
+      resolving.delete(value.name)
+      return resolved
     }
 
     return undefined
