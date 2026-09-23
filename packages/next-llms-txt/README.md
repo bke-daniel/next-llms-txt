@@ -321,9 +321,9 @@ function generator(config: LLMsTxtConfig, pages?: LLMsTxtPage[]) {
 }
 ```
 
-**5. If you relied on status codes of `*.html.md`:** `400` means auto-discovery is off, `404` means no page matched, and `500` means a custom `generator` returned nothing (this case was `400` in 1.x).
+**5. If you relied on status codes of `*.html.md`:** `400` means auto-discovery is off, `404` means no page matched, and `500` means the page file could not be parsed (was `404`) or a custom `generator` returned nothing (was `400`).
 
-**6. If you read the discovery logs,** they moved from `console.log` to the `debug` package. Run with `DEBUG=next-llms-txt:*`. Warnings controlled by `showWarnings` still go to `console.warn`.
+**6. If you read the discovery logs,** they moved from `console.log` to the `debug` package. Run with `DEBUG=next-llms-txt:*`. Advisories controlled by `showWarnings` still go to `console.warn`. Failures are new in production output: a page that cannot be parsed is logged with `console.error` and passed to `onError`, and a configuration whose discovery directories do not exist is warned about, whatever `showWarnings` says.
 
 **7. CommonJS.** The package is ESM-only. `require('next-llms-txt')` did not work in 1.x either, because the `require` export pointed at a file that was never built; it now fails with Node's ESM-only error. Use `import`.
 

@@ -7,7 +7,9 @@ import babelTraverseImport from '@babel/traverse'
 import * as t from '@babel/types'
 import debugImport from 'debug'
 import { DEFAULT_CONFIG, DEFAULT_PAGE_EXTENSIONS } from './constants.js'
+import { LLMsTxtError } from './errors.js'
 import normalizePath from './normalize-path.js'
+import { reportError } from './report-error.js'
 import stripJsonComments from './strip-json-comments.js'
 
 // `@babel/traverse` and `debug` ship as CJS. Under raw Node ESM, the
@@ -134,6 +136,8 @@ function throwIfAborted(signal: AbortSignal | undefined): void {
 export class LLMsTxtAutoDiscovery {
   private config: RequiredLLMsTxtHandlerConfig
   private warnings: string[] = []
+  /** Pages whose file could not be read or parsed, keyed by route. */
+  private failedPages: Map<string, LLMsTxtError> = new Map()
   private pathAliases: PathAlias[] = []
   /** Lazy initialiser promise for `loadTsConfigPaths`; resolves once. */
   private tsconfigLoadOnce: Promise<void> | null = null
@@ -175,9 +179,14 @@ export class LLMsTxtAutoDiscovery {
     // Track visited real paths so symlink cycles can't deadlock the walk.
     const visitedRealDirs = new Set<string>()
 
+    const configuredDirs: string[] = []
+    let walkedAnyDir = false
+
     if (autoDiscovery.appDir) {
       const appDir = path.join(rootDir, autoDiscovery.appDir)
+      configuredDirs.push(appDir)
       if (await this.directoryExists(appDir)) {
+        walkedAnyDir = true
         const appPages = await this.discoverAppPages(appDir, visitedRealDirs, signal)
         for (const p of appPages) {
           if (seen.has(p.route))
@@ -190,7 +199,9 @@ export class LLMsTxtAutoDiscovery {
 
     if (autoDiscovery.pagesDir) {
       const pagesDir = path.join(rootDir, autoDiscovery.pagesDir)
+      configuredDirs.push(pagesDir)
       if (await this.directoryExists(pagesDir)) {
+        walkedAnyDir = true
         const pagesRouterPages = await this.discoverPagesRouterPages(pagesDir, visitedRealDirs, signal)
         for (const p of pagesRouterPages) {
           if (seen.has(p.route))
@@ -201,7 +212,29 @@ export class LLMsTxtAutoDiscovery {
       }
     }
 
+    // Nothing to walk is almost always a misconfiguration (a project with
+    // `app/` at the root, a wrong `rootDir`, a monorepo cwd). It would
+    // otherwise produce a title-only llms.txt with status 200, so say so
+    // regardless of `showWarnings`.
+    if (!walkedAnyDir) {
+      const message = configuredDirs.length === 0
+        ? '[next-llms-txt] Auto-discovery is enabled but neither appDir nor pagesDir is configured'
+        : `[next-llms-txt] Auto-discovery found none of the configured directories: ${configuredDirs.join(', ')}. Set autoDiscovery.appDir / pagesDir / rootDir, or disable auto-discovery.`
+      this.warnings.push(message)
+      console.warn(message)
+    }
+
     return pages
+  }
+
+  /**
+   * Errors from pages whose file could not be read or parsed during the
+   * last `discoverPages` run, keyed by route. These pages are absent from
+   * the discovery result; callers that serve a single route use this to
+   * answer 500 instead of 404.
+   */
+  getFailedPages(): ReadonlyMap<string, LLMsTxtError> {
+    return this.failedPages
   }
 
   /**
@@ -534,7 +567,16 @@ export class LLMsTxtAutoDiscovery {
       }
     }
     catch (error) {
-      this.addWarning(`Failed to analyze page: ${error}`, pageInfo)
+      // A page that cannot be read or parsed is a failure, not an advisory:
+      // it is reported through `onError` and logged regardless of
+      // `showWarnings`, and remembered so the *.html.md route for it can
+      // answer 500 rather than pretending the page does not exist.
+      const failure = new LLMsTxtError(
+        `Failed to analyze page ${filePath} (${route})`,
+        { cause: error },
+      )
+      this.failedPages.set(route, failure)
+      reportError(this.config, 'Auto-discovery failed for a page:', failure)
     }
 
     return pageInfo
@@ -937,13 +979,21 @@ export class LLMsTxtAutoDiscovery {
     }
   }
 
+  /**
+   * `false` only when the path is absent or not a directory. Permission
+   * errors, too many open files and the like are rethrown: silently
+   * treating them as "no pages here" would serve an empty llms.txt.
+   */
   private async directoryExists(dir: string): Promise<boolean> {
     try {
       const stat = await fsp.stat(dir)
       return stat.isDirectory()
     }
-    catch {
-      return false
+    catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      if (code === 'ENOENT' || code === 'ENOTDIR')
+        return false
+      throw error
     }
   }
 

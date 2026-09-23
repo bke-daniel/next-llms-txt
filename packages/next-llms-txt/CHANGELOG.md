@@ -17,7 +17,7 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 - **Pages Router files are discovered by default** (`pagesDir: 'src/pages'`); 1.x only scanned the App Router. When both routers register the same route, the App Router page wins.
 - **Pages inside App Router route groups are discovered.** `app/(marketing)/about/page.tsx` is listed at `/about`; 1.x skipped every `(group)` directory. Intercepting routes (`(.)photo`) and parallel-route slots (`@modal`) are skipped, since they render inside another page rather than at a URL of their own.
 - **`generator` receives `LLMsTxtPage[]`** as its second argument instead of the internal `PageInfo[]`. `LLMsTxtPage` has `route` and `config` only.
-- **Per-page `*.html.md` status codes:** `400` when auto-discovery is off, `404` when no page matches, `500` when a custom `generator` returns an empty result (was `400`).
+- **Per-page `*.html.md` status codes:** `400` when auto-discovery is off, `404` when no page matches, `500` when the page file could not be read or parsed (was `404`) or when a custom `generator` returns an empty result (was `400`).
 - **Discovery trace output moved from `console.log` to `debug`.** Enable it with `DEBUG=next-llms-txt:*`. Warnings controlled by `showWarnings` still use `console.warn`.
 - **ESM-only manifest.** `main` and the `require` export are gone. They pointed at `dist/index.js`, which the build never produced, so `require('next-llms-txt')` did not work in 1.x either; it now fails with Node's ESM-only error instead of module-not-found.
 - **Dead code removed:** the unexported, deprecated `createPageLLMsTxtHandlers` helper and `getAutoDiscoveryConfig`.
@@ -27,7 +27,7 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 - TypeScript 6.x and 7.x support. The `typescript` peer range is now `^5.9.3 || ^6.0.0 || ^7.0.0`, and CI type-checks the sources and a consumer of the published declarations with TypeScript 5.9, 6.0 and 7.0. Installing 1.0.2 next to TypeScript 6 or 7 failed with `ERESOLVE`.
 - `LLMsTxtError`, `LLMsTxtConfigError` and `LLMsTxtGenerationError`, exported for `instanceof` checks.
 - `LLMsTxtPage` type and a typed `pages` option for supplying pages by hand. A page passed through `pages` overrides a discovered page with the same route.
-- `onError` hook, called with the original error (including its `cause` chain) when a request throws, before the `500` response is sent. The `500` for a custom `generator` that returns nothing does not call it yet (#51).
+- `onError` hook, called with the original error (including its `cause` chain) when a request throws, before the `500` response is sent, and when auto-discovery cannot read or parse a page file. The `500` for a custom `generator` that returns nothing does not call it yet (#51).
 - `cacheControl` option: a custom header value, or `false` to omit the header. The default stays `public, max-age=3600, s-maxage=3600`.
 - `discoveryTimeoutMs` option. Discovery also stops when the request is aborted.
 - `autoDiscovery.llmstxtExportName` (default `llmstxt`) and `autoDiscovery.extensions` (extension priority for page entries and import resolution).
@@ -44,6 +44,7 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 - `defaultConfig` is deep-merged with the defaults, so a partial override no longer drops sibling keys.
 - `/llms.txt/` (trailing slash) is routed to the site handler. `/foo/index` and `/foo/` normalise to `/foo`, and Windows path separators are normalised once at the boundary.
 - Discovery uses asynchronous file system access, extracts exports in a single AST pass and caches parsed files, so a module imported by many pages is parsed once.
+- Discovery failures are no longer silent (#51). A page file that cannot be read or parsed is passed to `onError` and logged with `console.error` regardless of `showWarnings`; 1.x recorded it as a development-only warning, so in production the page simply vanished from `llms.txt`. When none of the configured discovery directories exists (for example `app/` at the project root while `appDir` is `src/app`), a warning naming the resolved paths is printed regardless of `showWarnings`. A directory that exists but cannot be read is an error, not an empty result.
 - Dependencies upgraded, including `@babel/*` 7.29.
 
 ### Fixed

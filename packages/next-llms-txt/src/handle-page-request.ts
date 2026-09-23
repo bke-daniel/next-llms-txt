@@ -11,6 +11,7 @@ import { composeDiscoverySignal } from './request-signal.js'
 
 const AUTODISCOVERY_OFF_BODY = 'Auto-discovery must be enabled for page-specific llms.txt files.'
 const GENERATOR_RETURNED_EMPTY_BODY = 'Generator returned empty content for this page.'
+const PAGE_ANALYSIS_FAILED_BODY = 'The page for this route could not be analysed. See the server log.'
 
 /**
  * Handles requests for per-page *.html.md files.
@@ -18,7 +19,8 @@ const GENERATOR_RETURNED_EMPTY_BODY = 'Generator returned empty content for this
  * Status-code contract (P2 #39):
  *   400 → configuration says auto-discovery is off (client misuse)
  *   404 → discovery is on but the requested route has no matching page
- *   500 → page matched but the generator returned empty (server bug)
+ *   500 → page matched but its file could not be read or parsed, or the
+ *         generator returned empty (server bug)
  *
  * Every error response is built fresh per request. Web `Response` bodies
  * are single-use streams, so returning a shared module-level instance
@@ -49,7 +51,13 @@ export default async function handlePageRequest(
   const matchingPage = pages.find(page => normalizePath(page.route) === requestedRoute)
 
   if (!matchingPage?.config) {
-    return new NextResponse(PAGE_ERROR_NOTIFICATION, { status: 404 })
+    // Discovery has already reported the failure through `onError` and the
+    // log; here it only decides the status.
+    const failed = [...discovery.getFailedPages().keys()]
+      .some(route => normalizePath(route) === requestedRoute)
+    return failed
+      ? new NextResponse(PAGE_ANALYSIS_FAILED_BODY, { status: 500 })
+      : new NextResponse(PAGE_ERROR_NOTIFICATION, { status: 404 })
   }
 
   const content = handlerConfig.generator
