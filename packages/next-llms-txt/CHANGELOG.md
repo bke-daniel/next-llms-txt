@@ -26,7 +26,7 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 - TypeScript 6.x and 7.x support. The `typescript` peer range is now `^5.9.3 || ^6.0.0 || ^7.0.0`, and CI type-checks the sources and a consumer of the published declarations with TypeScript 5.9, 6.0 and 7.0. Installing 1.0.2 next to TypeScript 6 or 7 failed with `ERESOLVE`.
 - `LLMsTxtError`, `LLMsTxtConfigError` and `LLMsTxtGenerationError`, exported for `instanceof` checks.
 - `LLMsTxtPage` type and a typed `pages` option for supplying pages by hand. A page passed through `pages` overrides a discovered page with the same route.
-- `onError` hook, called with the original error (including its `cause` chain) before the `500` response is sent.
+- `onError` hook, called with the original error (including its `cause` chain) when a request throws, before the `500` response is sent. The `500` for a custom `generator` that returns nothing does not call it yet (#51).
 - `cacheControl` option: a custom header value, or `false` to omit the header. The default stays `public, max-age=3600, s-maxage=3600`.
 - `discoveryTimeoutMs` option. Discovery also stops when the request is aborted.
 - `autoDiscovery.llmstxtExportName` (default `llmstxt`) and `autoDiscovery.extensions` (extension priority for page entries and import resolution).
@@ -49,11 +49,11 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 
 - Object-shaped `metadata.title` (`{ default, template, absolute }`) is resolved to a string in the metadata fallback.
 - Template-literal titles keep their placeholders instead of being cut off at the first interpolation.
-- Dynamic, catch-all, group and parallel route segments (`[id]`, `[...slug]`, `(group)`, `@modal`) no longer leak into generated titles.
+- Dynamic and catch-all segments (`[id]`, `[...slug]`) no longer leak into titles derived from the route. Route groups and parallel-route slots are still not handled correctly: `(group)` directories are skipped entirely and `@slot` directories appear in routes and section names, as in 1.x (#51).
 - Sections from `defaultConfig` are kept next to discovered sections instead of being overwritten.
 - Error responses are created per request. 1.x reused one `NextResponse` instance, whose body can only be read once.
 - Symlink cycles no longer hang discovery.
-- A malformed `tsconfig.json` is reported with its path and the original parse error as `cause`.
+- A malformed `tsconfig.json` stays non-fatal (path aliases are not followed for that run). The failure, with the file path, is logged to the `next-llms-txt:discovery` debug channel only.
 - `@babel/traverse` and `debug` (both CommonJS) are unwrapped correctly when the bundle runs as native ESM.
 - The published bundle no longer references a source map that is not part of the tarball.
 
