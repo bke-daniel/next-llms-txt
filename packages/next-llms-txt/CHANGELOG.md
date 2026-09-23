@@ -15,6 +15,7 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 - **`autoDiscovery: false` is respected.** 1.x silently re-enabled discovery with the default settings.
 - **`llms.txt` output changed.** Discovered pages are grouped into sections (root-level routes under `Main Pages`, deeper routes by their first path segment) and each route is emitted once. 1.x put every discovered page into a single bucket and could list a route twice. `## Pages` now only holds pages passed through `pages`. Items without a `title` and sections without renderable items are dropped, and the output ends with a single newline.
 - **Pages Router files are discovered by default** (`pagesDir: 'src/pages'`); 1.x only scanned the App Router. When both routers register the same route, the App Router page wins.
+- **Pages inside App Router route groups are discovered.** `app/(marketing)/about/page.tsx` is listed at `/about`; 1.x skipped every `(group)` directory. Intercepting routes (`(.)photo`) and parallel-route slots (`@modal`) are skipped, since they render inside another page rather than at a URL of their own.
 - **`generator` receives `LLMsTxtPage[]`** as its second argument instead of the internal `PageInfo[]`. `LLMsTxtPage` has `route` and `config` only.
 - **Per-page `*.html.md` status codes:** `400` when auto-discovery is off, `404` when no page matches, `500` when a custom `generator` returns an empty result (was `400`).
 - **Discovery trace output moved from `console.log` to `debug`.** Enable it with `DEBUG=next-llms-txt:*`. Warnings controlled by `showWarnings` still use `console.warn`.
@@ -49,7 +50,9 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 
 - Object-shaped `metadata.title` (`{ default, template, absolute }`) is resolved to a string in the metadata fallback.
 - Template-literal titles keep their placeholders instead of being cut off at the first interpolation.
-- Dynamic and catch-all segments (`[id]`, `[...slug]`) no longer leak into titles derived from the route. Route groups and parallel-route slots are still not handled correctly: `(group)` directories are skipped entirely and `@slot` directories appear in routes and section names, as in 1.x (#51).
+- Dynamic and catch-all segments (`[id]`, `[...slug]`) no longer leak into titles derived from the route.
+- `export const llmstxt = { … } satisfies LLMsTxtConfig` and `as const` are recognised. 1.x treated such exports as absent and fell back to `metadata` (#51).
+- Property values that are identifiers declared in the same file (`title: PAGE_TITLE`) are resolved. A title that cannot be read statically no longer drops the page from `llms.txt` and crashes its `*.html.md` route with a `TypeError`; the page keeps a route-derived title and a warning is recorded (#51).
 - Sections from `defaultConfig` are kept next to discovered sections instead of being overwritten.
 - Error responses are created per request. 1.x reused one `NextResponse` instance, whose body can only be read once.
 - Symlink cycles no longer hang discovery.

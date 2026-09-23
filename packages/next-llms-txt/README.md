@@ -308,6 +308,7 @@ catch (error) {
 - Each route appears once. A page passed through `pages` replaces a discovered page with the same route.
 - `## Pages` now only lists pages passed through `pages`.
 - Files in `src/pages` (Pages Router) are discovered by default. Point `autoDiscovery.pagesDir` somewhere else if you do not want them.
+- Pages inside route groups such as `app/(marketing)/about/page.tsx` are now listed, at `/about`. 1.x skipped them.
 - `autoDiscovery: false` really turns discovery off now. 1.x ignored it. With discovery off, `*.html.md` requests answer `400`.
 
 **4. If you use a custom `generator`,** its second argument is now `LLMsTxtPage[]` (`route` and `config`) instead of the internal `PageInfo[]`. `filePath`, `hasLLMsTxtExport`, `hasMetadataFallback` and `warnings` are no longer passed.
