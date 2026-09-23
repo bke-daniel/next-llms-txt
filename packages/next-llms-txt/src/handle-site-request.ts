@@ -1,4 +1,4 @@
-import type { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest, NextResponse } from 'next/server.js'
 import type { LLMsTxtHandlerConfig, LLMsTxtSection, PageInfo, RequiredLLMsTxtHandlerConfig } from './types.js'
 import createMarkdownResponse from './create-markdown-response.js'
 import { LLMsTxtAutoDiscovery } from './discovery.js'

@@ -55,6 +55,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:coverage:ci": "vitest run --coverage --reporter=dot",
+    "test:node-import": "node tests/node-import/import-dist.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc -p tsconfig.json --noEmit",

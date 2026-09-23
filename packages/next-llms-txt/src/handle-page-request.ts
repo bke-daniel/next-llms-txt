@@ -1,6 +1,6 @@
-import type { NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server.js'
 import type { LLMsTxtHandlerConfig, RequiredLLMsTxtHandlerConfig } from './types.js'
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server.js'
 import { PAGE_ERROR_NOTIFICATION } from './constants.js'
 import createMarkdownResponse from './create-markdown-response.js'
 import { LLMsTxtAutoDiscovery } from './discovery.js'
