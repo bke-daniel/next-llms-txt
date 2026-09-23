@@ -12,6 +12,7 @@ vi.mock('../../src/create-markdown-response')
 vi.mock('../../src/generator')
 
 const mockDiscoverPages = vi.fn()
+const mockGetFailedPages = vi.fn(() => new Map())
 const mockCreateMarkdownResponse = createMarkdownResponse as MockedFunction<typeof createMarkdownResponse>
 const mockGenerateLLMsTxt = generateLLMsTxt as MockedFunction<typeof generateLLMsTxt>
 
@@ -19,6 +20,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   ; (LLMsTxtAutoDiscovery as any).mockImplementation(class {
     discoverPages = mockDiscoverPages
+    getFailedPages = mockGetFailedPages
   })
 })
 
@@ -96,6 +98,27 @@ describe('handlePageRequest', () => {
       const response = await handlePageRequest(request, handlerConfig)
 
       expect(response.status).toBe(404)
+    })
+
+    it('should return 500, not 404, when the page file failed to parse', async () => {
+      const handlerConfig: LLMsTxtHandlerConfig = {
+        baseUrl: 'http://example.com',
+        autoDiscovery: true,
+      }
+      const request = {
+        url: 'http://example.com/about.html.md',
+      } as NextRequest
+
+      const pages: PageInfo[] = [
+        { route: '/about', filePath: '/app/about/page.tsx', warnings: [] },
+      ]
+      mockDiscoverPages.mockResolvedValue(pages)
+      mockGetFailedPages.mockReturnValue(new Map([['/about', new Error('SyntaxError')]]))
+
+      const response = await handlePageRequest(request, handlerConfig)
+
+      expect(response.status).toBe(500)
+      expect(await response.text()).toContain('could not be analysed')
     })
   })
 

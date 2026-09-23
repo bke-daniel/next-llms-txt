@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import handlePageRequest from './handle-page-request.js'
 import handleSiteRequest from './handle-site-request.js'
 import mergeConfig from './merge-with-default-config.js'
+import { reportError } from './report-error.js'
 import validateConfig from './validate-config.js'
 
 /**
@@ -72,19 +73,7 @@ export function createLLmsTxt(
       return await handlePageRequest(request, mergedConfig)
     }
     catch (error) {
-      if (typeof config.onError === 'function') {
-        try {
-          config.onError(error)
-        }
-        catch {
-          // Don't let a misbehaving onError hook turn a 500 into a different
-          // failure mode.
-        }
-      }
-      // Log the error object itself, not just the message — keeps the stack
-      // trace and any `cause` chain available to structured loggers.
-
-      console.error('[next-llms-txt] Error generating llms.txt:', error)
+      reportError(config, 'Error generating llms.txt:', error)
       return new NextResponse('Error generating llms.txt', { status: 500 })
     }
   }

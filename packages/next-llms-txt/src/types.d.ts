@@ -132,9 +132,13 @@ export interface LLMsTxtHandlerConfig {
   trailingSlash?: boolean
 
   /**
-   * Whether to surface discovery warnings via `console.warn`. Detailed
-   * trace-level logs are also available via the `debug` library — set
-   * `DEBUG=next-llms-txt:*` in your environment regardless of this flag.
+   * Whether to surface per-page discovery advisories via `console.warn`
+   * (metadata fallback used, no export found, …). Defaults to on in
+   * development. Failures are never gated by this flag: a page that cannot
+   * be parsed goes to `onError` and `console.error`, and a configuration
+   * whose discovery directories do not exist is always warned about.
+   * Detailed trace-level logs are also available via the `debug` library —
+   * set `DEBUG=next-llms-txt:*` in your environment regardless of this flag.
    */
   showWarnings?: boolean
 
@@ -146,10 +150,17 @@ export interface LLMsTxtHandlerConfig {
   cacheControl?: string | false
 
   /**
-   * Called when handler execution throws. Receives the original error
-   * with its stack intact. Useful for piping into a structured logger
-   * (Pino, Winston, Sentry). The handler still returns a 500 response
-   * after invoking this hook.
+   * Called for every failure the plugin surfaces, with the original error
+   * (stack and `cause` intact). Useful for piping into a structured logger
+   * (Pino, Winston, Sentry). Two kinds of failure reach it:
+   *
+   * - a request that throws; the handler still returns a 500 afterwards
+   * - a page file that auto-discovery could not read or parse; the
+   *   site-wide `llms.txt` is still served (without that page) and the
+   *   page's own `*.html.md` route answers 500
+   *
+   * Failures are also logged with `console.error`, independent of
+   * `showWarnings`, which only controls advisories.
    */
   onError?: (error: unknown) => void
 
