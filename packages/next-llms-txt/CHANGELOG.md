@@ -50,6 +50,7 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 
 ### Fixed
 
+- `dist/index.mjs` can be imported in plain Node.js (#46). It imported `next/server`, which bundlers resolve but Node's ESM resolver does not, since `next` has no `exports` map; the bundle now imports `next/server.js`. Usage from `proxy.ts` or a route handler was never affected.
 - Object-shaped `metadata.title` (`{ default, template, absolute }`) is resolved to a string in the metadata fallback.
 - Template-literal titles keep their placeholders instead of being cut off at the first interpolation.
 - Dynamic and catch-all segments (`[id]`, `[...slug]`) no longer leak into titles derived from the route.

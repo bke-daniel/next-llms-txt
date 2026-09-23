@@ -55,6 +55,9 @@ jobs:
       - name: Build next-llms-txt package
         run: npm run build -w next-llms-txt
 
+      - name: Import the built bundle in plain Node.js
+        run: npm run test:node-import -w next-llms-txt
+
       - name: Lint
         run: npm run lint
 

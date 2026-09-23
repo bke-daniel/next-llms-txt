@@ -1,6 +1,6 @@
-import type { NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server.js'
 import type { LLMsTxtHandlerConfig } from './types.js'
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server.js'
 import handlePageRequest from './handle-page-request.js'
 import handleSiteRequest from './handle-site-request.js'
 import mergeConfig from './merge-with-default-config.js'

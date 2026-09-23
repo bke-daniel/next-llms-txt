@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server.js'
 
 export const DEFAULT_CACHE_CONTROL = 'public, max-age=3600, s-maxage=3600'
 
