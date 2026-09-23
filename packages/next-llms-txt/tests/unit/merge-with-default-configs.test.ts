@@ -10,7 +10,7 @@ describe('test mergeWithDefaultConfig', () => {
     }))
   })
 
-  it('merges baseUrl and defaultConfig', () => {
+  it('merges baseUrl and deep-merges defaultConfig with the defaults', () => {
     const input = {
       baseUrl: 'https://example.com',
       defaultConfig: {
@@ -20,9 +20,12 @@ describe('test mergeWithDefaultConfig', () => {
     }
     const result = mergeWithDefaultConfig(input)
     expect(result.baseUrl).toBe('https://example.com')
+    // Deep-merge: user overrides win where supplied, defaults fill the rest.
     expect(result.defaultConfig).toEqual({
       title: 'Custom Title',
       description: 'Custom Desc',
+      sections: [],
+      optional: [],
     })
   })
 
@@ -46,12 +49,12 @@ describe('test mergeWithDefaultConfig', () => {
     expect(result.autoDiscovery).toEqual(DEFAULT_CONFIG.autoDiscovery)
   })
 
-  it('uses default autoDiscovery if input is boolean false', () => {
+  it('preserves autoDiscovery:false to actually disable discovery', () => {
     const input = {
-      autoDiscovery: false,
+      autoDiscovery: false as const,
     }
     const result = mergeWithDefaultConfig(input)
-    expect(result.autoDiscovery).toEqual(DEFAULT_CONFIG.autoDiscovery)
+    expect(result.autoDiscovery).toBe(false)
   })
 
   it('merges trailingSlash and showWarnings', () => {

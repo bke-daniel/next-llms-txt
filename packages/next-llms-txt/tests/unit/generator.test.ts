@@ -127,6 +127,21 @@ describe('generateLLMsTxt', () => {
       expect(result).toContain('- [Bar](/bar)')
     })
 
+    it('prefixes page routes with baseUrl so they match the absolute section items (#56)', () => {
+      const config: LLMsTxtConfig = {
+        title: 'Demo',
+        sections: [{ title: 'Docs', items: [{ title: 'Guide', url: 'https://example.com/docs/guide' }] }],
+      }
+      const pages = [
+        { route: '/', config: { title: 'Home' } },
+        { route: '/foo', config: { title: 'Foo', description: 'Bar' } },
+      ]
+      const result = generateLLMsTxt(config, pages, 'https://example.com')
+      expect(result).toContain('- [Home](https://example.com/)')
+      expect(result).toContain('- [Foo](https://example.com/foo): Bar')
+      expect(result).not.toContain('](/')
+    })
+
     it('handles pages without description', () => {
       const config: LLMsTxtConfig = { title: 'Demo', sections: [] }
       const pages = [
@@ -220,7 +235,7 @@ describe('generateLLMsTxt', () => {
       expect(result).toContain('- [Getting Started](/docs/start): Start here')
     })
 
-    it('includes multiple sections', () => {
+    it('includes sections with items and skips items-empty sections (P2 #34/#35)', () => {
       const config: LLMsTxtConfig = {
         title: 'Demo',
         sections: [
@@ -249,10 +264,11 @@ describe('generateLLMsTxt', () => {
       expect(result).toContain('## Section 2')
       expect(result).toContain('> Second section desc')
       expect(result).toContain('- [Item 2](/item2): Desc 2')
-      expect(result).toContain('## Section 3')
+      // Empty sections no longer render a header (P2 #34).
+      expect(result).not.toContain('## Section 3')
     })
 
-    it('handles section with no items', () => {
+    it('drops sections with no items entirely', () => {
       const config: LLMsTxtConfig = {
         title: 'Demo',
         sections: [
@@ -263,11 +279,11 @@ describe('generateLLMsTxt', () => {
         ],
       }
       const result = generateLLMsTxt(config)
-      expect(result).toContain('## Empty Section')
+      expect(result).not.toContain('## Empty Section')
       expect(result).not.toContain('- [')
     })
 
-    it('handles section description without items', () => {
+    it('drops items-empty sections even when a description is set (P2 #34)', () => {
       const config: LLMsTxtConfig = {
         title: 'Demo',
         sections: [
@@ -279,8 +295,8 @@ describe('generateLLMsTxt', () => {
         ],
       }
       const result = generateLLMsTxt(config)
-      expect(result).toContain('## Info Section')
-      expect(result).toContain('> Just information, no links')
+      expect(result).not.toContain('## Info Section')
+      expect(result).not.toContain('> Just information, no links')
     })
   })
 

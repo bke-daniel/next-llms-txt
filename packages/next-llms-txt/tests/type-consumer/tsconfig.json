@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "next-llms-txt": [
+        "../../dist/index.d.ts"
+      ]
+    },
+    "types": [],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "files": [
+    "consumer.ts"
+  ]
+}

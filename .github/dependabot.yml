@@ -30,6 +30,18 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # The toolchain (tsup dts build, typescript-eslint, which supports
+      # <6.1.0) needs the TypeScript 6.0 compiler API. TypeScript 7 support is
+      # covered by the typescript-compat job in the Test workflow instead.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+      # @types/node follows the Node.js major in .nvmrc (24), so its types never
+      # describe APIs the runtime does not have.
+      - dependency-name: "@types/node"
+        versions: ["<24.0.0", ">=25.0.0"]
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -43,11 +55,3 @@ updates:
     labels:
       - "github-actions"
       - "automated"
-    ignore:
-      # Ignoriere alles unter 24
-      - dependency-name: "@types/node"
-        versions: ["<24.0.0"]
-
-      # Ignoriere alles ab 25
-      - dependency-name: "@types/node"
-        versions: [">=25.0.0"]

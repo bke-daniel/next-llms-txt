@@ -70,13 +70,13 @@ export function validateLLMsTxtFormat(content: string): boolean {
     return false
 
   // First line must be H1 title
-  if (!lines[0].match(/^# .+/))
+  if (!/^# .+/.test(lines[0]))
     return false
 
   // Check for valid structure
   for (const line of lines) {
     // Only allow H1 titles, H2 sections, blockquotes, and markdown lists
-    if (!line.match(/^(# |## |> |- \[.+\]\(.+\)(?:: .+)?$)/)) {
+    if (!/^(?:# |## |> |- \[.+\]\(.+\)(?:: .+)?$)/.test(line)) {
       return false
     }
   }
@@ -104,7 +104,7 @@ export function extractSections(content: string): { title: string, items: string
   let currentSection: { title: string, items: string[] } | null = null
 
   for (const line of lines) {
-    if (line.match(/^## .+/)) {
+    if (/^## .+/.test(line)) {
       if (currentSection) {
         sections.push(currentSection)
       }
@@ -113,7 +113,7 @@ export function extractSections(content: string): { title: string, items: string
         items: [],
       }
     }
-    else if (line.match(/^- \[.+\]/)) {
+    else if (/^- \[.+\]/.test(line)) {
       if (currentSection) {
         currentSection.items.push(line)
       }

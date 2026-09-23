@@ -1,3 +1,5 @@
+import BackToHomeLink from '@/components/BackToHomeLink'
+
 export default function NoExportAtAllPage() {
   return (
     <>
@@ -8,7 +10,7 @@ export default function NoExportAtAllPage() {
       </div>
       <a className="underline" href="/no-exports.html.md">View Markdown</a>
       <div className="mt-6">
-        <a className="underline" href="/">← Back to Home</a>
+        <BackToHomeLink />
       </div>
     </>
   )
