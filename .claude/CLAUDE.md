@@ -28,7 +28,7 @@ Versions live in the `package.json` files; this list only records the decisions 
 - **React 19.2.6** / React DOM
 - **TypeScript `~6.0.3`** in every workspace. The plugin's optional peer range is `^5.9.3 || ^6.0.0 || ^7.0.0`, but the repo cannot build or lint on TypeScript 7: it ships no JavaScript compiler API, which tsup's dts build and typescript-eslint (`<6.1.0`) need. TypeScript 7 is covered by the `typescript-compat` CI job instead (see CONTRIBUTING.md, "TypeScript Versions").
 - **Node.js 24** (`.nvmrc`), `engines.node >=22.0.0`, `@types/node ^24` enforced by a root `overrides` entry. CI runs the unit tests on 22 and 24.
-- **Vitest 4.1.6** + `@vitest/coverage-v8`
+- **Vitest 4.1.x** + `@vitest/coverage-v8`
 - **ESLint 9.39.x** for the Next.js consumer packages (eslint-config-next pins typescript-eslint 8, which is not ESLint-10-compatible)
 - **ESLint 10.3.x** for the plugin itself (via `@antfu/eslint-config@9`)
 - **tsup** for the plugin build (ESM only)
