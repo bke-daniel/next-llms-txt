@@ -20,13 +20,17 @@ import type { LLMsTxtConfig, LLMsTxtItem, LLMsTxtPage } from './types.js'
  * - Output ends with a single trailing newline so concatenation tooling
  *   behaves and POSIX text-file convention is honoured.
  *
- * @param config - The llms.txt configuration
- * @param pages  - User-supplied pages emitted under `## Pages`
+ * @param config  - The llms.txt configuration
+ * @param pages   - User-supplied pages emitted under `## Pages`
+ * @param baseUrl - Prefix for the `## Pages` links, so they come out
+ *                  absolute like the discovered section items
+ *                  (`baseUrl + route`). Empty keeps the bare route.
  * @returns Generated llms.txt content as markdown
  */
 export function generateLLMsTxt(
   config: LLMsTxtConfig,
   pages: LLMsTxtPage[] = [],
+  baseUrl = '',
 ): string {
   const header: string[] = [`# ${config.title.trim()}`]
   if (config.description)
@@ -43,7 +47,7 @@ export function generateLLMsTxt(
         const description = page.config?.description
           ? `: ${page.config.description.trim()}`
           : ''
-        return `- [${page.config!.title.trim()}](${page.route})${description}`
+        return `- [${page.config!.title.trim()}](${baseUrl}${page.route})${description}`
       })
     if (pageItems.length > 0)
       contentBlocks.push(['## Pages', ...pageItems].join('\n'))

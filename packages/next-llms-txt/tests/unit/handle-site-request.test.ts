@@ -1,6 +1,7 @@
 import type { LLMsTxtHandlerConfig } from '../../src/types'
 import { NextRequest } from 'next/server'
 import { vi } from 'vitest'
+import { DEFAULT_CONFIG as PLUGIN_DEFAULTS } from '../../src/constants'
 import handleSiteRequest from '../../src/handle-site-request'
 import { AUTO_DISCOVERY, BASE_URL, DEFAULT_CONFIG } from '../constants'
 import createMockRequest from '../create-mock-request'
@@ -197,7 +198,20 @@ describe('handleSiteRequest', () => {
       const text = await response.text()
 
       expect(text).toContain('## Pages')
-      expect(text).toContain('- [Manual Page](/manual-page): Manually added')
+      expect(text).toContain(`- [Manual Page](${BASE_URL}/manual-page): Manually added`)
+    })
+
+    it('falls back to the default baseUrl for user pages when none is configured', async () => {
+      const config: LLMsTxtHandlerConfig = {
+        defaultConfig: { title: 'Test Site' },
+        autoDiscovery: false,
+        pages: [{ route: '/manual-page', config: { title: 'Manual Page' } }],
+      }
+
+      const response = await handleSiteRequest(mockRequest, config)
+      const text = await response.text()
+
+      expect(text).toContain(`- [Manual Page](${PLUGIN_DEFAULTS.baseUrl}/manual-page)`)
     })
 
     it('should merge pre-existing pages with discovered pages', async () => {
@@ -221,7 +235,7 @@ describe('handleSiteRequest', () => {
       const text = await response.text()
 
       expect(text).toContain('## Pages')
-      expect(text).toContain('- [Manual](/manual)')
+      expect(text).toContain(`- [Manual](${BASE_URL}/manual)`)
     })
   })
 
@@ -346,15 +360,13 @@ describe('handleSiteRequest', () => {
       const response = await handleSiteRequest(mockRequest, config)
       const text = await response.text()
 
-      // The user override goes in `## Pages` (relative URL form). The
-      // discovered absolute-URL entry inside the section is filtered out, so
-      // the route is referenced exactly once across the document.
-      const absoluteHits = text.split(`](${BASE_URL}/all-exports)`).length - 1
-      const relativeHits = text.split('](/all-exports)').length - 1
-      expect(absoluteHits).toBe(0)
-      expect(relativeHits).toBe(1)
+      // The user override goes in `## Pages`. The discovered entry inside the
+      // section is filtered out, so the route is referenced exactly once
+      // across the document.
+      const hits = text.split(`](${BASE_URL}/all-exports)`).length - 1
+      expect(hits).toBe(1)
       expect(text).toContain('## Pages')
-      expect(text).toContain('- [OVERRIDE](/all-exports): User override wins')
+      expect(text).toContain(`- [OVERRIDE](${BASE_URL}/all-exports): User override wins`)
     })
 
     it('de-dupes user-supplied pages by route (user-wins, first occurrence)', async () => {
@@ -371,8 +383,8 @@ describe('handleSiteRequest', () => {
       const text = await response.text()
       const occurrences = text.split('/dup').length - 1
       expect(occurrences).toBe(1)
-      expect(text).toContain('- [First](/dup)')
-      expect(text).not.toContain('- [Second](/dup)')
+      expect(text).toContain(`- [First](${BASE_URL}/dup)`)
+      expect(text).not.toContain('- [Second]')
     })
   })
 
@@ -644,7 +656,7 @@ describe('handleSiteRequest', () => {
       expect(text).toContain('> A complete example')
       // User supplied a `/custom` page → `## Pages` still rendered for it.
       expect(text).toContain('## Pages')
-      expect(text).toContain('- [Custom Page](/custom)')
+      expect(text).toContain(`- [Custom Page](${BASE_URL}/custom)`)
       expect(text).toContain('## Main')
       expect(text).toContain('## Optional')
     })

@@ -127,6 +127,21 @@ describe('generateLLMsTxt', () => {
       expect(result).toContain('- [Bar](/bar)')
     })
 
+    it('prefixes page routes with baseUrl so they match the absolute section items (#56)', () => {
+      const config: LLMsTxtConfig = {
+        title: 'Demo',
+        sections: [{ title: 'Docs', items: [{ title: 'Guide', url: 'https://example.com/docs/guide' }] }],
+      }
+      const pages = [
+        { route: '/', config: { title: 'Home' } },
+        { route: '/foo', config: { title: 'Foo', description: 'Bar' } },
+      ]
+      const result = generateLLMsTxt(config, pages, 'https://example.com')
+      expect(result).toContain('- [Home](https://example.com/)')
+      expect(result).toContain('- [Foo](https://example.com/foo): Bar')
+      expect(result).not.toContain('](/')
+    })
+
     it('handles pages without description', () => {
       const config: LLMsTxtConfig = { title: 'Demo', sections: [] }
       const pages = [

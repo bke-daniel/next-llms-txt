@@ -66,9 +66,11 @@ export default async function handleSiteRequest(
   // previous `[...userPages, ...discoveredPages]` shape caused.
   const pages: PageInfo[] = userPages
   let finalConfig = handlerConfig.defaultConfig
+  // Resolves the `baseUrl` fallback; it is the same prefix discovery uses
+  // for section items, so `## Pages` links come out in the same shape.
+  const mergedConfig: RequiredLLMsTxtHandlerConfig = mergeConfig(handlerConfig)
 
   if (handlerConfig.autoDiscovery) {
-    const mergedConfig: RequiredLLMsTxtHandlerConfig = mergeConfig(handlerConfig)
     const discovery = new LLMsTxtAutoDiscovery(mergedConfig)
     const signal = composeDiscoverySignal(
       (request as { signal?: AbortSignal }).signal,
@@ -98,7 +100,7 @@ export default async function handleSiteRequest(
 
   const content = handlerConfig.generator
     ? handlerConfig.generator(finalConfig, pages)
-    : generateLLMsTxt(finalConfig, pages)
+    : generateLLMsTxt(finalConfig, pages, mergedConfig.baseUrl)
 
   if (!content)
     throw new LLMsTxtGenerationError('Couldn\'t generate Config')

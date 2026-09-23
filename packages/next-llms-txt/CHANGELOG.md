@@ -44,6 +44,7 @@ See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
 - `defaultConfig` is deep-merged with the defaults, so a partial override no longer drops sibling keys.
 - `/llms.txt/` (trailing slash) is routed to the site handler. `/foo/index` and `/foo/` normalise to `/foo`, and Windows path separators are normalised once at the boundary.
 - Discovery uses asynchronous file system access, extracts exports in a single AST pass and caches parsed files, so a module imported by many pages is parsed once.
+- Pages passed through `pages` are linked with absolute URLs (`baseUrl` + `route`) in the `## Pages` block, the same shape as discovered items (#56). 1.x emitted the bare route, so a single file mixed `[Post](/blog/post)` and `[Home](https://example.com/)`.
 - Discovery failures are no longer silent (#51). A page file that cannot be read or parsed is passed to `onError` and logged with `console.error` regardless of `showWarnings`; 1.x recorded it as a development-only warning, so in production the page simply vanished from `llms.txt`. When none of the configured discovery directories exists (for example `app/` at the project root while `appDir` is `src/app`), a warning naming the resolved paths is printed regardless of `showWarnings`. A directory that exists but cannot be read is an error, not an empty result.
 - Dependencies upgraded, including `@babel/*` 7.29.
 
