@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
@@ -6,17 +7,12 @@
       "DOM",
       "ESNext"
     ],
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "strict": true,
-    "strictNullChecks": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "skipDefaultLibCheck": true,
     "skipLibCheck": true
   }
 }

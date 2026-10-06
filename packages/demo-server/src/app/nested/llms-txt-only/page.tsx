@@ -1,3 +1,5 @@
+import BackToHomeLink from '@/components/BackToHomeLink'
+
 export const llmstxt = {
   title: 'This is the llmstxt export',
   description: 'Is used for generation when it exists.',
@@ -14,7 +16,7 @@ export default function NestedLlmsTxtOnlyPage() {
         <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-800">nested</span>
       </div>
       <div className="mt-6">
-        <a className="underline" href="/">← Back to Home</a>
+        <BackToHomeLink />
       </div>
     </>
   )

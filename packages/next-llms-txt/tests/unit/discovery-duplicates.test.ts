@@ -86,8 +86,9 @@ describe('discovery duplicate prevention', () => {
   })
 
   describe('special folders', () => {
-    it('should skip route groups (folders starting with parentheses)', async () => {
-      // No routes should contain (group) syntax
+    it('should strip route groups (folders starting with parentheses) from routes', async () => {
+      // Route groups are organisational: their pages are discovered, but
+      // the group name never becomes a URL segment
       pages.forEach((page) => {
         expect(page.route).not.toMatch(/\([^)]+\)/)
       })

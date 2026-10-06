@@ -12,14 +12,16 @@ vi.mock('../../src/create-markdown-response')
 vi.mock('../../src/generator')
 
 const mockDiscoverPages = vi.fn()
+const mockGetFailedPages = vi.fn(() => new Map())
 const mockCreateMarkdownResponse = createMarkdownResponse as MockedFunction<typeof createMarkdownResponse>
 const mockGenerateLLMsTxt = generateLLMsTxt as MockedFunction<typeof generateLLMsTxt>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  ; (LLMsTxtAutoDiscovery as any).mockImplementation(() => ({
-    discoverPages: mockDiscoverPages,
-  }))
+  ; (LLMsTxtAutoDiscovery as any).mockImplementation(class {
+    discoverPages = mockDiscoverPages
+    getFailedPages = mockGetFailedPages
+  })
 })
 
 describe('handlePageRequest', () => {
@@ -97,6 +99,27 @@ describe('handlePageRequest', () => {
 
       expect(response.status).toBe(404)
     })
+
+    it('should return 500, not 404, when the page file failed to parse', async () => {
+      const handlerConfig: LLMsTxtHandlerConfig = {
+        baseUrl: 'http://example.com',
+        autoDiscovery: true,
+      }
+      const request = {
+        url: 'http://example.com/about.html.md',
+      } as NextRequest
+
+      const pages: PageInfo[] = [
+        { route: '/about', filePath: '/app/about/page.tsx', warnings: [] },
+      ]
+      mockDiscoverPages.mockResolvedValue(pages)
+      mockGetFailedPages.mockReturnValue(new Map([['/about', new Error('SyntaxError')]]))
+
+      const response = await handlePageRequest(request, handlerConfig)
+
+      expect(response.status).toBe(500)
+      expect(await response.text()).toContain('could not be analysed')
+    })
   })
 
   describe('when page is found', () => {
@@ -135,7 +158,7 @@ describe('handlePageRequest', () => {
         title: 'About Page',
         description: 'About us',
       })
-      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('# About Page\n\n> About us')
+      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('# About Page\n\n> About us', undefined)
       expect(response.status).toBe(200)
     })
 
@@ -233,10 +256,10 @@ describe('handlePageRequest', () => {
 
       expect(customGenerator).toHaveBeenCalledWith(pageConfig)
       expect(mockGenerateLLMsTxt).not.toHaveBeenCalled()
-      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('Custom content')
+      expect(mockCreateMarkdownResponse).toHaveBeenCalledWith('Custom content', undefined)
     })
 
-    it('should return 400 when custom generator returns empty string', async () => {
+    it('returns 500 when custom generator returns empty string (P2 #39: server bug, not client misuse)', async () => {
       const customGenerator = vi.fn().mockReturnValue('')
       const handlerConfig: LLMsTxtHandlerConfig = {
         baseUrl: 'http://example.com',
@@ -263,10 +286,11 @@ describe('handlePageRequest', () => {
 
       const response = await handlePageRequest(request, handlerConfig)
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(500)
+      expect(await response.text()).toMatch(/empty content/i)
     })
 
-    it('should return 400 when custom generator returns undefined', async () => {
+    it('returns 500 when custom generator returns undefined (P2 #39)', async () => {
       const customGenerator = vi.fn().mockReturnValue(undefined)
       const handlerConfig: LLMsTxtHandlerConfig = {
         baseUrl: 'http://example.com',
@@ -293,7 +317,7 @@ describe('handlePageRequest', () => {
 
       const response = await handlePageRequest(request, handlerConfig)
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(500)
     })
   })
 

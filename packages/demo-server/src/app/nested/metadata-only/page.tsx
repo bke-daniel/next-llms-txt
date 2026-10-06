@@ -1,3 +1,5 @@
+import BackToHomeLink from '@/components/BackToHomeLink'
+
 export const metadata = {
   title: 'This is the metadata export',
   description: 'This shouldn\'t be used for generation when llmstxt export exist!',
@@ -14,7 +16,7 @@ export default function NestedMetadataOnlyPage() {
         <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-800">nested</span>
       </div>
       <div className="mt-6">
-        <a className="underline" href="/">← Back to Home</a>
+        <BackToHomeLink />
       </div>
     </>
   )

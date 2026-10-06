@@ -1,3 +1,5 @@
+import BackToHomeLink from '@/components/BackToHomeLink'
+
 export const llmstxt = {
   title: 'This is the llmstxt export',
   description: 'Is used for generation when it exists.',
@@ -14,7 +16,7 @@ export default function LlmsTxtOnlyPage() {
       </div>
       <a className="underline" href="/llms-txt-only.html.md">View Markdown</a>
       <div className="mt-6">
-        <a className="underline" href="/">← Back to Home</a>
+        <BackToHomeLink />
       </div>
     </>
   )

@@ -7,7 +7,6 @@
       "dom.iterable",
       "esnext"
     ],
-    "baseUrl": ".",
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "paths": {
@@ -15,8 +14,7 @@
         "./*"
       ],
       "@/fixtures/*": [
-        "../*",
-        "!../nextjs/*"
+        "../*"
       ],
       "@/build-version": [
         "../../../dist/index.mjs"
@@ -33,9 +31,6 @@
       }
     ]
   },
-  "types": [
-    "cypress"
-  ],
   "include": [
     "next-env.d.ts",
     "**/*.ts",

@@ -3,8 +3,9 @@ name: Test
 on:
   push:
     branches: [main, develop]
+  # Every pull request, whatever its base: stacked PRs that target a feature
+  # branch would otherwise merge without having run the tests.
   pull_request:
-    branches: [main, develop]
 
 permissions:
   checks: write
@@ -15,8 +16,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [22]
+        # 24 matches .nvmrc. 22 is the lower bound of `engines`: @types/node is
+        # 24.x, so only running the tests on 22 catches a Node 24-only API.
+        node-version: [22, 24]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -48,11 +52,23 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: sfw npm ci
 
+      - name: Build next-llms-txt package
+        run: npm run build -w next-llms-txt
+
+      - name: Import the built bundle in plain Node.js
+        run: npm run test:node-import -w next-llms-txt
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
       - name: Run tests with coverage
         run: npm run test:coverage
 
       - name: Upload coverage to Codecov
-        if: matrix.node-version == 22
+        if: matrix.node-version == 24
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -62,7 +78,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload coverage artifact
-        if: matrix.node-version == 22
+        if: matrix.node-version == 24
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
@@ -70,7 +86,7 @@ jobs:
           retention-days: 30
 
       - name: Comment coverage on PR
-        if: github.event_name == 'pull_request' && matrix.node-version == 22
+        if: github.event_name == 'pull_request' && matrix.node-version == 24
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -78,11 +94,86 @@ jobs:
           json-final-path: ./packages/next-llms-txt/coverage/coverage-final.json
           vite-config-path: ./packages/next-llms-txt/vitest.config.ts
 
+  # The repository toolchain stays on TypeScript 6: TypeScript 7 ships no
+  # JavaScript compiler API, so tsup's dts build and typescript-eslint cannot
+  # run on it. Support for every TypeScript version in the peer range is proven
+  # here with a side-by-side `tsc` that type-checks the library sources, a
+  # consumer of the published declarations, and the workspace apps.
+  typescript-compat:
+    name: TypeScript ${{ matrix.typescript }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        typescript: ['5.9', '6.0', '7.0']
+    env:
+      TSC: ${{ github.workspace }}/../typescript-${{ matrix.typescript }}/node_modules/.bin/tsc
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Socket Security Firewall
+        uses: SocketDev/action@v1
+        with:
+          mode: firewall-free
+          job-summary: all
+
+      # No node_modules cache in this job: the TypeScript 7 leg installs a
+      # second compiler into a workspace, and that tree must not be saved
+      # under the lockfile-only cache key the other jobs restore from.
+      - name: Install dependencies
+        run: sfw npm ci
+
+      - name: Build next-llms-txt package with the locked TypeScript
+        run: npm run build -w next-llms-txt
+
+      - name: Install TypeScript ${{ matrix.typescript }} side by side
+        run: sfw npm install --prefix "${{ github.workspace }}/../typescript-${{ matrix.typescript }}" --no-audit --no-fund "typescript@~${{ matrix.typescript }}.0"
+
+      - name: Show compiler version
+        run: '"$TSC" --version'
+
+      - name: Type-check library sources
+        run: |
+          "$TSC" -p packages/next-llms-txt/tsconfig.json --noEmit
+          "$TSC" -p packages/next-llms-txt/tsconfig.build.json --noEmit
+
+      - name: Type-check a consumer of the published declarations
+        run: '"$TSC" -p packages/next-llms-txt/tests/type-consumer/tsconfig.json'
+
+      # Adds Next's generated validator, which checks the llms.txt route export
+      # against RouteHandlerConfig.
+      - name: Generate Next.js route types
+        run: npx next typegen
+        working-directory: packages/nextjs-test-server-app-router
+
+      - name: Type-check workspace apps as consumers
+        run: |
+          for app in nextjs-test-server-app-router nextjs-test-server-pages-router demo-server cypress-tests; do
+            echo "::group::$app"
+            "$TSC" -p "packages/$app/tsconfig.json" --noEmit --incremental false
+            echo "::endgroup::"
+          done
+
+      # Next.js >= 16.3 type-checks with the project-local `tsc`, so this is
+      # what a consumer on TypeScript 7 actually runs.
+      - name: Build the App Router test server on TypeScript 7
+        if: matrix.typescript == '7.0'
+        run: |
+          sfw npm install --no-save --no-audit --no-fund "typescript@~7.0.0" -w nextjs-test-server-app-router
+          npm run build -w nextjs-test-server-app-router
+
   e2e:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [22]
+        node-version: [24]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7

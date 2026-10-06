@@ -43,13 +43,12 @@ describe('route-to-file mapping', () => {
   })
 
   describe('special routes', () => {
-    it('should ignore route groups like (marketing)', async () => {
-      // Route groups should be ignored in discovery
+    it('does not serve pages under the literal route-group path', async () => {
+      // `(marketing)` is not a URL segment, so this path can never match
       const request = createMockRequest('/(marketing)/about.html.md')
       const response = await handler(request)
 
-      // Should either match /about (if exists) or 404
-      expect(response).toBeInstanceOf(NextResponse)
+      expect(response.status).toBe(404)
     })
 
     it('should ignore private folders starting with _', async () => {
