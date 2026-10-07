@@ -50,6 +50,7 @@ To try an example:
 
 ## Need Help?
 
-- Read the [main documentation](../../README.md)
-- Check the [API Reference](../../README.md#api-reference)
+- Read the [main documentation](../packages/next-llms-txt/README.md)
+- Check the [configuration reference](../packages/next-llms-txt/README.md#configuration-reference)
+- Upgrading? See the [update & upgrade guide](../packages/next-llms-txt/UPGRADING.md)
 - Ask questions in [GitHub Discussions](https://github.com/bke-daniel/next-llms-txt/discussions)

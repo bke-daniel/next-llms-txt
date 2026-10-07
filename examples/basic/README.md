@@ -17,6 +17,9 @@ import { createLLmsTxt } from 'next-llms-txt';
 
 export const { GET } = createLLmsTxt({
   baseUrl: 'https://example.com',
+  // Only the links below; without this, discovered pages are added too,
+  // linked to `.html.md` routes that a route handler does not serve.
+  autoDiscovery: false,
   defaultConfig: {
     title: 'My Awesome Project',
     description: 'A comprehensive toolkit for developers.',
@@ -53,4 +56,18 @@ export const { GET } = createLLmsTxt({
 
 ## Result
 
-Visit `http://localhost:3000/llms.txt` to see your generated file.
+Visit `http://localhost:3000/llms.txt` to see your generated file. The links are emitted exactly as written:
+
+```markdown
+# My Awesome Project
+> A comprehensive toolkit for developers.
+
+## Documentation
+- [Getting Started](https://example.com/docs/getting-started): Quick introduction for new users
+- [API Reference](https://example.com/docs/api): Complete API documentation
+
+## Examples
+- [Basic Example](https://example.com/examples/basic): Simple example to get started
+```
+
+To list your pages automatically, with links to their markdown variants, see the [auto-discovery example](../auto-discovery).

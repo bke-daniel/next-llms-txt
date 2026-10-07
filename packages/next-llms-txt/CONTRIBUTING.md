@@ -105,7 +105,7 @@ packages/
 4. **Run the full verification flow** above. Both the unit suite AND the
    two live test servers must be green.
 
-5. **Update docs** — README, CHANGELOG, and any relevant JSDoc.
+5. **Update docs** — README, CHANGELOG, UPGRADING (for changes consumers must act on), and any relevant JSDoc.
 
 6. **Commit** using conventional commits:
    - `feat:` new feature

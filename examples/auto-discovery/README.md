@@ -75,12 +75,12 @@ The list items in `llms.txt` link to each page's markdown variant (`/about.html.
 
 The auto-discovery system:
 
-1. Scans your `app/` or `src/app/` directory
-2. Finds all page files (`page.tsx`, `page.jsx`, etc.)
-3. Extracts `llmstxt` or `metadata` exports
-4. Automatically generates organized sections
-5. Handles dynamic routes like `[id]` and `[...slug]`
-6. Excludes Next.js internal files
+1. Scans `src/app` (App Router) and `src/pages` (Pages Router), relative to the project root
+2. Finds page files (`page.tsx`, `page.jsx`, … in the App Router; every page file in the Pages Router)
+3. Reads the `llmstxt` export, or the `title` and `description` of `metadata` as a fallback, without executing the file
+4. Groups pages into sections by their first path segment (`/docs/intro` → `Docs`, `/about` → `Main Pages`)
+5. Skips Next.js special files (`_app`, `_document`, `404`, `api/`, …), private folders (`_components`), parallel-route slots and intercepting routes; route groups such as `(marketing)` add no URL segment
+6. Lists dynamic segments such as `[slug]` literally; leave the export off those pages and add their concrete URLs through the `pages` option
 
 ## Result
 
