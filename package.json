@@ -26,8 +26,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "type-check": "npm run type-check --workspaces --if-present",
-    "cypress:open": "npm run cypress:open -w cypress-tests",
-    "cypress:run": "npm run cypress:run -w cypress-tests",
+    "cypress:open": "npm run cypress:open -w @next-llms-txt/cypress-tests",
+    "cypress:run": "npm run cypress:run -w @next-llms-txt/cypress-tests",
     "prepare": "sh -c 'if [ \"$CI\" = \"true\" ] || [ \"$HUSKY\" = \"0\" ]; then exit 0; else command -v husky >/dev/null 2>&1 && husky || exit 0; fi'"
   },
   "overrides": {
