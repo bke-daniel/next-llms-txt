@@ -38,37 +38,61 @@ export default function ServicesPage() {
 }
 ```
 
-## Step 2: Create the route handler
+## Step 2: Route the requests through `proxy.ts`
 
 ```typescript
-// app/llms.txt/route.ts
-import { createLLmsTxt } from 'next-llms-txt';
+// src/proxy.ts
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt';
 
-export const { GET } = createLLmsTxt({
+const { GET: handleLLmsTxt } = createLLmsTxt({
   baseUrl: 'https://example.com',
   defaultConfig: {
     title: 'My Website',
     description: 'Automatically discovered content from Next.js pages'
   },
   autoDiscovery: {
-    baseUrl: 'https://example.com',
-    appDir: 'src/app', // or just 'app'
-    showWarnings: true // Helpful during development
-  }
+    appDir: 'src/app' // or just 'app'
+  },
+  showWarnings: true // Helpful during development
 });
+
+export default async function proxy(request: NextRequest) {
+  if (isLLMsTxtPath(request.nextUrl.pathname))
+    return await handleLLmsTxt(request);
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ['/llms.txt', '/:path*.html.md']
+};
 ```
+
+The list items in `llms.txt` link to each page's markdown variant (`/about.html.md`, `/services.html.md`), so the proxy has to answer those routes too. A route handler at `app/llms.txt/route.ts` would serve `/llms.txt` alone and leave those links at 404.
 
 ## How it works
 
 The auto-discovery system:
 
-1. Scans your `app/` or `src/app/` directory
-2. Finds all page files (`page.tsx`, `page.jsx`, etc.)
-3. Extracts `llmstxt` or `metadata` exports
-4. Automatically generates organized sections
-5. Handles dynamic routes like `[id]` and `[...slug]`
-6. Excludes Next.js internal files
+1. Scans `src/app` (App Router) and `src/pages` (Pages Router), relative to the project root
+2. Finds page files (`page.tsx`, `page.jsx`, … in the App Router; every page file in the Pages Router)
+3. Reads the `llmstxt` export, or the `title` and `description` of `metadata` as a fallback, without executing the file
+4. Groups pages into sections by their first path segment (`/docs/intro` → `Docs`, `/about` → `Main Pages`)
+5. Skips Next.js special files (`_app`, `_document`, `404`, `api/`, …), private folders (`_components`), parallel-route slots and intercepting routes; route groups such as `(marketing)` add no URL segment
+6. Lists dynamic segments such as `[slug]` literally; leave the export off those pages and add their concrete URLs through the `pages` option
 
 ## Result
 
-Visit `http://localhost:3000/llms.txt` to see your auto-generated file with all discovered pages.
+Visit `http://localhost:3000/llms.txt` to see your auto-generated file with all discovered pages:
+
+```markdown
+# My Website
+> Automatically discovered content from Next.js pages
+
+## Main Pages
+- [About Us](https://example.com/about.html.md): Learn about our company mission and values
+- [Our Services](https://example.com/services.html.md): Professional services we offer
+```
+
+Each link answers with the page's markdown, e.g. `http://localhost:3000/about.html.md`.

@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server.js'
-import type { LLMsTxtHandlerConfig, RequiredLLMsTxtHandlerConfig } from './types.js'
+import type { LLMsTxtConfig, LLMsTxtHandlerConfig, RequiredLLMsTxtHandlerConfig } from './types.js'
 import { NextResponse } from 'next/server.js'
 import { PAGE_ERROR_NOTIFICATION } from './constants.js'
 import createMarkdownResponse from './create-markdown-response.js'
@@ -16,8 +16,12 @@ const PAGE_ANALYSIS_FAILED_BODY = 'The page for this route could not be analysed
 /**
  * Handles requests for per-page *.html.md files.
  *
+ * A page passed through `handlerConfig.pages` is served first (user wins,
+ * as in the site-wide llms.txt), so every `## Pages` link resolves even
+ * with auto-discovery off.
+ *
  * Status-code contract (P2 #39):
- *   400 → configuration says auto-discovery is off (client misuse)
+ *   400 → no user page matches and auto-discovery is off (client misuse)
  *   404 → discovery is on but the requested route has no matching page
  *   500 → page matched but its file could not be read or parsed, or the
  *         generator returned empty (server bug)
@@ -31,11 +35,21 @@ export default async function handlePageRequest(
   request: NextRequest,
   handlerConfig: LLMsTxtHandlerConfig,
 ): Promise<NextResponse> {
+  const { pathname } = new URL(request.url)
+  // Strip .html.md extension and normalise so trailing-slash, Windows-
+  // backslash, and `/index` variants all collapse to the same key.
+  const requestedRoute = normalizePath(pathname.replace(/\.html\.md$/, ''))
+
+  const userPage = handlerConfig.pages?.find(
+    page => page.config && normalizePath(page.route) === requestedRoute,
+  )
+  if (userPage?.config)
+    return renderPage(userPage.config, handlerConfig)
+
   if (!handlerConfig.autoDiscovery) {
     return new NextResponse(AUTODISCOVERY_OFF_BODY, { status: 400 })
   }
 
-  const { pathname } = new URL(request.url)
   const mergedConfig: RequiredLLMsTxtHandlerConfig = mergeConfig(handlerConfig)
   const discovery = new LLMsTxtAutoDiscovery(mergedConfig)
   const signal = composeDiscoverySignal(
@@ -44,10 +58,6 @@ export default async function handlePageRequest(
   )
   const pages = await discovery.discoverPages(signal)
 
-  // Strip .html.md extension and normalise so trailing-slash, Windows-
-  // backslash, and `/index` variants all collapse to the same key.
-  const routePath = pathname.replace(/\.html\.md$/, '')
-  const requestedRoute = normalizePath(routePath)
   const matchingPage = pages.find(page => normalizePath(page.route) === requestedRoute)
 
   if (!matchingPage?.config) {
@@ -60,10 +70,14 @@ export default async function handlePageRequest(
       : new NextResponse(PAGE_ERROR_NOTIFICATION, { status: 404 })
   }
 
+  return renderPage(matchingPage.config, handlerConfig)
+}
+
+function renderPage(config: LLMsTxtConfig, handlerConfig: LLMsTxtHandlerConfig): NextResponse {
   const content = handlerConfig.generator
-    ? handlerConfig.generator(matchingPage.config)
+    ? handlerConfig.generator(config)
     // single-page request → no `pages` list to pass to the generator
-    : generateLLMsTxt(matchingPage.config)
+    : generateLLMsTxt(config)
 
   if (!content)
     return new NextResponse(GENERATOR_RETURNED_EMPTY_BODY, { status: 500 })

@@ -4,6 +4,7 @@ import createMarkdownResponse from './create-markdown-response.js'
 import { LLMsTxtAutoDiscovery } from './discovery.js'
 import { LLMsTxtConfigError, LLMsTxtGenerationError } from './errors.js'
 import { generateLLMsTxt } from './generator.js'
+import toMarkdownUrl from './markdown-url.js'
 import mergeConfig from './merge-with-default-config.js'
 import { composeDiscoverySignal } from './request-signal.js'
 
@@ -14,8 +15,8 @@ import { composeDiscoverySignal } from './request-signal.js'
  * and the corresponding entry inside the discovered section is removed so
  * the route appears exactly once in the generated output.
  *
- * Section item URLs are absolute (`baseUrl + route`); we mirror that to
- * compute the lookup key for each user route.
+ * Section item URLs point at the markdown variant (`toMarkdownUrl`); we
+ * mirror that to compute the lookup key for each user route.
  */
 function reconcileUserPagesWithSections(
   userPages: PageInfo[],
@@ -25,7 +26,7 @@ function reconcileUserPagesWithSections(
   if (userPages.length === 0)
     return discoveredSections
 
-  const userRouteUrls = new Set(userPages.map(p => `${baseUrl}${p.route}`))
+  const userRouteUrls = new Set(userPages.map(p => toMarkdownUrl(baseUrl, p.route)))
 
   return discoveredSections
     .map<LLMsTxtSection>(section => ({

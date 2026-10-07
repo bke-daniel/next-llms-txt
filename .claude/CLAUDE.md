@@ -41,9 +41,10 @@ Versions live in the `package.json` files; this list only records the decisions 
 | `index.ts` | Public re-exports (`createLLmsTxt`, `isLLMsTxtPath`, types) |
 | `handler.ts` | Top-level `createLLmsTxt` factory — returns `{ GET }` |
 | `handle-site-request.ts` | `/llms.txt` site-wide handler — drives discovery + section merge |
-| `handle-page-request.ts` | `*.html.md` per-page handler |
+| `handle-page-request.ts` | `*.html.md` per-page handler — `pages` entries first, then discovered pages |
 | `discovery.ts` | `LLMsTxtAutoDiscovery` — App + Pages Router file walking and AST extraction |
 | `generator.ts` | Markdown emission |
+| `markdown-url.ts` | `toMarkdownUrl` — `.html.md` link target for list items (root → `/index.html.md`) |
 | `merge-with-default-config.ts` | User config × `DEFAULT_CONFIG` |
 | `validate-config.ts` | Throws on missing/incomplete config |
 | `constants.ts` | `DEFAULT_CONFIG` (frozen `autoDiscovery`) |
@@ -152,6 +153,7 @@ Run a single workspace's test server from anywhere via `npm --prefix packages/<n
 - `DEFAULT_CONFIG.autoDiscovery` is `Object.freeze`d — never mutate it (use the `mergeWithDefaultConfig` output instead).
 - `DEFAULT_CONFIG.autoDiscovery.rootDir` is `''` (the "unset" sentinel) and `discoverPages()` resolves `rootDir || process.cwd()` lazily at request time. Never set `rootDir` to `process.cwd()` at module-load time — that freezes the directory at first import and breaks discovery when cwd diverges later (e.g. under Cypress / a different invocation path). An explicitly configured `rootDir` still wins.
 - `PageInfo` user-facing fields are optional except `route`. Internal discovery fills the rest in.
+- Discovered and `pages` list items link to `${baseUrl}${route}.html.md` via `toMarkdownUrl`; hand-written `sections`/`optional` URLs are emitted unchanged.
 - Section titles in `generateSiteConfig` are derived from the first path segment of routes with two or more segments (`/docs/foo` → `Docs`). Routes with at most one segment (`/`, `/docs`) → `Main Pages`.
 - When fixing a discovery bug, add a fixture under `packages/next-llms-txt/tests/fixtures/discovery-extras/` plus a regression test in `tests/unit/discovery-extras.test.ts`.
 

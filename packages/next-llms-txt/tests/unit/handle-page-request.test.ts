@@ -56,6 +56,68 @@ describe('handlePageRequest', () => {
     })
   })
 
+  describe('user-supplied pages', () => {
+    it('serves a user page even when autoDiscovery is off', async () => {
+      const handlerConfig: LLMsTxtHandlerConfig = {
+        baseUrl: 'http://example.com',
+        autoDiscovery: false,
+        pages: [{ route: '/manual', config: { title: 'Manual' } }],
+      }
+      mockGenerateLLMsTxt.mockReturnValue('# Manual')
+      mockCreateMarkdownResponse.mockReturnValue({ status: 200 } as any)
+
+      const response = await handlePageRequest({ url: 'http://example.com/manual.html.md' } as NextRequest, handlerConfig)
+
+      expect(response.status).toBe(200)
+      expect(mockGenerateLLMsTxt).toHaveBeenCalledWith({ title: 'Manual' })
+      expect(mockDiscoverPages).not.toHaveBeenCalled()
+    })
+
+    it('serves the root user page at /index.html.md', async () => {
+      const handlerConfig: LLMsTxtHandlerConfig = {
+        baseUrl: 'http://example.com',
+        autoDiscovery: false,
+        pages: [{ route: '/', config: { title: 'Home' } }],
+      }
+      mockGenerateLLMsTxt.mockReturnValue('# Home')
+      mockCreateMarkdownResponse.mockReturnValue({ status: 200 } as any)
+
+      const response = await handlePageRequest({ url: 'http://example.com/index.html.md' } as NextRequest, handlerConfig)
+
+      expect(response.status).toBe(200)
+      expect(mockGenerateLLMsTxt).toHaveBeenCalledWith({ title: 'Home' })
+    })
+
+    it('lets a user page win over a discovered page with the same route', async () => {
+      const handlerConfig: LLMsTxtHandlerConfig = {
+        baseUrl: 'http://example.com',
+        autoDiscovery: true,
+        pages: [{ route: '/about/', config: { title: 'User About' } }],
+      }
+      mockDiscoverPages.mockResolvedValue([
+        { route: '/about', filePath: '/app/about/page.tsx', hasLLMsTxtExport: true, hasMetadataFallback: false, config: { title: 'Discovered About' }, warnings: [] },
+      ])
+      mockGenerateLLMsTxt.mockReturnValue('# User About')
+      mockCreateMarkdownResponse.mockReturnValue({ status: 200 } as any)
+
+      await handlePageRequest({ url: 'http://example.com/about.html.md' } as NextRequest, handlerConfig)
+
+      expect(mockGenerateLLMsTxt).toHaveBeenCalledWith({ title: 'User About' })
+    })
+
+    it('ignores a user page without config and still answers 400 with autoDiscovery off', async () => {
+      const handlerConfig: LLMsTxtHandlerConfig = {
+        baseUrl: 'http://example.com',
+        autoDiscovery: false,
+        pages: [{ route: '/manual' }],
+      }
+
+      const response = await handlePageRequest({ url: 'http://example.com/manual.html.md' } as NextRequest, handlerConfig)
+
+      expect(response.status).toBe(400)
+    })
+  })
+
   describe('when page is not found', () => {
     it('should return 404 when page does not exist', async () => {
       const handlerConfig: LLMsTxtHandlerConfig = {

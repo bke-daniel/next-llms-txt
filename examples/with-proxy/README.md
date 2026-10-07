@@ -23,10 +23,9 @@ const { GET: handleLLmsTxt } = createLLmsTxt({
     description: 'Full documentation and guides'
   },
   autoDiscovery: {
-    baseUrl: 'https://example.com',
-    appDir: 'src/app',
-    showWarnings: process.env.NODE_ENV === 'development'
-  }
+    appDir: 'src/app'
+  },
+  showWarnings: process.env.NODE_ENV === 'development'
 });
 
 export default async function proxy(request: NextRequest) {
@@ -59,18 +58,20 @@ export default function DocsPage() {
 }
 ```
 
-## Step 3: Optional - Add markdown files
+## Step 3: Check the markdown variants
 
-Create `src/app/docs/page.html.md` for raw content:
+There are no `.html.md` files to write: the handler generates each page's markdown from its `llmstxt` (or `metadata`) export on request. `llms.txt` links to these variants:
+
+```markdown
+## Main Pages
+- [Documentation](https://example.com/docs.html.md): Complete guide to using our platform
+```
+
+and `/docs.html.md` answers with:
 
 ```markdown
 # Documentation
-
-This is the raw markdown content that LLMs can easily parse.
-
-## Features
-- Feature 1
-- Feature 2
+> Complete guide to using our platform
 ```
 
 ## Benefits

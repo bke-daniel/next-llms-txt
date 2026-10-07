@@ -21,74 +21,317 @@
   </a>
 </p>
 
-LLM-focused content discovery and delivery for **Next.js 16+**. Generates a spec-compliant `llms.txt` plus on-demand raw markdown endpoints (`*.html.md`) for every discoverable page. One function. Zero boilerplate. Production ready.
+LLM-focused content discovery and delivery for **Next.js 16+**. `next-llms-txt` generates a spec-compliant [`llms.txt`](https://llmstxt.org) for your site and serves a markdown version of every listed page at `<route>.html.md`. One function, wired into `proxy.ts`.
 
-## Highlights
+Current version: **3.0**. Coming from an older version? See the [update & upgrade guide](./UPGRADING.md).
 
-- ✨ Automated discovery: scan App + Pages routes, emit structured `llms.txt`
-- 🚀 Zero setup: a single `createLLmsTxt` call yields `{ GET }`
-- 🧠 AI-ready: direct clean markdown endpoints (`/*.html.md`)—no DOM scraping
-- 📝 Dual source: prefer `llmstxt` export; fallback to Next.js `metadata`
-- 🌐 Absolute URL discipline: predictable ingestion for external agents
-- 🎯 Focused spec compliance: tight, minimal, deterministic output
-- 🧪 High test coverage: defensive edge cases, stable upgrades
-- ⚙️ Proxy-first integration: one matcher handles all relevant paths
-- 🔒 Safe defaults: warnings only in dev, no runtime file writes
-- 🛠 Customizable: override generator for bespoke markdown formatting
+Live demo: <https://next-llms-txt-demo-server.vercel.app>
 
 ## Contents
 
-- [Introduction](#1-introduction)
-- [Features](#2-features)
+- [How it works](#how-it-works)
 - [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Migrating from 1.x to 2.0](#migrating-from-1x-to-20)
 - [Guides](#guides)
-- [API Reference](#api-reference)
-- [Best Practices](#10-best-practices)
-- [Compatibility](#11-compatibility)
-- [FAQ](#12-faq)
-- [Contributing](#13-contributing)
+  - [Auto-discovery](#auto-discovery)
+  - [Adding pages by hand](#adding-pages-by-hand)
+  - [Manual sections only](#manual-sections-only)
+  - [Per-page markdown (`.html.md`)](#per-page-markdown-htmlmd)
+  - [Custom generator](#custom-generator)
+  - [Errors, logging and timeouts](#errors-logging-and-timeouts)
+- [Configuration reference](#configuration-reference)
+- [API reference](#api-reference)
+- [Compatibility](#compatibility)
+- [Best practices](#best-practices)
+- [FAQ](#faq)
+- [Demo server](#demo-server)
+- [Contributing](#contributing)
 - [License](#license)
- - [Demo Server](#demo-server)
 
-## 1. Introduction
+## How it works
 
-LLMs struggle with hydrated React trees, client navigation, and layout noise. The `llms.txt` specification provides a markdown manifest of essential site content plus direct pointers to clean textual representations. `next-llms-txt` automates generation for Next.js 16+: it scans pages, synthesizes structured sections, serves canonical markdown, and exposes per-page raw content via deterministic `.html.md` routes. Result: higher quality ingestion for AI agents, less manual curation.
+LLMs struggle with hydrated React trees, client navigation and layout noise. The llms.txt specification answers this with a markdown index of a site's essential content plus links to clean markdown versions of its pages. `next-llms-txt` builds both from your Next.js project:
 
-See the Demo here: https://next-llms-txt-demo-server.vercel.app
+- **`/llms.txt`**: an H1 title, an optional blockquote description, and H2 sections whose list items link to your pages. Pages are found by scanning the App Router and Pages Router directories for an `llmstxt` export, falling back to Next.js `metadata`.
+- **`/<route>.html.md`**: the markdown version of one page, generated on request from the same export. The root page is served at `/index.html.md`.
+- **Links point at the markdown.** As llmstxt.org recommends, each list item links to the page's `.html.md` variant, not to the HTML page, so an agent following `llms.txt` lands on markdown directly.
 
-## 2. Features
+```markdown
+# My Website
+> Documentation and guides for my product.
 
-- Auto-discovery across App Router and legacy Pages Router
-- Unified handler for site-level `llms.txt` + per-page markdown
-- Markdown-first content pipeline (no HTML parsing required by consumers)
-- Metadata fallback (uses Next.js `metadata` where `llmstxt` export absent)
-- Static matcher configuration (proxy-friendly; no dynamic arrays)
+## Main Pages
+- [Home](https://example.com/index.html.md): Welcome to my website
+- [Pricing](https://example.com/pricing.html.md): Plans and prices
 
-### Pattern: Diagnostics Disabled in Production
+## Docs
+- [Getting Started](https://example.com/docs/getting-started.html.md): Install and configure the product
+```
+
+Both endpoints are answered by a single handler from `createLLmsTxt`. Nothing is written to disk; every response is generated on demand.
+
+## Quick Start
+
+**1. Install the package.**
+
+```bash
+npm install next-llms-txt   # or: yarn add / pnpm add / bun add next-llms-txt
+```
+
+**2. Route `/llms.txt` and `*.html.md` through the handler in `src/proxy.ts`.**
 
 ```typescript
-{
+// src/proxy.ts
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt'
+
+const { GET: handleLLmsTxt } = createLLmsTxt({
   baseUrl: 'https://example.com',
+  defaultConfig: {
+    title: 'My Website',
+    description: 'Documentation and guides for my product.',
+  },
   autoDiscovery: true,
-  showWarnings: false,
+})
+
+export default async function proxy(request: NextRequest) {
+  if (isLLMsTxtPath(request.nextUrl.pathname))
+    return await handleLLmsTxt(request)
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/llms.txt', '/:path*.html.md'],
 }
 ```
 
-## 10. Best Practices
+**3. Describe your pages.** Export an `llmstxt` object (recommended), or rely on your existing `metadata` export:
 
-- Provide stable absolute `baseUrl` (no relative paths)
-- Prefer explicit `llmstxt` export over metadata fallback for clarity
-- Keep descriptions concise (<= 120 chars target)
-- Avoid empty sections; let discovery filter automatically
-- Disable warnings outside development
-- Version control generated changes via tests, not runtime patching
-- Treat `llms.txt` as high-signal index; exclude low-value marketing fluff
+```typescript
+// src/app/pricing/page.tsx
+import type { LLMsTxtConfig } from 'next-llms-txt'
 
-## 11. Compatibility
+export const llmstxt = {
+  title: 'Pricing',
+  description: 'Plans and prices',
+} satisfies LLMsTxtConfig
 
-- **Next.js**: 16.x official. 15.x may work with manual proxy wiring; not supported.
+export default function PricingPage() {
+  return <main>…</main>
+}
+```
+
+**4. Check the result.**
+
+```bash
+curl http://localhost:3000/llms.txt
+curl http://localhost:3000/pricing.html.md
+```
+
+> **Why `proxy.ts` and not a route handler?** A route handler at `app/llms.txt/route.ts` only answers `/llms.txt`. The `.html.md` links inside it would answer 404. The proxy answers both with one matcher. If you list only links you write yourself, a route handler is enough; see [Manual sections only](#manual-sections-only).
+
+## Guides
+
+### Auto-discovery
+
+Auto-discovery is **on by default**: it runs unless you pass `autoDiscovery: false`. Pass `true` for the defaults or an object to customise it (see [`AutoDiscoveryConfig`](#autodiscoveryconfig)).
+
+**Where it looks.** `src/app` (App Router) and `src/pages` (Pages Router), relative to `rootDir`, which defaults to the working directory of the Next.js process at request time. When both routers register the same route, the App Router page wins. If none of the configured directories exists, a warning is always logged.
+
+**What it reads.** For each page file it parses the source (no code is executed) and takes:
+
+1. the `llmstxt` named export (rename it with `autoDiscovery.llmstxtExportName`), or
+2. as a fallback, the `title` and `description` of the Next.js `metadata` export.
+
+Values may be literals, constants declared in the same file, imports resolved through relative paths or `tsconfig` path aliases, and expressions wrapped in `as`, `satisfies` or `!`. Pages with neither export are left out of `llms.txt`, and their `.html.md` route answers 404.
+
+**App Router rules.**
+
+- `page.ts`, `page.tsx`, `page.js` and `page.jsx` are page entries (order set by `autoDiscovery.extensions`).
+- Route groups count as no URL segment: `app/(marketing)/about/page.tsx` → `/about`.
+- Private folders (`_components`), parallel-route slots (`@modal`) and intercepting routes (`(.)photo`) are skipped.
+
+**Pages Router rules.**
+
+- Every `.ts`, `.tsx`, `.js` and `.jsx` file is a page; `index` maps to its directory.
+- Skipped: `_app`, `_document`, `_error`, `404`, `500`, any `_`-prefixed file or folder, the `api/` directory, and `*.test.*`, `*.spec.*`, `*.stories.*` and `*.d.ts` files.
+
+**Dynamic segments** such as `[slug]` are not expanded. A dynamic page with an export is listed with the literal segment (`/blog/[slug].html.md`). Leave the export off such pages and list their concrete URLs through [`pages`](#adding-pages-by-hand) instead.
+
+**Sections.** Discovered pages are grouped by the first path segment of routes with two or more segments (`/docs/getting-started` → `## Docs`). Routes with at most one segment (`/`, `/pricing`, `/docs`) go under `## Main Pages`. Sections from `defaultConfig.sections` come first, discovered sections after them.
+
+### Adding pages by hand
+
+Pass `pages` to list routes that discovery cannot see (dynamic routes, CMS pages) or to override a discovered page:
+
+```typescript
+createLLmsTxt({
+  baseUrl: 'https://example.com',
+  defaultConfig: { title: 'My Website' },
+  pages: [
+    { route: '/blog/hello-world', config: { title: 'Hello World', description: 'Our first post' } },
+  ],
+})
+```
+
+These entries appear under `## Pages`, linked as `https://example.com/blog/hello-world.html.md`, and are served at that route, even with `autoDiscovery: false`. A `pages` entry wins over a discovered page with the same route; the route then appears once, under `## Pages`. Entries without `config` are dropped.
+
+### Manual sections only
+
+To write every link yourself, turn discovery off. Without discovery and `pages`, `llms.txt` contains only your own links and no `.html.md` routes are involved, so a route handler is enough:
+
+```typescript
+// app/llms.txt/route.ts
+import { createLLmsTxt } from 'next-llms-txt'
+
+export const { GET } = createLLmsTxt({
+  baseUrl: 'https://example.com',
+  autoDiscovery: false,
+  defaultConfig: {
+    title: 'My Awesome Project',
+    description: 'A comprehensive toolkit for developers.',
+    sections: [
+      {
+        title: 'Documentation',
+        items: [
+          { title: 'Getting Started', url: 'https://example.com/docs/getting-started', description: 'A quick introduction for new users.' },
+          { title: 'API Reference', url: 'https://example.com/docs/api' },
+        ],
+      },
+    ],
+    optional: [
+      { title: 'Changelog', url: 'https://example.com/changelog' },
+    ],
+  },
+})
+```
+
+Links in `sections` and `optional` are emitted exactly as written. `optional` becomes the spec's `## Optional` section, which agents may skip when context is short.
+
+### Per-page markdown (`.html.md`)
+
+Every page that has a configuration (an `llmstxt` export, a `metadata` fallback, or a `pages` entry) is served as markdown at `<route>.html.md`, the root page at `/index.html.md`. The body is the page's config rendered in llms.txt format, including any `sections` the page's `llmstxt` export defines:
+
+```bash
+curl https://example.com/pricing.html.md
+```
+
+```markdown
+# Pricing
+> Plans and prices
+```
+
+`/docs/index.html.md` resolves to the same page as `/docs.html.md`. Status codes:
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Markdown body, `Content-Type: text/markdown; charset=utf-8` |
+| `400` | Auto-discovery is off and the route is not in `pages` |
+| `404` | No page with a configuration matches the route |
+| `500` | The page file could not be read or parsed, a custom `generator` returned nothing, or discovery timed out |
+
+### Custom generator
+
+`generator` replaces the built-in markdown rendering for both endpoints. For `/llms.txt` it receives the merged site config (sections already include the discovered pages) and the `pages` entries; for `.html.md` it receives the single page's config.
+
+```typescript
+import type { LLMsTxtConfig, LLMsTxtPage } from 'next-llms-txt'
+
+createLLmsTxt({
+  defaultConfig: { title: 'My Website' },
+  generator: (config: LLMsTxtConfig, pages?: LLMsTxtPage[]) => {
+    const lines = [`# ${config.title}`]
+    for (const section of config.sections ?? [])
+      lines.push('', `## ${section.title}`, ...section.items.map(item => `- [${item.title}](${item.url})`))
+    for (const page of pages ?? [])
+      lines.push(`- [${page.config?.title}](https://example.com${page.route})`)
+    return `${lines.join('\n')}\n`
+  },
+})
+```
+
+This is also the way to link HTML pages instead of their `.html.md` variants: rewrite the item URLs (strip `.html.md`, map `/index` to `/`) before rendering.
+
+### Errors, logging and timeouts
+
+- **Invalid configuration** throws `LLMsTxtConfigError` when `createLLmsTxt` is called, so it fails at startup. A config needs at least one of `defaultConfig.title`, a non-empty `pages` array, or `autoDiscovery` set to `true` or an object.
+- **Request failures** return `500` and are passed to `onError` with the original error, and logged with `console.error`.
+- **Unparseable page files** are passed to `onError` and logged; `llms.txt` is still served without that page, and the page's `.html.md` answers `500`.
+- **Advisories** (metadata fallback used, page without export) go to `console.warn` when `showWarnings` is on, which defaults to `NODE_ENV === 'development'`.
+- **Trace logs** use the [`debug`](https://www.npmjs.com/package/debug) package: `DEBUG=next-llms-txt:*`.
+- **Timeouts**: `discoveryTimeoutMs` aborts discovery after the given time and answers `500`. Discovery also stops when the request is aborted.
+
+```typescript
+createLLmsTxt({
+  baseUrl: 'https://example.com',
+  autoDiscovery: true,
+  showWarnings: false,
+  discoveryTimeoutMs: 2000,
+  onError: error => logger.error({ err: error }, 'llms.txt failed'),
+})
+```
+
+## Configuration reference
+
+### `LLMsTxtHandlerConfig`
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `baseUrl` | `string` | `http://localhost:${PORT ?? 3000}` | Prefix for the absolute URLs of discovered and `pages` entries. Set it in production. |
+| `defaultConfig` | `LLMsTxtConfig` | title `My llms.txt Site`, description `This is my llms.txt generated site.` | Title, description, `sections` and `optional` of `llms.txt`. Fields you set replace the defaults. |
+| `autoDiscovery` | `boolean \| AutoDiscoveryConfig` | enabled | Page discovery. `false` turns it off. |
+| `pages` | `LLMsTxtPage[]` | none | Pages added by hand; listed under `## Pages` and served at `<route>.html.md`. |
+| `generator` | `(config, pages?) => string \| undefined` | built-in | Custom markdown rendering. |
+| `cacheControl` | `string \| false` | `public, max-age=3600, s-maxage=3600` | `Cache-Control` of both endpoints; `false` omits the header. |
+| `showWarnings` | `boolean` | `NODE_ENV === 'development'` | Log discovery advisories with `console.warn`. |
+| `onError` | `(error: unknown) => void` | none | Called for every failure, with the original error. |
+| `discoveryTimeoutMs` | `number` | no timeout | Abort discovery after this many milliseconds. |
+| `trailingSlash` | `boolean` | `true` | Reserved; currently has no effect. Trailing slashes are always accepted. |
+
+### `AutoDiscoveryConfig`
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `appDir` | `string` | `src/app` | App Router directory, relative to `rootDir`. Empty string skips it. |
+| `pagesDir` | `string` | `src/pages` | Pages Router directory, relative to `rootDir`. Empty string skips it. |
+| `rootDir` | `string` | `process.cwd()` at request time | Project root. |
+| `llmstxtExportName` | `string` | `llmstxt` | Name of the named export to read. |
+| `extensions` | `readonly string[]` | `['.ts', '.tsx', '.js', '.jsx']` | Page file extensions, in priority order; also used to resolve imports. |
+
+### `LLMsTxtConfig`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `title` | `string` | H1 title (required). |
+| `description` | `string` | Blockquote under the title. |
+| `sections` | `LLMsTxtSection[]` | H2 sections: `{ title, description?, items: LLMsTxtItem[] }`. |
+| `optional` | `LLMsTxtItem[]` | Items of the `## Optional` section. |
+
+An `LLMsTxtItem` is `{ title, url, description? }`.
+
+## API reference
+
+### `createLLmsTxt(config)`
+
+Validates the config and returns `{ GET }`, a handler that answers `/llms.txt` and `*.html.md` requests with a `NextResponse`. Any other path is treated as a page request. Throws `LLMsTxtConfigError` for an invalid config.
+
+### `isLLMsTxtPath(pathname)`
+
+Returns `true` for `/llms.txt` and any path ending in `.html.md`. Use it in `proxy.ts` to decide which requests go to the handler.
+
+### Errors
+
+`LLMsTxtError` is the base class; `LLMsTxtConfigError` (invalid config) and `LLMsTxtGenerationError` (generator returned nothing for `/llms.txt`) extend it. All are exported for `instanceof` checks.
+
+### Types
+
+`LLMsTxtHandlerConfig`, `AutoDiscoveryConfig`, `LLMsTxtConfig`, `LLMsTxtSection`, `LLMsTxtItem`, `LLMsTxtPage` and `PageInfo` are exported.
+
+The package is ESM-only and ships `dist/index.mjs` with `dist/index.d.ts`.
+
+## Compatibility
+
+- **Next.js**: 16.x. 15.x may work with manual proxy wiring; not supported.
 - **Node.js**: 22+
 - **React**: 19.2+
 - **TypeScript**: 5.9, 6.x and 7.x. `typescript` is an optional peer dependency; the library never imports it at runtime. The published declarations are type-checked against all three in CI.
@@ -103,432 +346,58 @@ TypeScript 6 and 7 also put a floor on Next.js itself, independent of this libra
 
 TypeScript 7 no longer ships the JavaScript compiler API that older Next.js versions load to type-check and to read `next.config.ts`, so `next build` and `next dev` fail there before this library is involved.
 
-## 12. FAQ
+Discovery reads page files from disk, so the handler needs the Node.js runtime (the default for `proxy.ts` in Next.js 16) and access to the source files at runtime.
 
-**Q: Does it write files to disk?** No. All responses are generated on demand.
-**Q: Can I add dynamic runtime items?** Yes—inject them into `defaultConfig.sections` before calling handler.
-**Q: How are duplicate items handled?** Last write wins within a section; discovery skips exact duplicates.
-**Q: Why not expose HTML?** Raw markdown lowers parsing cost and ambiguity for LLM ingestion.
-**Q: Can I customize section ordering?** Provide sections manually; discovered sections append after manual ones.
+## Best practices
 
-## 13. Contributing
+- Set an absolute `baseUrl` (HTTPS in production); the localhost fallback is meant for development.
+- Prefer explicit `llmstxt` exports over the `metadata` fallback; they say what an agent should know, not what a search snippet should say.
+- Keep descriptions short (about 120 characters) and factual.
+- Treat `llms.txt` as a high-signal index: leave marketing and low-value pages out by not giving them an export.
+- Keep `showWarnings` off in production.
+- Only public pages belong in `llms.txt`; check what discovery picks up before deploying.
 
-Fork, branch, implement, test, open PR. Maintain type safety. Preserve public API surface. Add focused tests.
+## FAQ
 
-Setup:
+**Does it write files to disk?** No. Both endpoints are generated on request; responses are cacheable via `cacheControl`.
 
-```bash
-git clone https://github.com/bke-daniel/next-llms-txt.git
-cd next-llms-txt
-npm install
-npm test
-```
+**Why do the links end in `.html.md`?** llmstxt.org recommends linking markdown versions of pages, at the page URL plus `.md` (`index.html.md` for URLs without a file name). The plugin serves exactly those routes. To link HTML pages instead, use a custom `generator`.
 
----
+**Can I have `/llms.html.md`?** No. `/llms.txt` is the location the specification defines; the `.html.md` convention applies to the pages it links.
 
-`llms.txt` specification: <https://llmstxt.org>
-High coverage ensured; rely on contract rather than internal imports.
-No deprecated multi-handler APIs (`createEnhancedLLMsTxtHandlers`, `createLLMsTxtHandlers`, `createPageLLMsTxtHandlers`)—all replaced by `createLLmsTxt`.
+**How are duplicates handled?** Each route appears once. A `pages` entry beats a discovered page; an App Router page beats a Pages Router page.
 
-1. **`llmstxt` Export (Preferred)**: Provide explicit title and description for maximum clarity.
+**Can I control section order?** Sections from `defaultConfig.sections` come first, in your order; discovered sections follow in discovery order.
 
-```typescript
-// app/about/page.tsx
-export const llmstxt = {
-  title: 'About Our Company',
-  description: 'Learn about our mission and values.'
-};
-```
+**Can I add items at runtime?** The config is read when `createLLmsTxt` is called. Build it before that, or render dynamic content with a custom `generator`.
 
-1. **`metadata` Export (Fallback)**: If no `llmstxt` object is found, the library will use your existing Next.js `metadata` export as a fallback.
+## Demo server
 
-```typescript
-// app/about/page.tsx
-export const metadata = {
-  title: 'About Us', // Used as the llms.txt title
-  description: 'Our company history.' // Used as the llms.txt description
-};
-```
-
-### 3. URL Resolution and `.html.md`
-
-LLMs prefer raw text over parsing complex HTML. `next-llms-txt` facilitates this with a special convention:
-
-- A page at the URL `/services/consulting` can be requested as `/services/consulting.html.md` to get its raw llms.txt-style content.
-- The unified `createLLmsTxt` handler intercepts both `/llms.txt` and `/*.html.md` paths in your Next 16 `proxy.ts` middleware and renders the markdown response for each.
-- The auto-discovery system finds each page's `llmstxt` (or `metadata`) export and uses it to render the corresponding `.html.md`.
-
-This allows you to provide clean, structured text to LLMs without affecting your user-facing pages.
-
-## Quick Start
-
-Get up and running in 30 seconds.
-
-1. **Install the package:**
-
-    ```bash
-    npm install next-llms-txt
-    ```
-
-## Demo Server
-
-Explore a live set of routes showcasing auto-discovery, per-page markdown, and different export combinations in the monorepo demo server.
-
-- Start from the repo root:
-
-    ```bash
-    npm run server:demo
-    ```
-
-- Open `http://localhost:3000` and try:
-  - `/llms.txt` — root manifest generated via auto-discovery
-  - `/*.html.md` — page-specific raw markdown endpoints
-  - `/all-exports`, `/metadata-only`, `/llms-txt-only`, `/no-exports`
-  - Nested variants under `/nested/*`
-  - `/full-test` — comprehensive configuration
-  - `/with-proxy` — explains proxy setup for `.html.md`
-
-Hosted demo (auto-updated via Vercel):
-
-- Production: https://next-llms-txt-demo-server.vercel.app
-
-Key files in the demo:
-- `packages/demo-server/src/app/llms.txt/route.ts` — Node.js route using `createLLmsTxt`
-- `packages/demo-server/src/proxy.ts` — edge proxy rewriting `*.html.md` to a Node API
-- `packages/demo-server/src/app/api/llms-md/route.ts` — Node API generating markdown
-- `packages/demo-server/src/llms-txt-config.ts` — demo config used by the handlers
-
-2. **Add proxy integration in `src/proxy.ts`:**
-
-    ```typescript
-    // src/proxy.ts
-    import type { NextRequest } from 'next/server'
-    import { NextResponse } from 'next/server'
-    import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt'
-
-    const { GET: handleLLmsTxt } = createLLmsTxt({
-      baseUrl: 'http://localhost:3000',
-      autoDiscovery: {
-        appDir: 'src/app',
-      },
-    })
-
-    export default async function proxy(request: NextRequest) {
-      const { pathname } = request.nextUrl
-      if (isLLMsTxtPath(pathname)) {
-        return await handleLLmsTxt(request)
-      }
-      return NextResponse.next()
-    }
-
-    export const config = {
-      matcher: ['/llms.txt', '/:path*.html.md']
-    }
-    ```
-
-3. **Add content sources to your pages:**
-
-    Export a `llmstxt` object (recommended) or use Next.js `metadata` as fallback in your page files:
-
-    ```typescript
-    // src/app/services/page.tsx
-    export const llmstxt = {
-      title: 'Our Services',
-      description: 'Explore the professional services we offer.'
-    }
-    // or
-    export const metadata = {
-      title: 'Our Services',
-      description: 'Explore the professional services we offer.'
-    }
-    ```
-
-4. **Add llms.txt route handler:**
-
-    ```typescript
-    // src/app/llms.txt/route.ts
-    import { createLLmsTxt } from 'next-llms-txt'
-
-    export const { GET } = createLLmsTxt({
-      baseUrl: 'https://example.com',
-      defaultConfig: {
-        title: 'Next.js next-llms-txt is awesome!',
-        description: 'A comprehensive toolkit for generating LLM-optimized documentation',
-      },
-      autoDiscovery: true,
-    })
-    ```
-
-5. **Start your development server** and visit `http://localhost:3000/llms.txt`.
-
-## Installation
+The monorepo contains a demo app with routes for every export combination:
 
 ```bash
-# npm
-npm install next-llms-txt
-
-# yarn
-yarn add next-llms-txt
-
-# pnpm
-pnpm add next-llms-txt
-
-# bun
-bun add next-llms-txt
+npm run server:demo   # from the repo root, then open http://localhost:3000
 ```
 
-## Migrating from 1.x to 2.0
-
-Most projects only need steps 1 and 2. The full list of changes is in the [changelog](./CHANGELOG.md).
-
-**1. Check your runtime.** 2.0 needs Node.js 22 or newer and supports TypeScript 5.9, 6.x and 7.x. TypeScript 6 and 7 also put a floor on Next.js itself; see [Compatibility](#11-compatibility).
-
-**2. Make sure the config passes validation.** `createLLmsTxt` now validates when it is called, so a bad config fails at startup instead of on the first request. It throws `LLMsTxtConfigError` unless the config has at least one of:
-
-- `defaultConfig.title`
-- a non-empty `pages` array
-- `autoDiscovery` set to `true` or to an object
-
-```typescript
-import { createLLmsTxt, LLMsTxtConfigError } from 'next-llms-txt'
-
-try {
-  createLLmsTxt({ autoDiscovery: false }) // nothing to generate from
-}
-catch (error) {
-  if (error instanceof LLMsTxtConfigError) {
-    // fix the config
-  }
-}
-```
-
-**3. Review your generated `llms.txt`.** The output changed, so diff it once after upgrading:
-
-- Discovered pages are grouped into sections: root-level routes under `Main Pages`, deeper routes by their first path segment. 1.x used a single bucket.
-- Each route appears once. A page passed through `pages` replaces a discovered page with the same route.
-- `## Pages` now only lists pages passed through `pages`, and links them with absolute URLs (`baseUrl` + `route`) like every other item. 1.x emitted the bare route.
-- Files in `src/pages` (Pages Router) are discovered by default. Point `autoDiscovery.pagesDir` somewhere else if you do not want them.
-- Pages inside route groups such as `app/(marketing)/about/page.tsx` are now listed, at `/about`. 1.x skipped them.
-- `autoDiscovery: false` really turns discovery off now. 1.x ignored it. With discovery off, `*.html.md` requests answer `400`.
-
-**4. If you use a custom `generator`,** its second argument is now `LLMsTxtPage[]` (`route` and `config`) instead of the internal `PageInfo[]`. `filePath`, `hasLLMsTxtExport`, `hasMetadataFallback` and `warnings` are no longer passed.
-
-```typescript
-import type { LLMsTxtConfig, LLMsTxtPage } from 'next-llms-txt'
-
-function generator(config: LLMsTxtConfig, pages?: LLMsTxtPage[]) {
-  return `# ${config.title}\n\n${(pages ?? []).map(page => `- ${page.route}`).join('\n')}\n`
-}
-```
-
-**5. If you relied on status codes of `*.html.md`:** `400` means auto-discovery is off, `404` means no page matched, and `500` means the page file could not be parsed (was `404`) or a custom `generator` returned nothing (was `400`).
-
-**6. If you read the discovery logs,** they moved from `console.log` to the `debug` package. Run with `DEBUG=next-llms-txt:*`. Advisories controlled by `showWarnings` still go to `console.warn`. Failures are new in production output: a page that cannot be parsed is logged with `console.error` and passed to `onError`, and a configuration whose discovery directories do not exist is warned about, whatever `showWarnings` says.
-
-**7. CommonJS.** The package is ESM-only. `require('next-llms-txt')` did not work in 1.x either, because the `require` export pointed at a file that was never built; it now fails with Node's ESM-only error. Use `import`.
-
-## Guides
-
-Follow these guides to implement `next-llms-txt` in your project.
-
-### 1. Basic Manual Setup
-
-This approach gives you full control by letting you define the `llms.txt` content manually. It's perfect for smaller sites or when you want to be explicit.
-
-**Create `app/llms.txt/route.ts`:**
-
-```typescript
-import { createLLmsTxt } from 'next-llms-txt';
-
-export const { GET } = createLLmsTxt({
-  baseUrl: 'https://example.com',
-  defaultConfig: {
-    title: 'My Awesome Project',
-    description: 'A comprehensive toolkit for developers.',
-    sections: [
-    {
-      title: 'Documentation',
-      items: [
-        {
-          title: 'Getting Started',
-          url: 'https://example.com/docs/getting-started',
-          description: 'A quick introduction for new users.'
-        },
-        {
-          title: 'API Reference',
-          url: 'https://example.com/docs/api',
-          description: 'Complete API documentation for the project.'
-        }
-      ]
-    }
-  ],
-  },
-});
-```
-
-### 2. Auto-Discovery Setup
-
-Let `next-llms-txt` automatically scan your project and build the `llms.txt` file from your pages.
-
-**Step 1: Add content sources to your pages.**
-
-In each page you want to include (e.g., `app/services/page.tsx`), export a `llmstxt` or `metadata` object.
-
-```typescript
-// app/services/page.tsx
-import type { Metadata } from 'next';
-
-// Provide an llmstxt export (recommended)
-export const llmstxt = {
-  title: 'Our Services',
-  description: 'Explore the professional services we offer.'
-};
-
-// Or, the library can use your existing metadata as a fallback
-export const metadata: Metadata = {
-  title: 'Our Services',
-  description: 'Explore the professional services we offer.'
-};
-
-export default function ServicesPage() {
-  return <div>Our Services</div>;
-}
-```
-
-**Step 2: Create the route handler with auto-discovery.**
-
-```typescript
-// app/llms.txt/route.ts
-import { createLLmsTxt } from 'next-llms-txt';
-
-export const { GET } = createLLmsTxt({
-  baseUrl: 'https://example.com',
-  defaultConfig: {
-    title: 'My Website',
-    description: 'Automatically discovered content from my Next.js pages.',
-  },
-  autoDiscovery: true,
-});
-```
-
-The handler will now automatically find your pages and generate the `llms.txt` file.
-
-### 3. Per-Page Content with `.html.md`
-
-To provide raw markdown content for specific pages, create `.html.md` files. The middleware automatically serves this content when LLMs request it.
-
-**Step 1: Create your markdown content files.**
-
-Place a markdown file next to your page, naming it with the `.html.md` extension.
-
-```text
-/src/app
-  /services
-    /consulting
-      page.tsx
-      page.html.md  <-- Markdown content for the /services/consulting page
-```
-
-**Step 2: Configure proxy to handle `.html.md` requests.**
-
-The proxy integration from the Quick Start already handles this:
-
-```typescript
-// src/proxy.ts
-export default async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  // Handles both /llms.txt and /*.html.md paths
-  if (isLLMsTxtPath(pathname)) {
-    return await handleLLmsTxt(request)
-  }
-  return NextResponse.next()
-}
-```
-
-Now, when an LLM sees a URL like `https://example.com/services/consulting` in your main `llms.txt`, it can request the content from your API route, which will serve the text from `page.html.md`.
-
-## API Reference
-
-### Core Functions
-
-#### `createLLmsTxt(config)`
-
-Unified handler factory returning `{ GET }` for `/llms.txt` and `.html.md` content endpoints.
-
-```typescript
-import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt';
-
-const { GET } = createLLmsTxt({
-  baseUrl: 'https://example.com',
-  defaultConfig: {
-    title: 'My Site',
-    description: 'Documentation and reference'
-  },
-  autoDiscovery: true,
-});
-```
-
-#### `isLLMsTxtPath(pathname)`
-
-Predicate utility to route requests for `/llms.txt` and any `*.html.md` content pages.
-
-```typescript
-if (isLLMsTxtPath(request.nextUrl.pathname)) {
-  return await GET(request);
-}
-```
-
-### Type Definitions
-
-The library is written in TypeScript and exports all types for a fully typed experience.
-
-- `LLMsTxtConfig`: The main configuration object for `llms.txt` content.
-- `LLMsTxtSection`: A section within the `llms.txt` file, containing a title and items.
-- `LLMsTxtItem`: An individual link, with a title, URL, and optional description.
-- `LLMsTxtPage`: The user-supplied page shape for `LLMsTxtHandlerConfig.pages` (just `route` + optional `config`).
-- `AutoDiscoveryConfig`: Configuration for the auto-discovery system (`appDir`, `pagesDir`, `rootDir`, `llmstxtExportName`, `extensions`).
-- `LLMsTxtHandlerConfig`: Main configuration object for `createLLmsTxt`.
-- `LLMsTxtError` / `LLMsTxtConfigError` / `LLMsTxtGenerationError`: typed error classes consumers can `instanceof`-check.
-
-## Best Practices
-
-- **Use Absolute URLs**: Always provide a `baseUrl` in your configuration to ensure all generated URLs are absolute, as required by the `llms.txt` standard.
-- **Prefer `llmstxt` Exports**: While the `metadata` fallback is convenient, using an explicit `llmstxt` export gives you more control and makes your intent clear.
-- **Keep Descriptions Concise**: Write clear and concise descriptions for your pages and sections. Think about what an LLM would need to understand the content.
-- **Use Proxy**: The proxy approach provides the most flexibility for handling both `/llms.txt` and `.html.md` requests in a single location.
+Try `/llms.txt`, `/all-exports.html.md`, `/metadata-only.html.md`, `/nested/*` and `/full-test`. Hosted version: <https://next-llms-txt-demo-server.vercel.app>.
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to set up the development environment, run tests, and submit your changes.
-
-### Development Setup
+Contributions are welcome. See the [Contributing Guide](CONTRIBUTING.md) for setup, the test workflow and conventions.
 
 ```bash
-# Clone the repository
 git clone https://github.com/bke-daniel/next-llms-txt.git
 cd next-llms-txt
-
-# Install dependencies
 npm install
-
-# Run tests
 npm test
 ```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT, see [LICENSE](LICENSE).
 
 ## Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/bke-daniel/next-llms-txt/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/bke-daniel/next-llms-txt/discussions)
+- 🐛 **Bug reports**: [GitHub Issues](https://github.com/bke-daniel/next-llms-txt/issues)
+- 💡 **Feature requests**: [GitHub Discussions](https://github.com/bke-daniel/next-llms-txt/discussions)
 - 💬 **Questions**: [GitHub Discussions](https://github.com/bke-daniel/next-llms-txt/discussions/categories/q-a)
-
----
-
-**next-llms-txt** - Making AI-friendly documentation effortless in Next.js
-
-Built with ❤️ by the open source community
-
-`llms.txt` is a markdown file that helps AI agents like ChatGPT and Claude understand your website structure and find key resources. It follows the [llmstxt.org specification](https://llmstxt.org) with a standardized format that's easy for both humans and LLMs to read.

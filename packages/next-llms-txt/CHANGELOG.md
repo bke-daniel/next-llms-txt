@@ -5,9 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-10-07
+
+See the [update & upgrade guide](./UPGRADING.md#upgrade-from-2x-to-30). The public API (functions, options, types) is unchanged; the generated output and two response codes are not, which is why this is a major release.
+
+### Breaking
+
+- **`llms.txt` list items link to the markdown variant** of each page (`${baseUrl}${route}.html.md`, the root as `/index.html.md`) instead of the HTML page, as llmstxt.org recommends (#57). This applies to discovered pages and to the `## Pages` block. Items you write yourself in `sections` or `optional` are unchanged. The new links only resolve when `*.html.md` requests reach the handler, i.e. through `proxy.ts` with the matcher `['/llms.txt', '/:path*.html.md']`. A route handler at `app/llms.txt/route.ts` alone serves `/llms.txt` only, so its links answer 404: switch to the proxy, set `autoDiscovery: false` if you only list your own links, or pass a custom `generator` that links the HTML pages.
+- **Pages passed through `pages` are served at their `*.html.md` route** (was `404`, or `400` with discovery off), so every link in `## Pages` resolves. A user page wins over a discovered page with the same route, and it is served even with `autoDiscovery: false`; `400` now only answers routes without a `pages` entry while discovery is off.
+
+### Changed
+
+- Documentation rewritten for 3.0: the README is restructured around the `proxy.ts` setup with a full configuration reference, the new [UPGRADING.md](./UPGRADING.md) covers upgrading from 2.x and from 1.x, and the examples no longer put `baseUrl` / `showWarnings` inside `autoDiscovery`. The per-page `.html.md` docs described static `.html.md` files the plugin never served; they now describe the generated markdown. `ENHANCED_FEATURES.md` is removed: it documented the 0.x API (`createEnhancedLLMsTxtHandlers` and friends).
+- 2.x no longer receives security fixes; see [SECURITY.md](./SECURITY.md).
+
 ## [2.0.0] - 2026-10-06
 
-See the [migration notes](./README.md#migrating-from-1x-to-20) in the README.
+See the [update & upgrade guide](./UPGRADING.md#upgrade-from-1x-to-30).
 
 ### Breaking
 

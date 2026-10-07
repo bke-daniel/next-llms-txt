@@ -18,11 +18,11 @@ npm run dev
 
 ## What’s Inside
 
-- Root `llms.txt` endpoint via auto-discovery
+- Root `llms.txt` endpoint via auto-discovery; its list items link to the per-page `*.html.md` endpoints
 - Pages that export different combinations of `metadata` and `llmstxt` handlers
 - Nested routes to validate discovery across subpaths
 - A comprehensive “Full Test” route used by e2e tests
-- Proxy demo showing edge rewrite of `*.html.md` to a Node.js API route
+- `src/proxy.ts` answering `/llms.txt` and every `*.html.md` request with one `createLLmsTxt` handler
 
 See `src/app/page.tsx` for a linked overview of all demo routes.
 
@@ -34,9 +34,8 @@ Global configuration is in `src/llms-txt-config.ts`.
 
 ### Routes of Interest
 
-- `src/app/llms.txt/route.ts`: Node.js runtime route generating the root `llms.txt` via `createLLmsTxt`.
-- `src/proxy.ts`: Edge proxy; rewrites `*.html.md` to `/api/llms-md` for markdown responses.
-- `src/app/api/llms-md/route.ts`: Node.js API route calling `createLLmsTxt` to produce page-specific markdown.
+- `src/proxy.ts`: answers `/llms.txt` and `/*.html.md` (matcher `['/llms.txt', '/:path*.html.md']`) with the handler from `createLLmsTxt`. This is the setup the library recommends.
+- `src/app/llms.txt/route.ts` and `src/app/api/llms-md/route.ts`: older route-handler variants. The proxy answers `/llms.txt` and `*.html.md` before they are reached, so they only serve as reference.
 
 ### Demo Pages
 
@@ -47,5 +46,5 @@ Global configuration is in `src/llms-txt-config.ts`.
 
 ## Learn More
 
-- `next-llms-txt` package: explore features and APIs in the main library README.
+- `next-llms-txt` package: features and APIs in the [library README](../next-llms-txt/README.md); upgrading in the [update & upgrade guide](../next-llms-txt/UPGRADING.md).
 - Next.js docs: https://nextjs.org/docs
