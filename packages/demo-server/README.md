@@ -18,7 +18,7 @@ npm run dev
 
 ## What’s Inside
 
-- Root `llms.txt` endpoint via auto-discovery
+- Root `llms.txt` endpoint via auto-discovery; its list items link to the per-page `*.html.md` endpoints
 - Pages that export different combinations of `metadata` and `llmstxt` handlers
 - Nested routes to validate discovery across subpaths
 - A comprehensive “Full Test” route used by e2e tests

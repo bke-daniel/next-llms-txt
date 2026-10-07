@@ -5,12 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.0] - 2026-10-07
+
+**Check your setup after upgrading:** the new links only resolve when `*.html.md` requests reach the handler, i.e. through `proxy.ts` with the matcher `['/llms.txt', '/:path*.html.md']`. A route handler at `app/llms.txt/route.ts` alone serves `/llms.txt` only, so its links would answer 404; switch to the proxy or pass a custom `generator` that links the HTML pages.
 
 ### Changed
 
 - **`llms.txt` list items link to the markdown variant** of each page (`${baseUrl}${route}.html.md`, the root as `/index.html.md`) instead of the HTML page, as llmstxt.org recommends (#57). This applies to discovered pages and to the `## Pages` block. Items you write yourself in `sections` or `optional` are unchanged. To keep HTML links, pass a custom `generator`.
 - **Pages passed through `pages` are served at their `*.html.md` route**, so every link in `## Pages` resolves. A user page wins over a discovered page with the same route, and it is served even with `autoDiscovery: false`; the `400` now only answers routes without a user page while discovery is off.
+- READMEs and examples: the auto-discovery guides use `proxy.ts` instead of a route handler, the per-page `.html.md` section describes the generated markdown (it wrongly described static `.html.md` files), and the example configs no longer put `baseUrl` / `showWarnings` inside `autoDiscovery`.
 
 ## [2.0.0] - 2026-10-06
 

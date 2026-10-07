@@ -396,13 +396,15 @@ export default function ServicesPage() {
 }
 ```
 
-**Step 2: Create the route handler with auto-discovery.**
+**Step 2: Route `/llms.txt` and `*.html.md` through the handler in `proxy.ts`.**
 
 ```typescript
-// app/llms.txt/route.ts
-import { createLLmsTxt } from 'next-llms-txt';
+// src/proxy.ts
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { createLLmsTxt, isLLMsTxtPath } from 'next-llms-txt';
 
-export const { GET } = createLLmsTxt({
+const { GET: handleLLmsTxt } = createLLmsTxt({
   baseUrl: 'https://example.com',
   defaultConfig: {
     title: 'My Website',
@@ -410,43 +412,45 @@ export const { GET } = createLLmsTxt({
   },
   autoDiscovery: true,
 });
+
+export default async function proxy(request: NextRequest) {
+  if (isLLMsTxtPath(request.nextUrl.pathname))
+    return await handleLLmsTxt(request);
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ['/llms.txt', '/:path*.html.md'],
+};
 ```
 
-The handler will now automatically find your pages and generate the `llms.txt` file.
+The handler now finds your pages and generates `llms.txt`. Each list item links to the page's markdown variant:
+
+```markdown
+# My Website
+> Automatically discovered content from my Next.js pages.
+
+## Main Pages
+- [Home](https://example.com/index.html.md): Welcome to my website
+- [Our Services](https://example.com/services.html.md): Explore the professional services we offer.
+```
+
+> **Use the proxy, not only a route handler.** A route handler at `app/llms.txt/route.ts` serves `/llms.txt` alone, so the `.html.md` links in it would answer 404. If you cannot use `proxy.ts`, pass a custom `generator` that links the HTML pages instead.
 
 ### 3. Per-Page Content with `.html.md`
 
-To provide raw markdown content for specific pages, create `.html.md` files. The middleware automatically serves this content when LLMs request it.
+Every page that has a configuration (an `llmstxt` export, a `metadata` fallback, or an entry in `pages`) is served as markdown at `<route>.html.md`. The root page is served at `/index.html.md`. The content is generated on request from that configuration, the same way as `llms.txt`; there are no `.html.md` files to create.
 
-**Step 1: Create your markdown content files.**
-
-Place a markdown file next to your page, naming it with the `.html.md` extension.
-
-```text
-/src/app
-  /services
-    /consulting
-      page.tsx
-      page.html.md  <-- Markdown content for the /services/consulting page
+```bash
+curl https://example.com/services.html.md
 ```
 
-**Step 2: Configure proxy to handle `.html.md` requests.**
-
-The proxy integration from the Quick Start already handles this:
-
-```typescript
-// src/proxy.ts
-export default async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  // Handles both /llms.txt and /*.html.md paths
-  if (isLLMsTxtPath(pathname)) {
-    return await handleLLmsTxt(request)
-  }
-  return NextResponse.next()
-}
+```markdown
+# Our Services
+> Explore the professional services we offer.
 ```
 
-Now, when an LLM sees a URL like `https://example.com/services/consulting.html.md` in your main `llms.txt`, it can request the content from your API route, which will serve the text from `page.html.md`.
+Status codes: `200` with `Content-Type: text/markdown; charset=utf-8`, `404` for a route without configuration, `400` when auto-discovery is off and the route is not in `pages`, `500` when the page file could not be parsed. The proxy from the Auto-Discovery guide handles these requests; `isLLMsTxtPath` matches both `/llms.txt` and `*.html.md`.
 
 ## API Reference
 

@@ -12,7 +12,7 @@ Simple manual configuration with explicit sections and items. Perfect for smalle
 
 ### 2. [Auto-Discovery](./auto-discovery)
 
-Automatically scan your Next.js app and generate `llms.txt` from page exports. Great for larger sites with many pages.
+Automatically scan your Next.js app and generate `llms.txt` from page exports. Great for larger sites with many pages. Each discovered page is listed with a link to its markdown variant (`/about.html.md`).
 
 **When to use:** You want to automatically include all pages with minimal configuration.
 
