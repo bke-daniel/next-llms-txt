@@ -96,8 +96,8 @@ describe('discovery (extras fixture)', () => {
 
       // Only routes with two or more segments get their own section; a
       // single-segment route is root-level, even when it has child routes.
-      expect(urlsOf('Docs')).toEqual([`${BASE_URL}/docs/getting-started`])
-      expect(urlsOf('Main Pages')).toContain(`${BASE_URL}/docs`)
+      expect(urlsOf('Docs')).toEqual([`${BASE_URL}/docs/getting-started.html.md`])
+      expect(urlsOf('Main Pages')).toContain(`${BASE_URL}/docs.html.md`)
     })
 
     it('produces absolute URLs using the configured baseUrl', async () => {

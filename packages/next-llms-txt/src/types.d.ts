@@ -122,7 +122,8 @@ export interface LLMsTxtHandlerConfig {
   /**
    * Pages to include in the site-wide llms.txt in addition to (or in
    * place of) any pages found by auto-discovery. User entries win when
-   * a route also matches a discovered page.
+   * a route also matches a discovered page. Each entry with a `config` is
+   * listed with a link to, and served at, `${route}.html.md`.
    */
   pages?: LLMsTxtPage[]
 

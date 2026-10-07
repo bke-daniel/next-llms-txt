@@ -1,4 +1,5 @@
 import type { LLMsTxtConfig, LLMsTxtItem, LLMsTxtPage } from './types.js'
+import toMarkdownUrl from './markdown-url.js'
 
 /**
  * Generates llms.txt content following the llmstxt.org specification.
@@ -22,9 +23,10 @@ import type { LLMsTxtConfig, LLMsTxtItem, LLMsTxtPage } from './types.js'
  *
  * @param config  - The llms.txt configuration
  * @param pages   - User-supplied pages emitted under `## Pages`
- * @param baseUrl - Prefix for the `## Pages` links, so they come out
- *                  absolute like the discovered section items
- *                  (`baseUrl + route`). Empty keeps the bare route.
+ * @param baseUrl - Prefix for the `## Pages` links. Like the discovered
+ *                  section items, they point at the page's markdown
+ *                  variant (`baseUrl + route + .html.md`). Empty keeps
+ *                  the link relative.
  * @returns Generated llms.txt content as markdown
  */
 export function generateLLMsTxt(
@@ -47,7 +49,7 @@ export function generateLLMsTxt(
         const description = page.config?.description
           ? `: ${page.config.description.trim()}`
           : ''
-        return `- [${page.config!.title.trim()}](${baseUrl}${page.route})${description}`
+        return `- [${page.config!.title.trim()}](${toMarkdownUrl(baseUrl, page.route)})${description}`
       })
     if (pageItems.length > 0)
       contentBlocks.push(['## Pages', ...pageItems].join('\n'))

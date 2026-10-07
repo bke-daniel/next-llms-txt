@@ -157,6 +157,7 @@ LLMs prefer raw text over parsing complex HTML. `next-llms-txt` facilitates this
 - A page at the URL `/services/consulting` can be requested as `/services/consulting.html.md` to get its raw llms.txt-style content.
 - The unified `createLLmsTxt` handler intercepts both `/llms.txt` and `/*.html.md` paths in your Next 16 `proxy.ts` middleware and renders the markdown response for each.
 - The auto-discovery system finds each page's `llmstxt` (or `metadata`) export and uses it to render the corresponding `.html.md`.
+- The list items in `llms.txt` link to these markdown variants, not to the HTML pages, as llmstxt.org recommends: `/services/consulting` is listed as `${baseUrl}/services/consulting.html.md`, the root `/` as `${baseUrl}/index.html.md`. This covers discovered pages and pages passed through `pages`; their `.html.md` route is served even with auto-discovery off. Links you write yourself in `sections` or `optional` are emitted unchanged. To list HTML URLs instead, pass a custom `generator`.
 
 This allows you to provide clean, structured text to LLMs without affecting your user-facing pages.
 
@@ -445,7 +446,7 @@ export default async function proxy(request: NextRequest) {
 }
 ```
 
-Now, when an LLM sees a URL like `https://example.com/services/consulting` in your main `llms.txt`, it can request the content from your API route, which will serve the text from `page.html.md`.
+Now, when an LLM sees a URL like `https://example.com/services/consulting.html.md` in your main `llms.txt`, it can request the content from your API route, which will serve the text from `page.html.md`.
 
 ## API Reference
 

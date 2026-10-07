@@ -8,6 +8,7 @@ import * as t from '@babel/types'
 import debugImport from 'debug'
 import { DEFAULT_CONFIG, DEFAULT_PAGE_EXTENSIONS } from './constants.js'
 import { LLMsTxtError } from './errors.js'
+import toMarkdownUrl from './markdown-url.js'
 import normalizePath from './normalize-path.js'
 import { reportError } from './report-error.js'
 import stripJsonComments from './strip-json-comments.js'
@@ -258,7 +259,7 @@ export class LLMsTxtAutoDiscovery {
 
       const item: LLMsTxtItem = {
         title: page.config.title,
-        url: `${this.config.baseUrl}${page.route}`,
+        url: toMarkdownUrl(this.config.baseUrl, page.route),
       }
       if (page.config.description !== undefined)
         item.description = page.config.description

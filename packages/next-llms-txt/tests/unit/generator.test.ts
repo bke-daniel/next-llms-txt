@@ -123,11 +123,11 @@ describe('generateLLMsTxt', () => {
       ]
       const result = generateLLMsTxt(config, pages)
       expect(result).toContain('## Pages')
-      expect(result).toContain('- [Foo](/foo): Bar')
-      expect(result).toContain('- [Bar](/bar)')
+      expect(result).toContain('- [Foo](/foo.html.md): Bar')
+      expect(result).toContain('- [Bar](/bar.html.md)')
     })
 
-    it('prefixes page routes with baseUrl so they match the absolute section items (#56)', () => {
+    it('links pages to their absolute markdown variant, like the section items (#56, #57)', () => {
       const config: LLMsTxtConfig = {
         title: 'Demo',
         sections: [{ title: 'Docs', items: [{ title: 'Guide', url: 'https://example.com/docs/guide' }] }],
@@ -137,8 +137,8 @@ describe('generateLLMsTxt', () => {
         { route: '/foo', config: { title: 'Foo', description: 'Bar' } },
       ]
       const result = generateLLMsTxt(config, pages, 'https://example.com')
-      expect(result).toContain('- [Home](https://example.com/)')
-      expect(result).toContain('- [Foo](https://example.com/foo): Bar')
+      expect(result).toContain('- [Home](https://example.com/index.html.md)')
+      expect(result).toContain('- [Foo](https://example.com/foo.html.md): Bar')
       expect(result).not.toContain('](/')
     })
 
@@ -156,8 +156,8 @@ describe('generateLLMsTxt', () => {
       ]
       const result = generateLLMsTxt(config, pages)
       expect(result).toContain('## Pages')
-      expect(result).toContain('- [Test Page](/test)')
-      expect(result).not.toContain('- [Test Page](/test):')
+      expect(result).toContain('- [Test Page](/test.html.md)')
+      expect(result).not.toContain('- [Test Page](/test.html.md):')
     })
 
     it('handles multiple pages', () => {
@@ -190,9 +190,9 @@ describe('generateLLMsTxt', () => {
       ]
       const result = generateLLMsTxt(config, pages)
       expect(result).toContain('## Pages')
-      expect(result).toContain('- [Page 1](/page1): First page')
-      expect(result).toContain('- [Page 2](/page2): Second page')
-      expect(result).toContain('- [Page 3](/page3)')
+      expect(result).toContain('- [Page 1](/page1.html.md): First page')
+      expect(result).toContain('- [Page 2](/page2.html.md): Second page')
+      expect(result).toContain('- [Page 3](/page3.html.md)')
     })
   })
 
@@ -386,7 +386,7 @@ describe('generateLLMsTxt', () => {
       expect(result).toContain('# Complete Site')
       expect(result).toContain('> A complete example')
       expect(result).toContain('## Pages')
-      expect(result).toContain('- [About](/about): About us')
+      expect(result).toContain('- [About](/about.html.md): About us')
       expect(result).toContain('## Main')
       expect(result).toContain('> Main content')
       expect(result).toContain('- [Home](/): Homepage')
@@ -421,7 +421,7 @@ describe('generateLLMsTxt', () => {
       const result = generateLLMsTxt(config, pages)
 
       expect(result).toContain('## Pages')
-      expect(result).toContain('- [Auto](/auto)')
+      expect(result).toContain('- [Auto](/auto.html.md)')
       expect(result).toContain('## Manual')
       expect(result).toContain('- [Item](/item)')
     })

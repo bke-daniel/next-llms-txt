@@ -1,5 +1,6 @@
 import type { LLMsTxtConfig, LLMsTxtItem } from '../../src/types'
 import { LLMsTxtAutoDiscovery } from '../../src/discovery'
+import toMarkdownUrl from '../../src/markdown-url'
 import { BASE_URL, LLMS_TXT_HANDLER_CONFIG, ROUTES_WITH_EXPORTS, ROUTES_WITH_NO_EXPORT } from '../constants'
 
 describe('configuration scenarios - group 5: site-wide generation', () => {
@@ -18,20 +19,22 @@ describe('configuration scenarios - group 5: site-wide generation', () => {
 
     it('should include pages with llmstxt in site-wide file', async () => {
       ROUTES_WITH_EXPORTS.forEach((route) => {
-        expect(urls).toContain(BASE_URL + route)
+        expect(urls).toContain(toMarkdownUrl(BASE_URL, route))
       })
     })
 
     it('should include pages with metadata fallback in site-wide file', async () => {
       const urls = allItems.map(item => item.url)
       ROUTES_WITH_EXPORTS.forEach((route) => {
-        expect(urls).toContain(BASE_URL + route)
+        expect(urls).toContain(toMarkdownUrl(BASE_URL, route))
       })
     })
 
     it('should exclude pages without any config from site-wide file', async () => {
       const urls = allItems.map(item => item.url)
-      expect(urls).not.toContain(ROUTES_WITH_NO_EXPORT.map(r => BASE_URL + r))
+      ROUTES_WITH_NO_EXPORT.forEach((route) => {
+        expect(urls).not.toContain(toMarkdownUrl(BASE_URL, route))
+      })
     })
   })
 })
