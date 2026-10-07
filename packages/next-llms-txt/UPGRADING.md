@@ -1,17 +1,17 @@
 # Update & upgrade guide
 
-This guide takes an existing project to **next-llms-txt 2.1**. Pick your starting point:
+This guide takes an existing project to **next-llms-txt 3.0**. Pick your starting point:
 
-- [Update from 2.0 to 2.1](#update-from-20-to-21): a minor release, usually done in a few minutes
-- [Upgrade from 1.x to 2.1](#upgrade-from-1x-to-21): a major upgrade with breaking changes
+- [Upgrade from 2.x to 3.0](#upgrade-from-2x-to-30): the API is unchanged, the generated links are not; usually done in a few minutes
+- [Upgrade from 1.x to 3.0](#upgrade-from-1x-to-30): a larger upgrade across two majors
 
 The complete list of changes is in the [changelog](./CHANGELOG.md).
 
 ```bash
-npm install next-llms-txt@^2.1.0
+npm install next-llms-txt@^3.0.0
 ```
 
-## Update from 2.0 to 2.1
+## Upgrade from 2.x to 3.0
 
 ### What changed
 
@@ -39,7 +39,7 @@ npm install next-llms-txt@^2.1.0
 - it wins over a discovered page with the same route, as it already did in `llms.txt`;
 - `400` is only returned when discovery is off **and** the route has no `pages` entry.
 
-The public API and types are unchanged.
+The public API and types are unchanged. 3.0 is a major release because the generated output and these status codes change: a setup may need changes to keep working, see the checklist.
 
 ### Checklist
 
@@ -57,7 +57,7 @@ If you serve `/llms.txt` through a route handler alone (`app/llms.txt/route.ts`)
 - **Only manual links:** set `autoDiscovery: false` and don't use `pages`. Then `llms.txt` contains only your own `sections` and `optional` links, and a route handler is enough.
 - **Keep HTML links:** pass the [generator below](#keeping-html-links).
 
-> **Auto-discovery is on unless you set `autoDiscovery: false`.** A route handler with only `defaultConfig.sections` and no `autoDiscovery` key still lists discovered pages, and from 2.1 on those links end in `.html.md`. If you meant to list only your own links, add `autoDiscovery: false`.
+> **Auto-discovery is on unless you set `autoDiscovery: false`.** A route handler with only `defaultConfig.sections` and no `autoDiscovery` key still lists discovered pages, and from 3.0 on those links end in `.html.md`. If you meant to list only your own links, add `autoDiscovery: false`.
 
 **2. Check the result.** After deploying, every link in `llms.txt` should answer `200` with `text/markdown`:
 
@@ -122,13 +122,13 @@ createLLmsTxt({
 
 The generator also renders the `.html.md` responses, which have no `pages` argument; the output for them stays the same. `toHtmlUrl` also rewrites links you wrote yourself in `sections` if they end in `.html.md`.
 
-## Upgrade from 1.x to 2.1
+## Upgrade from 1.x to 3.0
 
-Upgrade straight to 2.1; there is no need to stop at 2.0. Most projects need steps 1 to 4.
+Upgrade straight to 3.0; there is no need to stop at 2.x. Most projects need steps 1 to 4.
 
-**1. Check your runtime.** 2.x needs Node.js 22 or newer and Next.js 16, and supports TypeScript 5.9, 6.x and 7.x. TypeScript 6 and 7 also put a floor on Next.js itself; see [Compatibility](./README.md#compatibility).
+**1. Check your runtime.** 3.0 needs Node.js 22 or newer and Next.js 16, and supports TypeScript 5.9, 6.x and 7.x. TypeScript 6 and 7 also put a floor on Next.js itself; see [Compatibility](./README.md#compatibility).
 
-**2. Serve both endpoints from `createLLmsTxt` in `proxy.ts`.** Since 2.1 the links in `llms.txt` point at `.html.md` routes, so the handler has to answer them; wire it up as in the [Quick Start](./README.md#quick-start). If you still call a pre-1.0 helper (`createLLMsTxtHandlers`, `createEnhancedLLMsTxtHandlers`, `createPageLLMsTxtHandlers`), replace it with `createLLmsTxt`; those were removed from the public API in 1.0. Older examples in this repository nested `baseUrl` and `showWarnings` inside `autoDiscovery`; they belong at the top level, and the 2.x types reject them inside `autoDiscovery`:
+**2. Serve both endpoints from `createLLmsTxt` in `proxy.ts`.** Since 3.0 the links in `llms.txt` point at `.html.md` routes, so the handler has to answer them; wire it up as in the [Quick Start](./README.md#quick-start). If you still call a pre-1.0 helper (`createLLMsTxtHandlers`, `createEnhancedLLMsTxtHandlers`, `createPageLLMsTxtHandlers`), replace it with `createLLmsTxt`; those were removed from the public API in 1.0. Older examples in this repository nested `baseUrl` and `showWarnings` inside `autoDiscovery`; they belong at the top level, and the 3.0 types reject them inside `autoDiscovery`:
 
 ```diff
  createLLmsTxt({
@@ -188,4 +188,4 @@ function generator(config: LLMsTxtConfig, pages?: LLMsTxtPage[]) {
 
 **9. CommonJS.** The package is ESM-only. `require('next-llms-txt')` did not work in 1.x either, because the `require` export pointed at a file that was never built; it now fails with Node's ESM-only error. Use `import`.
 
-**10. Then run the [2.0 → 2.1 checklist](#checklist)** to verify that every link answers `200`.
+**10. Then run the [2.x → 3.0 checklist](#checklist)** to verify that every link answers `200`.

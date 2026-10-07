@@ -70,7 +70,7 @@ npm run cypress:run      # Run Cypress tests headlessly
 
 ### next-llms-txt
 
-The main library package, currently at version 2.1. See [packages/next-llms-txt/README.md](packages/next-llms-txt/README.md) for the documentation, [UPGRADING.md](packages/next-llms-txt/UPGRADING.md) for the update & upgrade guide and [CHANGELOG.md](packages/next-llms-txt/CHANGELOG.md) for all changes.
+The main library package, currently at version 3.0. See [packages/next-llms-txt/README.md](packages/next-llms-txt/README.md) for the documentation, [UPGRADING.md](packages/next-llms-txt/UPGRADING.md) for the update & upgrade guide and [CHANGELOG.md](packages/next-llms-txt/CHANGELOG.md) for all changes.
 
 **Publishing:**
 ```bash

@@ -23,7 +23,7 @@
 
 LLM-focused content discovery and delivery for **Next.js 16+**. `next-llms-txt` generates a spec-compliant [`llms.txt`](https://llmstxt.org) for your site and serves a markdown version of every listed page at `<route>.html.md`. One function, wired into `proxy.ts`.
 
-Current version: **2.1**. Coming from an older version? See the [update & upgrade guide](./UPGRADING.md).
+Current version: **3.0**. Coming from an older version? See the [update & upgrade guide](./UPGRADING.md).
 
 Live demo: <https://next-llms-txt-demo-server.vercel.app>
 
